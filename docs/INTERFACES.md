@@ -1,8 +1,9 @@
 # P0 接线与接口定义
 
 ## 1. 系统拓扑
-- 主控：STM32G431
-- 电机：BLDC_A / BLDC_B / BLDC_C
+- 上位控制板：ESP32-S3
+- 电机控制节点：NODE_A / NODE_B / NODE_C（STM32G431）
+- 电机：BLDC_A / BLDC_B / BLDC_C（120° 均布）
 - 驱动：DRV_A / DRV_B / DRV_C
 - 反馈：Hall_A / Hall_B / Hall_C
 - 传感器：BALL_SENSOR
