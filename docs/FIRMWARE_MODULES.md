@@ -17,14 +17,18 @@
 
 ## 3. Sensor
 - Hall 采样
-- 入球检测
+- 管道有球检测
+- 发射位到球检测
+- 出球检测
 - 电压 / 电流 / 温度采样（若硬件具备）
 
 ## 4. Launch State Machine
 - `IDLE`
-- `PRESPIN`
-- `READY`
-- `SHOOT`
+- `SPINUP`
+- `FEED_READY`
+- `BALL_IN_POSITION`
+- `FIRE`
+- `RELOAD`
 - `FAULT`
 - `ESTOP`
 
