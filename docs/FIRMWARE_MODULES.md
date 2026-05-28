@@ -1,18 +1,19 @@
 # 固件模块划分
 
-## 1. Core / App
+## 1. Upper Controller / App
 - `main`
-- 系统初始化
-- 状态机调度
+- 参数接收
+- `rpm_mixer_120deg`
+- 发射状态机调度
 - 命令分发
 
-## 2. Motor Control
-- `motor_a_controller`
-- `motor_b_controller`
-- `motor_c_controller`
+## 2. Motor Node Control
+- `node_a_controller`
+- `node_b_controller`
+- `node_c_controller`
 - SimpleFOC 参数初始化
 - 目标 RPM 下发
-- 闭环更新
+- 单节点闭环更新
 
 ## 3. Sensor
 - Hall 采样
