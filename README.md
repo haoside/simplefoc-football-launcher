@@ -1,2 +1,72 @@
-# simplefoc-football-launcher
-3-BLDC SimpleFOC controlled standard size-5 football launcher
+# SimpleFOC Football Launcher
+
+基于 SimpleFOC 的三无刷电机足球发射控制系统。
+
+P0 目标：完成三路电机速度闭环、三轮同步预转、单次稳定射出标准 5 号足球，并具备基础安全保护。
+
+## Project Goal
+
+构建一套用于足球训练的三轮摩擦发射原型，通过三路 BLDC 独立调速与转速差控制，验证足球的速度、方向与旋转控制能力。
+
+## P0 Scope
+
+- 单电机 SimpleFOC 闭环稳定
+- 三电机独立速度闭环
+- 三轮同步预转
+- 入球检测
+- 单次稳定射出标准 5 号足球
+- 急停 / 过流 / 堵转 / 过热保护
+
+## Out of Scope
+
+- 自动瞄准
+- 视觉识别
+- 连续供球
+- 高速发射
+- 远程无人值守
+- HA / Matter 接入
+
+## Default Technical Direction
+
+- MCU：`STM32G431` 优先
+- Control Framework：`SimpleFOC`
+- Motor：优先带 Hall 的 BLDC
+- Driver：优先 `DRV8313 / DRV8302` 系三相驱动方案
+- Feedback：P0 优先 Hall，增强方案可切 `AS5048A`
+- Power：动力侧先按 `24V` 预估
+- Control Target：P0 先做 `速度控制`
+
+## P0 Milestones
+
+1. 单电机闭环跑通
+2. 三电机独立闭环跑通
+3. 入球检测 + 发射状态机跑通
+4. 单次低速稳定射球
+5. 故障保护停机
+
+## Suggested Repository Layout
+
+```text
+/docs
+  P0_TECH_PLAN.md
+  BOM_DRAFT.md
+  INTERFACES.md
+  FIRMWARE_MODULES.md
+/firmware
+/hardware
+```
+
+## Safety
+
+> 该项目涉及高速旋转部件和射出机构，P0 仅允许低速测试。
+
+- 必须先做低速测试
+- 发射方向禁止站人
+- 必须有物理急停按钮
+- 必须安装摩擦轮防护罩
+- 默认上电即安全空闲态
+- 无人看护时禁止运行
+
+## Status
+
+当前阶段：`P0 方案冻结 / 硬件与固件拆分中`
