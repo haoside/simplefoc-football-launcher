@@ -6,7 +6,7 @@
 - 电机：BLDC_A / BLDC_B / BLDC_C（120° 均布）
 - 驱动：DRV_A / DRV_B / DRV_C
 - 反馈：Hall_A / Hall_B / Hall_C
-- 传感器：BALL_SENSOR
+- 传感器：PIPE_BALL_SENSOR / BALL_IN_POSITION / EXIT_SENSOR
 - 安全：ESTOP
 
 ## 2. 主控接口分组
@@ -21,7 +21,9 @@
 - `HALL_C_1 / HALL_C_2 / HALL_C_3`
 
 ### 控制 / 安全输入
-- `BALL_SENSOR_IN`
+- `PIPE_BALL_SENSOR_IN`
+- `BALL_IN_POSITION_IN`
+- `EXIT_SENSOR_IN`
 - `ESTOP_IN`
 - `ENABLE_IN`
 
@@ -31,7 +33,9 @@
 
 ## 3. 逻辑关系
 - `ESTOP_IN = active` -> 全局立即停机，状态切 `ESTOP`
-- `BALL_SENSOR_IN = ready` 且三轮已达到目标转速 -> 允许进入 `READY`
+- `PIPE_BALL_SENSOR_IN = ready` 且三轮已达到目标转速 -> 允许进入 `FEED_READY`
+- `BALL_IN_POSITION_IN = active` -> 允许进入 `FIRE`
+- `EXIT_SENSOR_IN` 超时异常 -> 进入 `FAULT`
 - 任一路驱动故障 -> 全局切 `FAULT`
 
 ## 4. 上电默认行为
