@@ -16,6 +16,9 @@
 - `pinout/CONNECTOR_TABLE.md`
 - `pinout/HOST_NETS.csv`
 - `pinout/MOTOR_NODE_NETS.csv`
+- `host-esp32s3/HOST_NET_BY_NET.md`
+- `motor-node-g431/MOTOR_NODE_NET_BY_NET.md`
+- `PCB_LAYOUT_CONSTRAINTS.md`
 
 ## 当前设计策略
 - Host 与 Motor Node 分板
