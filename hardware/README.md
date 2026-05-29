@@ -19,6 +19,9 @@
 - `host-esp32s3/HOST_NET_BY_NET.md`
 - `motor-node-g431/MOTOR_NODE_NET_BY_NET.md`
 - `PCB_LAYOUT_CONSTRAINTS.md`
+- `host-esp32s3/HOST_SCHEMATIC_PAGES.md`
+- `motor-node-g431/MOTOR_NODE_SCHEMATIC_PAGES.md`
+- `SCHEMATIC_PAGE_INTERFACES.md`
 
 ## 当前设计策略
 - Host 与 Motor Node 分板
