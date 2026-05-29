@@ -22,6 +22,9 @@
 - `host-esp32s3/HOST_SCHEMATIC_PAGES.md`
 - `motor-node-g431/MOTOR_NODE_SCHEMATIC_PAGES.md`
 - `SCHEMATIC_PAGE_INTERFACES.md`
+- `host-esp32s3/HOST_FOOTPRINT_GUIDE.md`
+- `motor-node-g431/MOTOR_NODE_FOOTPRINT_GUIDE.md`
+- `FIRST_SPIN_BRINGUP.md`
 
 ## 当前设计策略
 - Host 与 Motor Node 分板
