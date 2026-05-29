@@ -1,0 +1,9 @@
+#pragma once
+
+#define RPM_MIN 500
+#define RPM_MAX 3000
+#define P0_TARGET_SPEED_MIN_MS 14
+#define P0_TARGET_SPEED_MAX_MS 18
+#define NODE_STATUS_PERIOD_MS 20
+#define HOST_CONTROL_PERIOD_MS 20
+#define COMMS_TIMEOUT_MS 200
