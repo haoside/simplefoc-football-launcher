@@ -1,3 +1,4 @@
+#include "host_fault.h"
 #include "host_state.h"
 
 extern void feed_request_one_ball();
@@ -7,6 +8,10 @@ void launch_state_machine_step() {
   HostState* s = host_state_get();
   if (s->cmd.estop) {
     s->state = ESTOP;
+    return;
+  }
+  if (host_fault_is_active()) {
+    s->state = FAULT;
     return;
   }
 

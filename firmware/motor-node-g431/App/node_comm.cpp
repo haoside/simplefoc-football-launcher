@@ -37,18 +37,34 @@ static void node_send_status(void) {
 }
 
 static void node_send_heartbeat(void) {
+  static uint8_t aliveCounter = 0;
   MotorNodeState* s = node_state_get();
   CanHeartbeatFrame hb = {0};
   uint8_t payload[8] = {0};
   hb.state = s->state;
   hb.faultCode = s->faultCode;
   hb.temp_x10 = s->temp_x10;
-  hb.aliveCounter++;
+  hb.aliveCounter = aliveCounter++;
   protocol_encode_heartbeat(payload, &hb);
   printf("CAN TX id=0x%03X hb state=%u fault=%u\n", CAN_ID_HEARTBEAT(s->nodeId), hb.state, hb.faultCode);
+}
+
+static void node_send_fault(void) {
+  MotorNodeState* s = node_state_get();
+  if (s->faultCode == FAULT_NONE) return;
+  CanFaultFrame ff = {0};
+  uint8_t payload[8] = {0};
+  ff.faultCode = s->faultCode;
+  ff.state = s->state;
+  ff.actualRpm = s->actualRpm;
+  ff.phaseCurrent_x10 = s->phaseCurrent_x10;
+  ff.busVoltage_x10 = s->busVoltage_x10;
+  protocol_encode_fault(payload, &ff);
+  printf("CAN TX id=0x%03X fault=%u\n", CAN_ID_FAULT(s->nodeId), ff.faultCode);
 }
 
 void node_comm_poll() {
   node_send_status();
   node_send_heartbeat();
+  node_send_fault();
 }

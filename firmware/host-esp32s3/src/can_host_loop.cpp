@@ -1,6 +1,7 @@
 #include "../../common/config.h"
 #include "../../common/protocol.h"
 #include "../../common/protocol_codec.h"
+#include "host_fault.h"
 #include "host_state.h"
 #include "rpm_mixer_120.h"
 #include <stdint.h>
@@ -12,18 +13,26 @@ struct HostNodeState {
   int16_t actualRpm;
   uint16_t lastSeenMs;
   uint8_t faultCode;
+  uint8_t state;
 };
 
 static HostNodeState g_nodes[3] = {
-  {NODE_ID_WHEEL_A, 0, 0, 0, FAULT_NONE},
-  {NODE_ID_WHEEL_B, 0, 0, 0, FAULT_NONE},
-  {NODE_ID_WHEEL_C, 0, 0, 0, FAULT_NONE},
+  {NODE_ID_WHEEL_A, 0, 0, 0, FAULT_NONE, STATE_IDLE},
+  {NODE_ID_WHEEL_B, 0, 0, 0, FAULT_NONE, STATE_IDLE},
+  {NODE_ID_WHEEL_C, 0, 0, 0, FAULT_NONE, STATE_IDLE},
 };
 
 static int clamp_rpm(float rpm) {
   if (rpm < RPM_MIN) return (rpm <= 0) ? 0 : RPM_MIN;
   if (rpm > RPM_MAX) return RPM_MAX;
   return (int)rpm;
+}
+
+static void host_can_send_estop_broadcast(uint8_t code, uint8_t source) {
+  CanEstopFrame frame = {0};
+  frame.code = code;
+  frame.source = source;
+  printf("CAN TX id=0x%03X ESTOP code=%u source=%u\n", CAN_ID_ESTOP_BROADCAST, code, source);
 }
 
 static void host_update_targets_from_command() {
@@ -56,12 +65,38 @@ static void host_handle_status(uint8_t nodeId, const CanStatusFrame* st) {
   }
 }
 
+static void host_handle_heartbeat(uint8_t nodeId, const CanHeartbeatFrame* hb) {
+  for (unsigned i = 0; i < 3; ++i) {
+    if (g_nodes[i].nodeId == nodeId) {
+      g_nodes[i].faultCode = hb->faultCode;
+      g_nodes[i].state = hb->state;
+      if (hb->faultCode != FAULT_NONE || hb->state == STATE_FAULT || hb->state == STATE_ESTOP) {
+        host_fault_raise(hb->faultCode ? hb->faultCode : FAULT_COMMS_TIMEOUT, nodeId);
+      }
+      break;
+    }
+  }
+}
+
+static void host_handle_fault(uint8_t nodeId, const CanFaultFrame* ff) {
+  host_fault_raise(ff->faultCode, nodeId);
+}
+
 void host_can_control_tick(void) {
   HostState* s = host_state_get();
   host_update_targets_from_command();
-  uint8_t enable = (s->state != ESTOP && s->state != FAULT) ? 1 : 0;
+
+  if (host_fault_is_active() || s->state == ESTOP || s->state == FAULT) {
+    s->state = (s->state == ESTOP) ? ESTOP : FAULT;
+    host_can_send_estop_broadcast(host_fault_code(), host_fault_source());
+    for (unsigned i = 0; i < 3; ++i) {
+      host_can_send_set_rpm(g_nodes[i].nodeId, 0, 0, 0);
+    }
+    return;
+  }
+
   for (unsigned i = 0; i < 3; ++i) {
-    host_can_send_set_rpm(g_nodes[i].nodeId, g_nodes[i].targetRpm, 200, enable);
+    host_can_send_set_rpm(g_nodes[i].nodeId, g_nodes[i].targetRpm, 200, 1);
   }
 }
 
@@ -71,6 +106,20 @@ void host_can_on_rx(uint16_t canId, const uint8_t* data, int len) {
       CanStatusFrame st = {0};
       if (protocol_decode_status(&st, data, len) > 0) {
         host_handle_status(g_nodes[i].nodeId, &st);
+      }
+      return;
+    }
+    if (canId == CAN_ID_HEARTBEAT(g_nodes[i].nodeId)) {
+      CanHeartbeatFrame hb = {0};
+      if (protocol_decode_heartbeat(&hb, data, len) > 0) {
+        host_handle_heartbeat(g_nodes[i].nodeId, &hb);
+      }
+      return;
+    }
+    if (canId == CAN_ID_FAULT(g_nodes[i].nodeId)) {
+      CanFaultFrame ff = {0};
+      if (protocol_decode_fault(&ff, data, len) > 0) {
+        host_handle_fault(g_nodes[i].nodeId, &ff);
       }
       return;
     }
