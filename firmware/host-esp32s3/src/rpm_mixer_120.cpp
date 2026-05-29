@@ -1,14 +1,4 @@
-struct RpmCommand {
-  float baseRpm;
-  float ux;
-  float uy;
-};
-
-struct WheelRpm {
-  float a;
-  float b;
-  float c;
-};
+#include "rpm_mixer_120.h"
 
 WheelRpm mix120deg(const RpmCommand& in, float kx, float ky) {
   WheelRpm out;

@@ -1,6 +1,8 @@
 #include "../../common/config.h"
 #include "../../common/protocol.h"
 #include "../../common/protocol_codec.h"
+#include "host_state.h"
+#include "rpm_mixer_120.h"
 #include <stdint.h>
 #include <stdio.h>
 
@@ -17,6 +19,21 @@ static HostNodeState g_nodes[3] = {
   {NODE_ID_WHEEL_B, 0, 0, 0, FAULT_NONE},
   {NODE_ID_WHEEL_C, 0, 0, 0, FAULT_NONE},
 };
+
+static int clamp_rpm(float rpm) {
+  if (rpm < RPM_MIN) return (rpm <= 0) ? 0 : RPM_MIN;
+  if (rpm > RPM_MAX) return RPM_MAX;
+  return (int)rpm;
+}
+
+static void host_update_targets_from_command() {
+  HostState* s = host_state_get();
+  RpmCommand cmd = {(float)s->cmd.baseRpm, s->cmd.ux, s->cmd.uy};
+  WheelRpm w = mix120deg(cmd, 1.0f, 1.0f);
+  g_nodes[0].targetRpm = clamp_rpm(w.a);
+  g_nodes[1].targetRpm = clamp_rpm(w.b);
+  g_nodes[2].targetRpm = clamp_rpm(w.c);
+}
 
 static void host_can_send_set_rpm(uint8_t nodeId, int16_t targetRpm, uint16_t rampMs, uint8_t enable) {
   CanSetRpmFrame frame = {0};
@@ -40,8 +57,11 @@ static void host_handle_status(uint8_t nodeId, const CanStatusFrame* st) {
 }
 
 void host_can_control_tick(void) {
+  HostState* s = host_state_get();
+  host_update_targets_from_command();
+  uint8_t enable = (s->state != ESTOP && s->state != FAULT) ? 1 : 0;
   for (unsigned i = 0; i < 3; ++i) {
-    host_can_send_set_rpm(g_nodes[i].nodeId, g_nodes[i].targetRpm, 200, 1);
+    host_can_send_set_rpm(g_nodes[i].nodeId, g_nodes[i].targetRpm, 200, enable);
   }
 }
 
