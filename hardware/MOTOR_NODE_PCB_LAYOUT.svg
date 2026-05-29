@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720">
+  <rect width="1200" height="720" fill="#111827"/>
+  <text x="40" y="50" fill="#f3f4f6" font-size="28" font-family="Arial">STM32G431 Motor Node PCB Floorplan</text>
+  <rect x="40" y="90" width="180" height="120" rx="12" fill="#b91c1c"/>
+  <text x="80" y="150" fill="#fff" font-size="24">24V IN</text>
+  <text x="70" y="180" fill="#fecaca" font-size="16">Fuse / TVS</text>
+  <rect x="260" y="90" width="220" height="120" rx="12" fill="#c2410c"/>
+  <text x="320" y="150" fill="#fff" font-size="24">Power</text>
+  <text x="285" y="180" fill="#fed7aa" font-size="16">VDRV / 3V3 Regulators</text>
+  <rect x="520" y="70" width="260" height="160" rx="14" fill="#0369a1"/>
+  <text x="585" y="145" fill="#fff" font-size="26">STM32G431</text>
+  <text x="590" y="175" fill="#dbeafe" font-size="16">Motor Control MCU</text>
+  <rect x="830" y="70" width="280" height="160" rx="14" fill="#6d28d9"/>
+  <text x="900" y="145" fill="#fff" font-size="26">CAN + SWD</text>
+  <text x="865" y="175" fill="#ede9fe" font-size="16">Comms / Debug Area</text>
+  <rect x="70" y="320" width="260" height="220" rx="14" fill="#065f46"/>
+  <text x="120" y="380" fill="#fff" font-size="24">Gate Driver</text>
+  <text x="110" y="415" fill="#d1fae5" font-size="16">DRV8353 / DRV8302</text>
+  <rect x="380" y="300" width="320" height="260" rx="14" fill="#1d4ed8"/>
+  <text x="470" y="370" fill="#fff" font-size="24">MOSFET Power Stage</text>
+  <text x="455" y="405" fill="#bfdbfe" font-size="16">3 Half Bridges + Shunts</text>
+  <rect x="760" y="320" width="220" height="120" rx="12" fill="#0f766e"/>
+  <text x="810" y="380" fill="#fff" font-size="24">Hall</text>
+  <text x="800" y="410" fill="#ccfbf1" font-size="16">Sensor Input</text>
+  <rect x="760" y="470" width="220" height="120" rx="12" fill="#7c2d12"/>
+  <text x="805" y="530" fill="#fff" font-size="24">Motor U/V/W</text>
+  <text x="815" y="560" fill="#fed7aa" font-size="16">Phase Output</text>
+  <line x1="220" y1="150" x2="260" y2="150" stroke="#94a3b8" stroke-width="4"/>
+  <line x1="480" y1="150" x2="520" y2="150" stroke="#94a3b8" stroke-width="4"/>
+  <line x1="330" y1="430" x2="380" y2="430" stroke="#94a3b8" stroke-width="4"/>
+  <line x1="700" y1="430" x2="760" y2="380" stroke="#94a3b8" stroke-width="4"/>
+  <line x1="700" y1="470" x2="760" y2="530" stroke="#94a3b8" stroke-width="4"/>
+</svg>
