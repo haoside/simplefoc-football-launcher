@@ -1,0 +1,17 @@
+Net,Category,Description
+VIN_24V,power,24V node input
+VDRV,power,gate driver supply
++3V3,power,logic supply
+PHASE_U,motor,motor phase U
+PHASE_V,motor,motor phase V
+PHASE_W,motor,motor phase W
+HALL_A,sensor,hall channel A
+HALL_B,sensor,hall channel B
+HALL_C,sensor,hall channel C
+ISENSE_A,analog,current sense A
+ISENSE_B,analog,current sense B
+VBUS_SENSE,analog,bus voltage sense
+DRV_EN,control,driver enable
+DRV_FAULT_N,control,driver fault
+CAN_H,comm,CAN high
+CAN_L,comm,CAN low

@@ -1,0 +1,14 @@
+Net,Category,Description
+VIN_24V,power,24V main input
++5V,power,5V system rail
++3V3,power,3.3V logic rail
+CAN_H,comm,CAN high
+CAN_L,comm,CAN low
+SIG_TUBE,sensor,tube ball sensor signal
+SIG_CHAMBER,sensor,chamber ball sensor signal
+SIG_EXIT,sensor,exit sensor signal
+SIG_ESTOP,safety,estop feedback input
+PWM_FEED,actuator,feed servo pwm
+SOLENOID_LOW,actuator,solenoid low side drive
+UART0_TX,debug,uart tx
+UART0_RX,debug,uart rx

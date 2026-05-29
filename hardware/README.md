@@ -8,6 +8,11 @@
 - `PCB_RULES.md`
 - `HOST_PCB_LAYOUT.svg`
 - `MOTOR_NODE_PCB_LAYOUT.svg`
+- `pinout/HOST_PINOUT.md`
+- `pinout/MOTOR_NODE_PINOUT.md`
+- `pinout/CONNECTOR_TABLE.md`
+- `pinout/HOST_NETS.csv`
+- `pinout/MOTOR_NODE_NETS.csv`
 
 ## 当前设计策略
 - Host 与 Motor Node 分板
