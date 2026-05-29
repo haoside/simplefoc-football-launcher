@@ -1,3 +1,5 @@
+#include "simplefoc_adapter.h"
+
 void simplefoc_init() {
-  // TODO: motor / driver / hall sensor / PID init
+  simplefoc_adapter_init();
 }
