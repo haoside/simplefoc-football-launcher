@@ -5,6 +5,9 @@
 ## 文件
 - `host-esp32s3/HOST_SCHEMATIC.md`
 - `motor-node-g431/MOTOR_NODE_SCHEMATIC.md`
+- `host-esp32s3/HOST_COMPONENT_LIST.md`
+- `motor-node-g431/MOTOR_NODE_COMPONENT_LIST.md`
+- `motor-node-g431/MOTOR_NODE_SUBCIRCUITS.md`
 - `PCB_RULES.md`
 - `HOST_PCB_LAYOUT.svg`
 - `MOTOR_NODE_PCB_LAYOUT.svg`
