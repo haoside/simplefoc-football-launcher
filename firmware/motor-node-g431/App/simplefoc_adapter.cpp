@@ -1,41 +1,39 @@
 #include "simplefoc_adapter.h"
+#include "hal/node_hal.h"
+#include "sensor_reader.h"
 
 static int g_targetRpm = 0;
-static int g_actualRpm = 0;
-static int g_busVoltage_x10 = 240;
-static int g_phaseCurrent_x10 = 0;
-static int g_temp_x10 = 250;
-static int g_fault = 0;
+static int g_pwmEnabled = 0;
 
 void simplefoc_adapter_init(void) {
   g_targetRpm = 0;
-  g_actualRpm = 0;
-  g_fault = 0;
+  g_pwmEnabled = 0;
+  node_hal_pwm_enable(0);
 }
 
 void simplefoc_adapter_set_target_rpm(int rpm) {
   g_targetRpm = rpm;
+  g_pwmEnabled = (rpm > 0) ? 1 : 0;
+  node_hal_pwm_enable(g_pwmEnabled);
 }
 
 int simplefoc_adapter_get_actual_rpm(void) {
-  if (g_actualRpm < g_targetRpm) g_actualRpm += 50;
-  else if (g_actualRpm > g_targetRpm) g_actualRpm -= 50;
-  return g_actualRpm;
+  if (!g_pwmEnabled) return 0;
+  return read_hall_rpm();
 }
 
 int simplefoc_adapter_get_bus_voltage_x10(void) {
-  return g_busVoltage_x10;
+  return (int)node_hal_read_vbus_x10();
 }
 
 int simplefoc_adapter_get_phase_current_x10(void) {
-  g_phaseCurrent_x10 = (g_targetRpm > 0) ? 30 : 0;
-  return g_phaseCurrent_x10;
+  return (int)node_hal_read_current_x10();
 }
 
 int simplefoc_adapter_get_temp_x10(void) {
-  return g_temp_x10;
+  return (int)node_hal_read_temp_x10();
 }
 
 int simplefoc_adapter_has_fault(void) {
-  return g_fault;
+  return node_hal_driver_fault_active();
 }
