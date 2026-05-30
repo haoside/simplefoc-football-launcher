@@ -1,8 +1,6 @@
+#include "feed_state.h"
 #include "host_fault.h"
 #include "host_state.h"
-
-extern void feed_request_one_ball();
-extern int feed_is_ready();
 
 void launch_state_machine_step() {
   HostState* s = host_state_get();
@@ -10,7 +8,7 @@ void launch_state_machine_step() {
     s->state = ESTOP;
     return;
   }
-  if (host_fault_is_active()) {
+  if (host_fault_is_active() || feed_fault_active()) {
     s->state = FAULT;
     return;
   }
@@ -32,11 +30,13 @@ void launch_state_machine_step() {
       if (s->sensors.chamberReady) s->state = FIRE;
       break;
     case FIRE:
-      s->state = RELOAD;
+      if (s->sensors.exitDetected) s->state = RELOAD;
       break;
     case RELOAD:
-      s->cmd.fireRequest = 0;
-      s->state = SPINUP;
+      if (feed_is_ready()) {
+        s->cmd.fireRequest = 0;
+        s->state = SPINUP;
+      }
       break;
     case FAULT:
     case ESTOP:
