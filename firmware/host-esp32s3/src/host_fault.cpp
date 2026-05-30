@@ -1,13 +1,16 @@
 #include "host_fault.h"
+#include "host_state.h"
 
 static uint8_t g_faultActive = 0;
 static uint8_t g_faultCode = 0;
 static uint8_t g_faultSource = 0;
 
 void host_fault_raise(uint8_t faultCode, uint8_t sourceNodeId) {
+  HostState* s = host_state_get();
   g_faultActive = 1;
   g_faultCode = faultCode;
   g_faultSource = sourceNodeId;
+  s->telemetry.hostFaultCode = faultCode;
 }
 
 int host_fault_is_active(void) {
@@ -23,7 +26,9 @@ uint8_t host_fault_source(void) {
 }
 
 void host_fault_clear(void) {
+  HostState* s = host_state_get();
   g_faultActive = 0;
   g_faultCode = 0;
   g_faultSource = 0;
+  s->telemetry.hostFaultCode = 0;
 }

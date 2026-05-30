@@ -27,10 +27,17 @@ struct HostSensors {
   uint8_t exitDetected;
 };
 
+struct HostTelemetry {
+  uint8_t feedState;
+  uint8_t feedFaultReason;
+  uint8_t hostFaultCode;
+};
+
 struct HostState {
   LaunchState state;
   HostCommand cmd;
   HostSensors sensors;
+  HostTelemetry telemetry;
 };
 
 HostState* host_state_get();
