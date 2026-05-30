@@ -1,8 +1,8 @@
+#include "hal/node_hal.h"
 #include "node_state.h"
 #include "../../common/protocol.h"
 #include "../../common/protocol_codec.h"
 #include <stdint.h>
-#include <stdio.h>
 
 static void node_apply_set_rpm(const CanSetRpmFrame* cmd) {
   MotorNodeState* s = node_state_get();
@@ -26,44 +26,58 @@ void node_comm_on_rx(uint16_t canId, const uint8_t* data, int len) {
 
 static void node_send_status(void) {
   MotorNodeState* s = node_state_get();
+  NodeCanFrame tx = {0};
   CanStatusFrame st = {0};
-  uint8_t payload[8] = {0};
+  tx.canId = CAN_ID_STATUS(s->nodeId);
+  tx.dlc = sizeof(CanStatusFrame);
   st.actualRpm = s->actualRpm;
   st.targetRpm = s->targetRpm;
   st.busVoltage_x10 = s->busVoltage_x10;
   st.phaseCurrent_x10 = s->phaseCurrent_x10;
-  protocol_encode_status(payload, &st);
-  printf("CAN TX id=0x%03X actual=%d target=%d\n", CAN_ID_STATUS(s->nodeId), st.actualRpm, st.targetRpm);
+  protocol_encode_status(tx.data, &st);
+  node_hal_can_send(&tx);
 }
 
 static void node_send_heartbeat(void) {
   static uint8_t aliveCounter = 0;
   MotorNodeState* s = node_state_get();
+  NodeCanFrame tx = {0};
   CanHeartbeatFrame hb = {0};
-  uint8_t payload[8] = {0};
+  tx.canId = CAN_ID_HEARTBEAT(s->nodeId);
+  tx.dlc = sizeof(CanHeartbeatFrame);
   hb.state = s->state;
   hb.faultCode = s->faultCode;
   hb.temp_x10 = s->temp_x10;
   hb.aliveCounter = aliveCounter++;
-  protocol_encode_heartbeat(payload, &hb);
-  printf("CAN TX id=0x%03X hb state=%u fault=%u\n", CAN_ID_HEARTBEAT(s->nodeId), hb.state, hb.faultCode);
+  protocol_encode_heartbeat(tx.data, &hb);
+  node_hal_can_send(&tx);
 }
 
 static void node_send_fault(void) {
   MotorNodeState* s = node_state_get();
   if (s->faultCode == FAULT_NONE) return;
+  NodeCanFrame tx = {0};
   CanFaultFrame ff = {0};
-  uint8_t payload[8] = {0};
+  tx.canId = CAN_ID_FAULT(s->nodeId);
+  tx.dlc = sizeof(CanFaultFrame);
   ff.faultCode = s->faultCode;
   ff.state = s->state;
   ff.actualRpm = s->actualRpm;
   ff.phaseCurrent_x10 = s->phaseCurrent_x10;
   ff.busVoltage_x10 = s->busVoltage_x10;
-  protocol_encode_fault(payload, &ff);
-  printf("CAN TX id=0x%03X fault=%u\n", CAN_ID_FAULT(s->nodeId), ff.faultCode);
+  protocol_encode_fault(tx.data, &ff);
+  node_hal_can_send(&tx);
+}
+
+void node_comm_poll_rx(void) {
+  NodeCanFrame rx = {0};
+  while (node_hal_can_recv(&rx) == 0) {
+    node_comm_on_rx(rx.canId, rx.data, rx.dlc);
+  }
 }
 
 void node_comm_poll() {
+  node_comm_poll_rx();
   node_send_status();
   node_send_heartbeat();
   node_send_fault();

@@ -1,11 +1,11 @@
 #include "../../common/config.h"
 #include "../../common/protocol.h"
 #include "../../common/protocol_codec.h"
+#include "hal/host_hal.h"
 #include "host_fault.h"
 #include "host_state.h"
 #include "rpm_mixer_120.h"
 #include <stdint.h>
-#include <stdio.h>
 
 struct HostNodeState {
   uint8_t nodeId;
@@ -29,10 +29,14 @@ static int clamp_rpm(float rpm) {
 }
 
 static void host_can_send_estop_broadcast(uint8_t code, uint8_t source) {
+  HostCanFrame tx = {0};
   CanEstopFrame frame = {0};
+  tx.canId = CAN_ID_ESTOP_BROADCAST;
+  tx.dlc = sizeof(CanEstopFrame);
   frame.code = code;
   frame.source = source;
-  printf("CAN TX id=0x%03X ESTOP code=%u source=%u\n", CAN_ID_ESTOP_BROADCAST, code, source);
+  for (unsigned i = 0; i < sizeof(frame); ++i) tx.data[i] = ((uint8_t*)&frame)[i];
+  host_hal_can_send(&tx);
 }
 
 static void host_update_targets_from_command() {
@@ -45,14 +49,16 @@ static void host_update_targets_from_command() {
 }
 
 static void host_can_send_set_rpm(uint8_t nodeId, int16_t targetRpm, uint16_t rampMs, uint8_t enable) {
+  HostCanFrame tx = {0};
   CanSetRpmFrame frame = {0};
-  uint8_t payload[8] = {0};
+  tx.canId = CAN_ID_SET_RPM(nodeId);
+  tx.dlc = sizeof(CanSetRpmFrame);
   frame.seq = 0;
   frame.targetRpm = targetRpm;
   frame.rampMs = rampMs;
   frame.enable = enable;
-  protocol_encode_set_rpm(payload, &frame);
-  printf("CAN TX id=0x%03X target=%d enable=%u\n", CAN_ID_SET_RPM(nodeId), targetRpm, enable);
+  protocol_encode_set_rpm(tx.data, &frame);
+  host_hal_can_send(&tx);
 }
 
 static void host_handle_status(uint8_t nodeId, const CanStatusFrame* st) {
@@ -100,28 +106,26 @@ void host_can_control_tick(void) {
   }
 }
 
-void host_can_on_rx(uint16_t canId, const uint8_t* data, int len) {
-  for (unsigned i = 0; i < 3; ++i) {
-    if (canId == CAN_ID_STATUS(g_nodes[i].nodeId)) {
-      CanStatusFrame st = {0};
-      if (protocol_decode_status(&st, data, len) > 0) {
-        host_handle_status(g_nodes[i].nodeId, &st);
+void host_can_poll_rx(void) {
+  HostCanFrame rx = {0};
+  while (host_hal_can_recv(&rx) == 0) {
+    for (unsigned i = 0; i < 3; ++i) {
+      if (rx.canId == CAN_ID_STATUS(g_nodes[i].nodeId)) {
+        CanStatusFrame st = {0};
+        if (protocol_decode_status(&st, rx.data, rx.dlc) > 0) {
+          host_handle_status(g_nodes[i].nodeId, &st);
+        }
+      } else if (rx.canId == CAN_ID_HEARTBEAT(g_nodes[i].nodeId)) {
+        CanHeartbeatFrame hb = {0};
+        if (protocol_decode_heartbeat(&hb, rx.data, rx.dlc) > 0) {
+          host_handle_heartbeat(g_nodes[i].nodeId, &hb);
+        }
+      } else if (rx.canId == CAN_ID_FAULT(g_nodes[i].nodeId)) {
+        CanFaultFrame ff = {0};
+        if (protocol_decode_fault(&ff, rx.data, rx.dlc) > 0) {
+          host_handle_fault(g_nodes[i].nodeId, &ff);
+        }
       }
-      return;
-    }
-    if (canId == CAN_ID_HEARTBEAT(g_nodes[i].nodeId)) {
-      CanHeartbeatFrame hb = {0};
-      if (protocol_decode_heartbeat(&hb, data, len) > 0) {
-        host_handle_heartbeat(g_nodes[i].nodeId, &hb);
-      }
-      return;
-    }
-    if (canId == CAN_ID_FAULT(g_nodes[i].nodeId)) {
-      CanFaultFrame ff = {0};
-      if (protocol_decode_fault(&ff, data, len) > 0) {
-        host_handle_fault(g_nodes[i].nodeId, &ff);
-      }
-      return;
     }
   }
 }
