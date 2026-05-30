@@ -7,6 +7,7 @@
 extern void host_can_control_tick(void);
 extern void host_can_poll_rx(void);
 extern void launch_state_machine_step(void);
+extern void telemetry_publish(void);
 
 int main() {
   HostState* s = host_state_get();
@@ -27,6 +28,7 @@ int main() {
     host_can_poll_rx();
     launch_state_machine_step();
     host_can_control_tick();
+    telemetry_publish();
     break; // placeholder for task loop
   }
   return 0;
