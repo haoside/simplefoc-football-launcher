@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+  <defs>
+    <style>
+      .title{font:700 32px Arial;fill:#0f172a}
+      .sub{font:600 20px Arial;fill:#334155}
+      .label{font:600 17px Arial;fill:#1e293b}
+      .small{font:500 14px Arial;fill:#475569}
+      .panel{fill:#fff;stroke:#cbd5e1;stroke-width:2}
+      .base{fill:#dbe4ee;stroke:#475569;stroke-width:3}
+      .frame{fill:#e5e7eb;stroke:#475569;stroke-width:3}
+      .wheel{fill:#cbd5e1;stroke:#334155;stroke-width:4}
+      .ball{fill:#fde68a;stroke:#d97706;stroke-width:4}
+      .motor{fill:#dbeafe;stroke:#2563eb;stroke-width:3}
+      .guard{fill:#eef2ff;stroke:#6366f1;stroke-width:3;stroke-dasharray:10 8}
+      .ctrl{fill:#dcfce7;stroke:#16a34a;stroke-width:3}
+      .power{fill:#fee2e2;stroke:#dc2626;stroke-width:3}
+      .line{stroke:#334155;stroke-width:2.5;fill:none;marker-end:url(#arr)}
+    </style>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#334155"/>
+    </marker>
+  </defs>
+
+  <rect width="1600" height="1000" fill="#ffffff"/>
+  <text x="40" y="52" class="title">单球三轮足球发射器 爆炸图风格草图</text>
+  <text x="40" y="84" class="sub">展示整机装配层次：底座 → 控制/电源 → 主框架 → 电机/轮组 → 防护罩</text>
+
+  <rect x="40" y="120" width="1520" height="820" rx="16" class="panel"/>
+
+  <!-- Base -->
+  <path d="M260 780 L1160 780 L1260 850 L160 850 Z" class="base"/>
+  <text x="600" y="885" class="label">1. 主底座 / 安装平台</text>
+
+  <!-- Control and power bays floating -->
+  <rect x="330" y="660" width="180" height="95" rx="12" class="ctrl"/>
+  <text x="382" y="712" class="label">2A 控制仓</text>
+  <text x="360" y="738" class="small">ESP32-S3 + 3xG431</text>
+  <path d="M420 755 L420 795" class="line"/>
+
+  <rect x="890" y="650" width="210" height="100" rx="12" class="power"/>
+  <text x="950" y="705" class="label">2B 电源仓</text>
+  <text x="922" y="733" class="small">24V电源 + 开关 + 保险</text>
+  <path d="M995 750 L995 795" class="line"/>
+
+  <!-- Main frame -->
+  <path d="M320 585 L1100 585 L1190 660 L230 660 Z" class="frame"/>
+  <path d="M380 585 L470 420 L600 300 L820 300 L970 430 L1030 585" class="frame"/>
+  <text x="610" y="270" class="label">3. 主框架 / 轮组支撑结构</text>
+  <path d="M710 660 L710 740" class="line"/>
+
+  <!-- Wheels and motors exploded -->
+  <circle cx="710" cy="420" r="85" class="ball"/>
+  <circle cx="710" cy="255" r="72" class="wheel"/>
+  <circle cx="570" cy="500" r="72" class="wheel"/>
+  <circle cx="850" cy="500" r="72" class="wheel"/>
+  <text x="674" y="426" class="label">4A 球</text>
+  <text x="675" y="255" class="small">4B wheel1</text>
+  <text x="535" y="500" class="small">4C wheel3</text>
+  <text x="815" y="500" class="small">4D wheel2</text>
+
+  <rect x="665" y="110" width="90" height="90" rx="14" class="motor"/>
+  <rect x="430" y="560" width="110" height="80" rx="14" class="motor"/>
+  <rect x="885" y="560" width="110" height="80" rx="14" class="motor"/>
+  <text x="680" y="160" class="small">5A BLDC1</text>
+  <text x="452" y="604" class="small">5B BLDC3</text>
+  <text x="908" y="604" class="small">5C BLDC2</text>
+  <path d="M710 200 L710 183" class="line"/>
+  <path d="M540 596 L570 560" class="line"/>
+  <path d="M885 596 L850 560" class="line"/>
+
+  <!-- Guard exploded -->
+  <path d="M450 170 L960 170 L1095 280 L1070 635 L950 705 L470 705 L340 620 L345 285 Z" class="guard"/>
+  <text x="1090" y="705" class="label">6. 防护罩总成</text>
+  <path d="M1080 635 L1170 705" class="line"/>
+
+  <!-- Manual feed opening -->
+  <path d="M610 105 L820 105 L880 150 L550 150 Z" fill="#dbeafe" stroke="#2563eb" stroke-width="3"/>
+  <text x="650" y="92" class="small">7. 手动上球口 / 导向喇叭口</text>
+  <path d="M715 150 L715 170" class="line"/>
+
+  <!-- Right note box -->
+  <rect x="1240" y="190" width="250" height="280" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="1260" y="225" class="label">装配顺序建议</text>
+  <text x="1260" y="262" class="small">1. 底座</text>
+  <text x="1260" y="292" class="small">2. 控制仓 / 电源仓</text>
+  <text x="1260" y="322" class="small">3. 主框架</text>
+  <text x="1260" y="352" class="small">4. 电机安装板</text>
+  <text x="1260" y="382" class="small">5. 轮组 / 联轴器</text>
+  <text x="1260" y="412" class="small">6. 防护罩</text>
+  <text x="1260" y="442" class="small">7. 急停 / 线束收尾</text>
+
+  <rect x="1240" y="520" width="250" height="170" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="1260" y="555" class="label">说明</text>
+  <text x="1260" y="592" class="small">该爆炸图对应单球方案。</text>
+  <text x="1260" y="622" class="small">无球仓、无闸门、无连续供弹。</text>
+  <text x="1260" y="652" class="small">重点用于机械/电控装配沟通。</text>
+
+  <text x="40" y="975" class="small">说明：爆炸图是工程沟通用分层草图，帮助明确装配关系、安装顺序和结构层次，不替代正式装配图。</text>
+</svg>
