@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="950" viewBox="0 0 1500 950">
+  <defs>
+    <style>
+      .title{font:700 32px Arial;fill:#0f172a}
+      .sub{font:600 20px Arial;fill:#334155}
+      .label{font:600 17px Arial;fill:#1e293b}
+      .small{font:500 14px Arial;fill:#475569}
+      .panel{fill:#fff;stroke:#cbd5e1;stroke-width:2}
+      .plate{fill:#e2e8f0;stroke:#475569;stroke-width:3}
+      .ctrl{fill:#dcfce7;stroke:#16a34a;stroke-width:3}
+      .power{fill:#fee2e2;stroke:#dc2626;stroke-width:3}
+      .conn{fill:#dbeafe;stroke:#2563eb;stroke-width:2}
+      .line{stroke:#334155;stroke-width:3;fill:none}
+      .dim{stroke:#0f766e;stroke-width:2.5;fill:none;marker-start:url(#arr);marker-end:url(#arr)}
+    </style>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+      <path d="M5,0 L10,5 L5,10 L0,5 z" fill="#0f766e"/>
+    </marker>
+  </defs>
+
+  <rect width="1500" height="950" fill="#ffffff"/>
+  <text x="40" y="52" class="title">控制仓 / 电源仓 安装板草图</text>
+  <text x="40" y="84" class="sub">P0：单球三轮方案，机械与电控对齐用，不作为最终加工图</text>
+
+  <rect x="40" y="120" width="680" height="760" rx="16" class="panel"/>
+  <text x="60" y="155" class="sub">控制仓安装板</text>
+
+  <rect x="150" y="220" width="430" height="300" rx="14" class="plate"/>
+  <text x="285" y="205" class="label">控制仓安装板 250 x 180 x 3~5mm</text>
+
+  <rect x="190" y="265" width="120" height="80" rx="10" class="ctrl"/>
+  <text x="220" y="308" class="label">ESP32-S3</text>
+
+  <rect x="360" y="245" width="85" height="60" rx="8" class="ctrl"/>
+  <rect x="470" y="245" width="85" height="60" rx="8" class="ctrl"/>
+  <rect x="415" y="330" width="85" height="60" rx="8" class="ctrl"/>
+  <text x="372" y="281" class="small">G431-1</text>
+  <text x="482" y="281" class="small">G431-2</text>
+  <text x="427" y="366" class="small">G431-3</text>
+
+  <rect x="190" y="385" width="150" height="70" rx="10" class="conn"/>
+  <text x="212" y="425" class="label">CAN / 端子区</text>
+
+  <circle cx="175" cy="245" r="8" fill="#fff" stroke="#334155" stroke-width="3"/>
+  <circle cx="555" cy="245" r="8" fill="#fff" stroke="#334155" stroke-width="3"/>
+  <circle cx="175" cy="495" r="8" fill="#fff" stroke="#334155" stroke-width="3"/>
+  <circle cx="555" cy="495" r="8" fill="#fff" stroke="#334155" stroke-width="3"/>
+  <text x="80" y="250" class="small">板固定孔</text>
+
+  <path d="M140 580 L590 580" class="dim"/>
+  <text x="285" y="610" class="label">250mm</text>
+  <path d="M625 220 L625 520" class="dim"/>
+  <text x="640" y="385" class="label">180mm</text>
+
+  <text x="90" y="685" class="small">原则：</text>
+  <text x="90" y="715" class="small">1. 控制板集中在低压区</text>
+  <text x="90" y="743" class="small">2. CAN/端子区靠边，便于布线</text>
+  <text x="90" y="771" class="small">3. 预留调试线插拔空间</text>
+  <text x="90" y="799" class="small">4. 与动力线分仓分层走线</text>
+
+  <rect x="780" y="120" width="680" height="760" rx="16" class="panel"/>
+  <text x="800" y="155" class="sub">电源仓安装板</text>
+
+  <rect x="900" y="210" width="410" height="340" rx="14" class="plate"/>
+  <text x="1020" y="195" class="label">电源仓安装板 320 x 220 x 3~5mm</text>
+
+  <rect x="955" y="255" width="220" height="110" rx="12" class="power"/>
+  <text x="1015" y="315" class="label">24V / 40A+ 电源</text>
+
+  <rect x="1200" y="255" width="70" height="70" rx="8" class="power"/>
+  <text x="1213" y="298" class="small">总开关</text>
+
+  <rect x="1200" y="345" width="70" height="70" rx="8" class="power"/>
+  <text x="1213" y="388" class="small">保险</text>
+
+  <rect x="955" y="395" width="120" height="70" rx="8" class="conn"/>
+  <text x="980" y="435" class="label">动力端子</text>
+
+  <rect x="1095" y="395" width="80" height="70" rx="8" class="conn"/>
+  <text x="1112" y="435" class="small">DCDC</text>
+
+  <circle cx="925" cy="235" r="8" fill="#fff" stroke="#334155" stroke-width="3"/>
+  <circle cx="1285" cy="235" r="8" fill="#fff" stroke="#334155" stroke-width="3"/>
+  <circle cx="925" cy="525" r="8" fill="#fff" stroke="#334155" stroke-width="3"/>
+  <circle cx="1285" cy="525" r="8" fill="#fff" stroke="#334155" stroke-width="3"/>
+
+  <path d="M900 605 L1310 605" class="dim"/>
+  <text x="1050" y="635" class="label">320mm</text>
+  <path d="M1345 210 L1345 550" class="dim"/>
+  <text x="1360" y="392" class="label">220mm</text>
+
+  <text x="820" y="680" class="small">原则：</text>
+  <text x="820" y="710" class="small">1. 电源、总开关、保险集中在动力仓</text>
+  <text x="820" y="738" class="small">2. DCDC 靠近低压输出侧</text>
+  <text x="820" y="766" class="small">3. 动力线短、粗、直；信号线独立走线</text>
+  <text x="820" y="794" class="small">4. 与控制仓保持物理隔离，便于散热与维护</text>
+
+  <text x="40" y="920" class="small">说明：控制仓安装板和电源仓安装板建议分开，避免强弱电混仓；实际孔位与电源外形需按采购件复核。</text>
+</svg>
