@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+  <defs>
+    <style>
+      .title{font:700 34px Arial;fill:#0f172a}
+      .sub{font:600 20px Arial;fill:#334155}
+      .label{font:600 18px Arial;fill:#1e293b}
+      .small{font:500 15px Arial;fill:#475569}
+      .line{stroke:#334155;stroke-width:3;fill:none}
+      .thin{stroke:#94a3b8;stroke-width:2;fill:none}
+      .dim{stroke:#0f766e;stroke-width:2.5;fill:none;marker-start:url(#arr2);marker-end:url(#arr2)}
+      .frame{fill:#e2e8f0;stroke:#475569;stroke-width:3}
+      .wheel{fill:#cbd5e1;stroke:#334155;stroke-width:4}
+      .ball{fill:#fde68a;stroke:#d97706;stroke-width:4}
+      .motor{fill:#dbeafe;stroke:#2563eb;stroke-width:3}
+      .guard{fill:#eef2ff;stroke:#6366f1;stroke-width:3;stroke-dasharray:10 8}
+      .panel{fill:#ffffff;stroke:#cbd5e1;stroke-width:2}
+    </style>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#334155"/>
+    </marker>
+    <marker id="arr2" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+      <path d="M5,0 L10,5 L5,10 L0,5 z" fill="#0f766e"/>
+    </marker>
+  </defs>
+  <rect width="1600" height="1000" fill="#ffffff"/>
+  <text x="40" y="55" class="title">单球三轮足球发射器 尺寸标注草图</text>
+  <text x="40" y="88" class="sub">P0：单球手动上球 / 三轮 120° 均布 / 尺寸为结构预留值，不是最终加工图</text>
+
+  <rect x="40" y="120" width="760" height="820" rx="16" class="panel"/>
+  <text x="60" y="155" class="sub">正视尺寸图</text>
+
+  <!-- front view geometry -->
+  <circle cx="420" cy="360" r="112" class="ball"/>
+  <circle cx="420" cy="230" r="76" class="wheel"/>
+  <circle cx="305" cy="430" r="76" class="wheel"/>
+  <circle cx="535" cy="430" r="76" class="wheel"/>
+  <text x="388" y="366" class="label">球 Ø220</text>
+  <text x="385" y="232" class="small">轮1 Ø110</text>
+  <text x="270" y="432" class="small">轮3 Ø110</text>
+  <text x="500" y="432" class="small">轮2 Ø110</text>
+
+  <path d="M210 520 L630 520 L685 557 L160 557 Z" class="frame"/>
+  <path d="M220 557 L200 625 M620 557 L640 625" class="line"/>
+  <path d="M190 625 L650 625" class="line"/>
+  <text x="375" y="610" class="small">底座宽度约 1000mm 方案中间截面</text>
+
+  <!-- dimensions front -->
+  <path d="M150 760 L690 760" class="dim"/>
+  <text x="330" y="790" class="label">发射区宽度 500~600mm</text>
+  <path d="M720 180 L720 560" class="dim"/>
+  <text x="735" y="385" class="label">发射区高度 450~550mm</text>
+
+  <path d="M420 105 L420 155" class="thin" marker-end="url(#arr)"/>
+  <text x="440" y="132" class="small">手动上球口</text>
+  <path d="M255 360 L185 360" class="thin" marker-end="url(#arr)"/>
+  <text x="65" y="352" class="small">轮位可调 ±15mm</text>
+
+  <rect x="840" y="120" width="720" height="380" rx="16" class="panel"/>
+  <text x="860" y="155" class="sub">侧视尺寸图</text>
+  <path d="M960 440 L1380 440 L1440 485 L900 485 Z" class="frame"/>
+  <path d="M975 485 L955 560 M1360 485 L1380 560" class="line"/>
+  <path d="M945 560 L1395 560" class="line"/>
+  <circle cx="1190" cy="340" r="92" class="ball"/>
+  <circle cx="1088" cy="338" r="62" class="wheel"/>
+  <path d="M1108 180 L1272 180 L1318 248 L1064 248 Z" class="guard"/>
+  <text x="1122" y="212" class="small">手动上球喇叭口</text>
+  <text x="1135" y="345" class="label">球</text>
+  <path d="M1285 338 L1472 338" class="line" marker-end="url(#arr)"/>
+  <text x="1318" y="315" class="label">出球方向</text>
+
+  <path d="M930 700 L1450 700" class="dim"/>
+  <text x="1110" y="730" class="label">整机深度 700~900mm</text>
+  <path d="M1488 180 L1488 562" class="dim"/>
+  <text x="1502" y="385" class="label">整机高度 900~1200mm</text>
+  <path d="M1035 250 L1035 338" class="dim"/>
+  <text x="865" y="305" class="small">上球口到轮组中心导入距离 100~180mm</text>
+
+  <rect x="840" y="540" width="720" height="400" rx="16" class="panel"/>
+  <text x="860" y="575" class="sub">俯视 / 安装尺寸图</text>
+  <circle cx="1180" cy="760" r="108" class="ball"/>
+  <circle cx="1180" cy="635" r="72" class="wheel"/>
+  <circle cx="1072" cy="822" r="72" class="wheel"/>
+  <circle cx="1288" cy="822" r="72" class="wheel"/>
+  <rect x="1135" y="500" width="90" height="58" rx="10" class="motor"/>
+  <rect x="965" y="874" width="95" height="58" rx="10" class="motor"/>
+  <rect x="1300" y="874" width="95" height="58" rx="10" class="motor"/>
+  <text x="1120" y="486" class="small">BLDC1 预留</text>
+  <text x="955" y="960" class="small">BLDC3 预留</text>
+  <text x="1290" y="960" class="small">BLDC2 预留</text>
+
+  <path d="M935 650 L1420 650" class="dim"/>
+  <text x="1080" y="680" class="label">轮组三角包络约 420~520mm</text>
+  <path d="M895 790 L895 930" class="dim"/>
+  <text x="905" y="865" class="small">控制/电源仓高度预留</text>
+  <path d="M1180 632 L1180 868" class="thin"/>
+  <text x="1220" y="740" class="small">wheel1@12:00</text>
+  <text x="1278" y="870" class="small">wheel2@4:00</text>
+  <text x="930" y="870" class="small">wheel3@8:00</text>
+
+  <text x="40" y="975" class="small">尺寸口径：球 Ø220、轮 Ø110、轮位径向可调 ±15mm、预压缩量 5~15mm、整机底座建议 1000 x 800mm 起步。</text>
+</svg>
