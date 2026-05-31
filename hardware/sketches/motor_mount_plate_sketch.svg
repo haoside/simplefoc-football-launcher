@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900">
+  <defs>
+    <style>
+      .title{font:700 34px Arial;fill:#0f172a}
+      .sub{font:600 20px Arial;fill:#334155}
+      .label{font:600 18px Arial;fill:#1e293b}
+      .small{font:500 15px Arial;fill:#475569}
+      .plate{fill:#e2e8f0;stroke:#475569;stroke-width:3}
+      .hole{fill:#ffffff;stroke:#334155;stroke-width:3}
+      .slot{fill:#ffffff;stroke:#2563eb;stroke-width:3}
+      .motor{fill:#dbeafe;stroke:#2563eb;stroke-width:3}
+      .line{stroke:#334155;stroke-width:3;fill:none}
+      .thin{stroke:#94a3b8;stroke-width:2;fill:none}
+      .dim{stroke:#0f766e;stroke-width:2.5;fill:none;marker-start:url(#arr2);marker-end:url(#arr2)}
+      .panel{fill:#ffffff;stroke:#cbd5e1;stroke-width:2}
+    </style>
+    <marker id="arr2" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+      <path d="M5,0 L10,5 L5,10 L0,5 z" fill="#0f766e"/>
+    </marker>
+  </defs>
+
+  <rect width="1400" height="900" fill="#ffffff"/>
+  <text x="40" y="55" class="title">电机安装板草图（6374 / 8mm轴 / 可调版）</text>
+  <text x="40" y="88" class="sub">用于单球三轮摩擦轮发射器 P0，优先可调与兼容，不作为最终加工图</text>
+
+  <rect x="40" y="120" width="620" height="700" rx="16" class="panel"/>
+  <text x="60" y="155" class="sub">正视图</text>
+
+  <!-- plate -->
+  <rect x="180" y="220" width="320" height="420" rx="12" class="plate"/>
+  <text x="250" y="205" class="label">安装板 180 x 140 x 8mm 起步</text>
+
+  <!-- center shaft hole -->
+  <circle cx="340" cy="430" r="28" class="hole"/>
+  <text x="305" y="436" class="small">主轴孔</text>
+  <text x="255" y="470" class="small">按 8mm 轴系预留</text>
+
+  <!-- motor holes -->
+  <circle cx="260" cy="350" r="10" class="hole"/>
+  <circle cx="420" cy="350" r="10" class="hole"/>
+  <circle cx="260" cy="510" r="10" class="hole"/>
+  <circle cx="420" cy="510" r="10" class="hole"/>
+  <text x="208" y="320" class="small">电机安装孔</text>
+
+  <!-- radial slots -->
+  <rect x="230" y="590" width="220" height="20" rx="10" class="slot"/>
+  <text x="210" y="640" class="small">底部滑槽：30~40mm 调节行程</text>
+
+  <!-- side fixing holes -->
+  <circle cx="210" cy="260" r="9" class="hole"/>
+  <circle cx="470" cy="260" r="9" class="hole"/>
+  <circle cx="210" cy="600" r="9" class="hole"/>
+  <circle cx="470" cy="600" r="9" class="hole"/>
+  <text x="75" y="267" class="small">与支架连接孔</text>
+
+  <!-- dimensions -->
+  <path d="M180 690 L500 690" class="dim"/>
+  <text x="295" y="720" class="label">180mm</text>
+  <path d="M540 220 L540 640" class="dim"/>
+  <text x="555" y="435" class="label">140mm</text>
+
+  <rect x="720" y="120" width="640" height="700" rx="16" class="panel"/>
+  <text x="740" y="155" class="sub">装配关系示意</text>
+
+  <!-- motor and plate side-ish -->
+  <rect x="960" y="210" width="120" height="160" rx="18" class="motor"/>
+  <rect x="900" y="420" width="240" height="320" rx="14" class="plate"/>
+  <circle cx="1020" cy="545" r="32" class="hole"/>
+  <rect x="930" y="680" width="180" height="22" rx="11" class="slot"/>
+  <path d="M1020 370 L1020 513" class="line"/>
+  <text x="975" y="300" class="label">6374 电机</text>
+  <text x="885" y="780" class="small">安装板通过滑槽与主框架连接，实现径向位置调节</text>
+
+  <!-- bracket relation -->
+  <path d="M820 760 L1220 760" class="line"/>
+  <path d="M870 760 L845 815 M1170 760 L1195 815" class="line"/>
+  <path d="M835 815 L1205 815" class="line"/>
+  <text x="960" y="845" class="label">主支架 / 主框架连接位</text>
+
+  <!-- dimensions and notes -->
+  <path d="M900 860 L1140 860" class="dim"/>
+  <text x="955" y="890" class="small">滑槽区 30~40mm</text>
+  <text x="760" y="530" class="small">设计原则：</text>
+  <text x="760" y="565" class="small">1. 先兼容 6374 常见孔位</text>
+  <text x="760" y="595" class="small">2. 先做长圆孔，不把孔位焊死</text>
+  <text x="760" y="625" class="small">3. 主轴孔按 8mm 轴系和联轴器预留</text>
+  <text x="760" y="655" class="small">4. 板厚先按 8mm 铝板</text>
+  <text x="760" y="685" class="small">5. P0 优先可调，不先追轻量化</text>
+
+  <text x="40" y="865" class="small">说明：这版是安装板草图与布局口径，用于机械继续细化。最终孔位需按实际采购电机外形图复核。</text>
+</svg>
