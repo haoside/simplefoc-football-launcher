@@ -32,12 +32,7 @@ flowchart TB
     HOST <-->|CAN| NODEB
     HOST <-->|CAN| NODEC
 
-    TUBE[Tube Ball Sensor] --> HOST
-    CHAMBER[Chamber Ball Sensor] --> HOST
-    EXIT[Exit Sensor] --> HOST
-    GATEFB[Gate Home / Ready] --> HOST
-
-    HOST --> FEED[Feed Gate / Servo / Solenoid]
+    ESTOP[Emergency Stop Feedback] --> HOST
     HOST --> LED[Status LED / Buzzer]
 ```
 
@@ -54,14 +49,12 @@ flowchart TB
     WB --- BALL
     WC --- BALL
 
-    TUBE[Multi-ball Tube] --> GATE[Single-ball Gate]
-    GATE --> GUIDE[Guide / Chamber]
-    GUIDE --> BALL
+    FUNNEL[Manual Top Loading Funnel] --> BALL
 ```
 
 ## 接线说明
 - Host 与三个电机节点通过 **CAN 总线**连接
 - 急停通过 **硬件回路**切断驱动使能/主回路，不仅靠通信命令
 - Hall 线、CAN 线、三相动力线分开走线
-- 多球管道传感器统一接到 Host
-- 单球分离机构由 Host 控制，传感器反馈闭环确认到位
+- 当前 P0 不做多球管道与单球分离机构
+- 单球手动上球，通过上方导向喇叭口进入三轮中心区域

@@ -2,7 +2,7 @@
 
 详见：`docs/CONNECTION_DIAGRAM.md`
 
-> 基于当前 BOM 草案：1 个上位控制板（ESP32-S3） + 3 个独立电机控制节点（STM32G431 + 三相驱动） + 多球管道供球。
+> 基于当前 BOM 草案：1 个上位控制板（ESP32-S3） + 3 个独立电机控制节点（B-G431B-ESC1） + 单球手动上球。
 
 ## 1. 系统拓扑
 
@@ -15,11 +15,11 @@
  │                                                                        |
  │   +--> Buck 24V->5V/3.3V --> ESP32-S3 Host                            |
  │   |                                                                    |
- │   +--> Motor Node A: STM32G431 -> DRV8353/DRV8302 -> BLDC A + Hall A  |
+ │   +--> Motor Node A: B-G431B-ESC1 -> BLDC A + Hall A                 |
  │   |                                                                    |
- │   +--> Motor Node B: STM32G431 -> DRV8353/DRV8302 -> BLDC B + Hall B  |
+ │   +--> Motor Node B: B-G431B-ESC1 -> BLDC B + Hall B                 |
  │   |                                                                    |
- │   +--> Motor Node C: STM32G431 -> DRV8353/DRV8302 -> BLDC C + Hall C  |
+ │   +--> Motor Node C: B-G431B-ESC1 -> BLDC C + Hall C                 |
  │                                                                        |
  └─ Sensors: tube_ball_present / chamber_ball_ready / exit_ball_detect ---+
 ```
@@ -34,7 +34,7 @@
 ### 逻辑侧
 - 24V -> DCDC -> 5V/3.3V
 - ESP32-S3 使用独立稳压输出
-- 每个 STM32G431 节点可由本地 DCDC 或统一 5V 供电后再稳压到 3.3V
+- 每个 B-G431B-ESC1 节点按板卡供电要求接入 24V 动力侧
 - 逻辑地与动力地单点共地，避免 Hall / 通信漂移
 
 ## 3. 主控与节点通信
@@ -61,23 +61,16 @@
 
 ## 4. 单个电机节点连接
 
-### STM32G431 -> 三相驱动板
-- `PWM_U / PWM_V / PWM_W` -> Driver INU / INV / INW
-- `EN_GATE` -> Driver enable
-- `FAULT_N` <- Driver fault output
-- `CURRENT_SENSE` <- Driver / shunt output（若使用）
-- `BUS_VOLTAGE_ADC` <- VM 分压采样
-
-### STM32G431 -> Hall
-- `HALL_A`
-- `HALL_B`
-- `HALL_C`
-- `3V3`
-- `GND`
-
-### 驱动板 -> 电机
+### B-G431B-ESC1 -> 电机
 - `U / V / W` -> BLDC 三相线
-- Hall 线束单独回 STM32，不走动力线束同束长距离并行
+- `HALL_A / HALL_B / HALL_C` -> 电机 Hall
+- `24V / GND` -> 动力输入
+- `CAN_H / CAN_L` -> 总线
+
+### 节点板安装原则
+- 每块 B-G431B-ESC1 靠近对应电机安装
+- 三块板分散布局，避免热量集中
+- Hall 线束与三相动力线分开走线
 
 ## 5. ESP32-S3 Host 连接
 
@@ -96,15 +89,10 @@
 
 ## 6. 单球分离机构连接
 
-### 方案 A：舵机/减速电机拨叉
-- Host PWM / DIR -> 分离机构驱动
-- 原点/到位开关 -> Host GPIO
-- 适合 P0 快速验证
-
-### 方案 B：电磁闸门
-- Host GPIO -> MOSFET -> Solenoid
-- 回位弹簧复位
-- 需要加续流保护
+### 当前 P0 不采用连续供球机构
+- 单球手动上球
+- Host 只负责轮速控制、急停、状态汇总
+- 后续若加自动捡球，仅预留前端安装位与电源/通信接口
 
 ## 7. 安全联锁
 - 急停必须硬件切断驱动使能或主接触器，不仅仅发总线命令
@@ -125,7 +113,7 @@
 - 急停 ×1
 - DCDC ×1
 - ESP32-S3 Host ×1
-- STM32G431 + Driver Node ×3
+- B-G431B-ESC1 Node ×3
 - BLDC + Hall ×3
 - 管道有球传感器 ×1
 - 发射位到球传感器 ×1
