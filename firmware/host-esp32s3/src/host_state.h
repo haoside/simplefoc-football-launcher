@@ -39,6 +39,13 @@ struct WheelTelemetry {
   uint8_t state;
 };
 
+struct DebugOverride {
+  uint8_t enabled;
+  int16_t wheel1Rpm;
+  int16_t wheel2Rpm;
+  int16_t wheel3Rpm;
+};
+
 struct HostTelemetry {
   uint8_t hostFaultCode;
 };
@@ -50,6 +57,7 @@ struct HostState {
   WheelTelemetry wheel1;
   WheelTelemetry wheel2;
   WheelTelemetry wheel3;
+  DebugOverride debugOverride;
   HostTelemetry telemetry;
   uint32_t stateEnterMs;
 };

@@ -14,6 +14,13 @@ static int clamp_rpm(int rpm) {
 }
 
 static void compute_targets(HostState* s) {
+  if (s->debugOverride.enabled) {
+    s->wheel1.targetRpm = s->debugOverride.wheel1Rpm;
+    s->wheel2.targetRpm = s->debugOverride.wheel2Rpm;
+    s->wheel3.targetRpm = s->debugOverride.wheel3Rpm;
+    return;
+  }
+
   const int base = s->cmd.baseRpm;
   const int d = s->cmd.deltaRpm;
   int w1 = base, w2 = base, w3 = base;

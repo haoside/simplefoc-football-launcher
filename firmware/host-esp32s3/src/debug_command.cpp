@@ -24,22 +24,49 @@ void host_debug_apply_text_command(const char* line) {
   }
   if (strncmp(line, "spin straight", 13) == 0) {
     s->cmd.spinMode = STRAIGHT;
+    s->debugOverride.enabled = 0;
     return;
   }
   if (strncmp(line, "spin topspin", 12) == 0) {
     s->cmd.spinMode = TOPSPIN;
+    s->debugOverride.enabled = 0;
     return;
   }
   if (strncmp(line, "spin backspin", 13) == 0) {
     s->cmd.spinMode = BACKSPIN;
+    s->debugOverride.enabled = 0;
     return;
   }
   if (strncmp(line, "spin left", 9) == 0) {
     s->cmd.spinMode = LEFT_CURVE;
+    s->debugOverride.enabled = 0;
     return;
   }
   if (strncmp(line, "spin right", 10) == 0) {
     s->cmd.spinMode = RIGHT_CURVE;
+    s->debugOverride.enabled = 0;
+    return;
+  }
+  if (strncmp(line, "jog wheel1 ", 11) == 0) {
+    s->debugOverride.enabled = 1;
+    s->debugOverride.wheel1Rpm = parse_int(line + 11, s->debugOverride.wheel1Rpm);
+    return;
+  }
+  if (strncmp(line, "jog wheel2 ", 11) == 0) {
+    s->debugOverride.enabled = 1;
+    s->debugOverride.wheel2Rpm = parse_int(line + 11, s->debugOverride.wheel2Rpm);
+    return;
+  }
+  if (strncmp(line, "jog wheel3 ", 11) == 0) {
+    s->debugOverride.enabled = 1;
+    s->debugOverride.wheel3Rpm = parse_int(line + 11, s->debugOverride.wheel3Rpm);
+    return;
+  }
+  if (strncmp(line, "jog off", 7) == 0) {
+    s->debugOverride.enabled = 0;
+    s->debugOverride.wheel1Rpm = 0;
+    s->debugOverride.wheel2Rpm = 0;
+    s->debugOverride.wheel3Rpm = 0;
     return;
   }
   if (strncmp(line, "fire", 4) == 0) {
