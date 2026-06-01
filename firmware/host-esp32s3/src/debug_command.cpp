@@ -1,6 +1,7 @@
 #include "debug_command.h"
 #include "host_fault.h"
 #include "host_state.h"
+#include "shot_presets.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -10,10 +11,29 @@ static int parse_int(const char* s, int fallback) {
   return v;
 }
 
+static void apply_preset_by_name(const char* name) {
+  HostState* s = host_state_get();
+  int count = 0;
+  const ShotPreset* presets = host_get_shot_presets(&count);
+  for (int i = 0; i < count; ++i) {
+    if (strcmp(presets[i].name, name) == 0) {
+      s->cmd.baseRpm = presets[i].baseRpm;
+      s->cmd.deltaRpm = presets[i].deltaRpm;
+      s->cmd.spinMode = presets[i].spinMode;
+      s->debugOverride.enabled = 0;
+      return;
+    }
+  }
+}
+
 void host_debug_apply_text_command(const char* line) {
   HostState* s = host_state_get();
   if (!line || !line[0]) return;
 
+  if (strncmp(line, "preset ", 7) == 0) {
+    apply_preset_by_name(line + 7);
+    return;
+  }
   if (strncmp(line, "set base ", 9) == 0) {
     s->cmd.baseRpm = parse_int(line + 9, s->cmd.baseRpm);
     return;
