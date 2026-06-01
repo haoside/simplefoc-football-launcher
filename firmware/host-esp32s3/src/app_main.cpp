@@ -1,5 +1,6 @@
 #include "app_config.h"
 #include "hal/host_hal.h"
+#include "debug_command.h"
 #include "host_state.h"
 #include <stdio.h>
 
@@ -16,6 +17,7 @@ int main() {
   host_hal_can_init();
 
   s->cmd.baseRpm = 2100;
+  host_debug_apply_text_command("ball loaded");
   s->cmd.deltaRpm = 250;
   s->cmd.spinMode = STRAIGHT;
   s->cmd.fireRequest = 0;
