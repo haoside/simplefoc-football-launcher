@@ -1,5 +1,4 @@
 #include "app_config.h"
-#include "feed_state.h"
 #include "hal/host_hal.h"
 #include "host_state.h"
 #include <stdio.h>
@@ -15,16 +14,16 @@ int main() {
 
   host_hal_init();
   host_hal_can_init();
-  feed_state_reset();
 
-  s->cmd.baseRpm = 1200;
-  s->cmd.ux = 0.0f;
-  s->cmd.uy = 0.0f;
+  s->cmd.baseRpm = 2100;
+  s->cmd.deltaRpm = 250;
+  s->cmd.spinMode = STRAIGHT;
   s->cmd.fireRequest = 0;
+  s->stateEnterMs = host_hal_millis();
 
   while (1) {
     s->cmd.estop = (uint8_t)host_hal_estop_active();
-    feed_state_step();
+    s->sensors.ballLoaded = (uint8_t)host_hal_sensor_ball_loaded();
     host_can_poll_rx();
     launch_state_machine_step();
     host_can_control_tick();

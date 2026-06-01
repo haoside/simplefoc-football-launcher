@@ -4,28 +4,49 @@
 #include "hal/host_hal.h"
 #include "host_fault.h"
 #include "host_state.h"
-#include "rpm_mixer_120.h"
 #include <stdint.h>
 
-struct HostNodeState {
-  uint8_t nodeId;
-  int16_t targetRpm;
-  int16_t actualRpm;
-  uint16_t lastSeenMs;
-  uint8_t faultCode;
-  uint8_t state;
-};
-
-static HostNodeState g_nodes[3] = {
-  {NODE_ID_WHEEL_A, 0, 0, 0, FAULT_NONE, STATE_IDLE},
-  {NODE_ID_WHEEL_B, 0, 0, 0, FAULT_NONE, STATE_IDLE},
-  {NODE_ID_WHEEL_C, 0, 0, 0, FAULT_NONE, STATE_IDLE},
-};
-
-static int clamp_rpm(float rpm) {
-  if (rpm < RPM_MIN) return (rpm <= 0) ? 0 : RPM_MIN;
+static int clamp_rpm(int rpm) {
+  if (rpm <= 0) return 0;
+  if (rpm < RPM_MIN) return RPM_MIN;
   if (rpm > RPM_MAX) return RPM_MAX;
-  return (int)rpm;
+  return rpm;
+}
+
+static void compute_targets(HostState* s) {
+  const int base = s->cmd.baseRpm;
+  const int d = s->cmd.deltaRpm;
+  int w1 = base, w2 = base, w3 = base;
+
+  switch ((SpinMode)s->cmd.spinMode) {
+    case TOPSPIN:
+      w1 = base + d;
+      w2 = base - d / 2;
+      w3 = base - d / 2;
+      break;
+    case BACKSPIN:
+      w1 = base - d;
+      w2 = base + d / 2;
+      w3 = base + d / 2;
+      break;
+    case LEFT_CURVE:
+      w1 = base;
+      w2 = base - d;
+      w3 = base + d;
+      break;
+    case RIGHT_CURVE:
+      w1 = base;
+      w2 = base + d;
+      w3 = base - d;
+      break;
+    case STRAIGHT:
+    default:
+      break;
+  }
+
+  s->wheel1.targetRpm = (int16_t)clamp_rpm(w1);
+  s->wheel2.targetRpm = (int16_t)clamp_rpm(w2);
+  s->wheel3.targetRpm = (int16_t)clamp_rpm(w3);
 }
 
 static void host_can_send_estop_broadcast(uint8_t code, uint8_t source) {
@@ -37,15 +58,6 @@ static void host_can_send_estop_broadcast(uint8_t code, uint8_t source) {
   frame.source = source;
   for (unsigned i = 0; i < sizeof(frame); ++i) tx.data[i] = ((uint8_t*)&frame)[i];
   host_hal_can_send(&tx);
-}
-
-static void host_update_targets_from_command() {
-  HostState* s = host_state_get();
-  RpmCommand cmd = {(float)s->cmd.baseRpm, s->cmd.ux, s->cmd.uy};
-  WheelRpm w = mix120deg(cmd, 1.0f, 1.0f);
-  g_nodes[0].targetRpm = clamp_rpm(w.a);
-  g_nodes[1].targetRpm = clamp_rpm(w.b);
-  g_nodes[2].targetRpm = clamp_rpm(w.c);
 }
 
 static void host_can_send_set_rpm(uint8_t nodeId, int16_t targetRpm, uint16_t rampMs, uint8_t enable) {
@@ -61,70 +73,55 @@ static void host_can_send_set_rpm(uint8_t nodeId, int16_t targetRpm, uint16_t ra
   host_hal_can_send(&tx);
 }
 
-static void host_handle_status(uint8_t nodeId, const CanStatusFrame* st) {
-  for (unsigned i = 0; i < 3; ++i) {
-    if (g_nodes[i].nodeId == nodeId) {
-      g_nodes[i].actualRpm = st->actualRpm;
-      g_nodes[i].targetRpm = st->targetRpm;
-      break;
-    }
-  }
-}
-
-static void host_handle_heartbeat(uint8_t nodeId, const CanHeartbeatFrame* hb) {
-  for (unsigned i = 0; i < 3; ++i) {
-    if (g_nodes[i].nodeId == nodeId) {
-      g_nodes[i].faultCode = hb->faultCode;
-      g_nodes[i].state = hb->state;
-      if (hb->faultCode != FAULT_NONE || hb->state == STATE_FAULT || hb->state == STATE_ESTOP) {
-        host_fault_raise(hb->faultCode ? hb->faultCode : FAULT_COMMS_TIMEOUT, nodeId);
-      }
-      break;
-    }
-  }
-}
-
-static void host_handle_fault(uint8_t nodeId, const CanFaultFrame* ff) {
-  host_fault_raise(ff->faultCode, nodeId);
+static void apply_status_to_wheel(WheelTelemetry* wheel, const CanStatusFrame* st) {
+  wheel->actualRpm = st->actualRpm;
+  wheel->targetRpm = st->targetRpm;
 }
 
 void host_can_control_tick(void) {
   HostState* s = host_state_get();
-  host_update_targets_from_command();
+  compute_targets(s);
 
   if (host_fault_is_active() || s->state == ESTOP || s->state == FAULT) {
     s->state = (s->state == ESTOP) ? ESTOP : FAULT;
     host_can_send_estop_broadcast(host_fault_code(), host_fault_source());
-    for (unsigned i = 0; i < 3; ++i) {
-      host_can_send_set_rpm(g_nodes[i].nodeId, 0, 0, 0);
-    }
+    host_can_send_set_rpm(NODE_ID_WHEEL_A, 0, 0, 0);
+    host_can_send_set_rpm(NODE_ID_WHEEL_B, 0, 0, 0);
+    host_can_send_set_rpm(NODE_ID_WHEEL_C, 0, 0, 0);
     return;
   }
 
-  for (unsigned i = 0; i < 3; ++i) {
-    host_can_send_set_rpm(g_nodes[i].nodeId, g_nodes[i].targetRpm, 200, 1);
-  }
+  host_can_send_set_rpm(NODE_ID_WHEEL_A, s->wheel1.targetRpm, 1000, 1);
+  host_can_send_set_rpm(NODE_ID_WHEEL_B, s->wheel2.targetRpm, 1000, 1);
+  host_can_send_set_rpm(NODE_ID_WHEEL_C, s->wheel3.targetRpm, 1000, 1);
 }
 
 void host_can_poll_rx(void) {
   HostCanFrame rx = {0};
+  HostState* s = host_state_get();
   while (host_hal_can_recv(&rx) == 0) {
-    for (unsigned i = 0; i < 3; ++i) {
-      if (rx.canId == CAN_ID_STATUS(g_nodes[i].nodeId)) {
-        CanStatusFrame st = {0};
-        if (protocol_decode_status(&st, rx.data, rx.dlc) > 0) {
-          host_handle_status(g_nodes[i].nodeId, &st);
+    if (rx.canId == CAN_ID_STATUS(NODE_ID_WHEEL_A)) {
+      CanStatusFrame st = {0};
+      if (protocol_decode_status(&st, rx.data, rx.dlc) > 0) apply_status_to_wheel(&s->wheel1, &st);
+    } else if (rx.canId == CAN_ID_STATUS(NODE_ID_WHEEL_B)) {
+      CanStatusFrame st = {0};
+      if (protocol_decode_status(&st, rx.data, rx.dlc) > 0) apply_status_to_wheel(&s->wheel2, &st);
+    } else if (rx.canId == CAN_ID_STATUS(NODE_ID_WHEEL_C)) {
+      CanStatusFrame st = {0};
+      if (protocol_decode_status(&st, rx.data, rx.dlc) > 0) apply_status_to_wheel(&s->wheel3, &st);
+    } else if (rx.canId == CAN_ID_HEARTBEAT(NODE_ID_WHEEL_A) || rx.canId == CAN_ID_HEARTBEAT(NODE_ID_WHEEL_B) || rx.canId == CAN_ID_HEARTBEAT(NODE_ID_WHEEL_C)) {
+      CanHeartbeatFrame hb = {0};
+      if (protocol_decode_heartbeat(&hb, rx.data, rx.dlc) > 0) {
+        if (hb.faultCode != FAULT_NONE || hb.state == STATE_FAULT || hb.state == STATE_ESTOP) {
+          uint8_t src = (rx.canId == CAN_ID_HEARTBEAT(NODE_ID_WHEEL_A)) ? NODE_ID_WHEEL_A : (rx.canId == CAN_ID_HEARTBEAT(NODE_ID_WHEEL_B) ? NODE_ID_WHEEL_B : NODE_ID_WHEEL_C);
+          host_fault_raise(hb.faultCode ? hb.faultCode : FAULT_COMMS_TIMEOUT, src);
         }
-      } else if (rx.canId == CAN_ID_HEARTBEAT(g_nodes[i].nodeId)) {
-        CanHeartbeatFrame hb = {0};
-        if (protocol_decode_heartbeat(&hb, rx.data, rx.dlc) > 0) {
-          host_handle_heartbeat(g_nodes[i].nodeId, &hb);
-        }
-      } else if (rx.canId == CAN_ID_FAULT(g_nodes[i].nodeId)) {
-        CanFaultFrame ff = {0};
-        if (protocol_decode_fault(&ff, rx.data, rx.dlc) > 0) {
-          host_handle_fault(g_nodes[i].nodeId, &ff);
-        }
+      }
+    } else if (rx.canId == CAN_ID_FAULT(NODE_ID_WHEEL_A) || rx.canId == CAN_ID_FAULT(NODE_ID_WHEEL_B) || rx.canId == CAN_ID_FAULT(NODE_ID_WHEEL_C)) {
+      CanFaultFrame ff = {0};
+      if (protocol_decode_fault(&ff, rx.data, rx.dlc) > 0) {
+        uint8_t src = (rx.canId == CAN_ID_FAULT(NODE_ID_WHEEL_A)) ? NODE_ID_WHEEL_A : (rx.canId == CAN_ID_FAULT(NODE_ID_WHEEL_B) ? NODE_ID_WHEEL_B : NODE_ID_WHEEL_C);
+        host_fault_raise(ff.faultCode, src);
       }
     }
   }

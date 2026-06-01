@@ -10,7 +10,9 @@ void host_hal_delay_ms(uint32_t ms) {
 }
 
 uint32_t host_hal_millis(void) {
-  return 0;
+  static uint32_t t = 0;
+  t += 20;
+  return t;
 }
 
 int host_hal_can_init(void) {
@@ -28,19 +30,8 @@ int host_hal_can_recv(HostCanFrame* frame) {
   return -1;
 }
 
-int host_hal_sensor_tube_ball_present(void) { return 0; }
-int host_hal_sensor_chamber_ready(void) { return 0; }
-int host_hal_sensor_exit_detected(void) { return 0; }
+int host_hal_sensor_ball_loaded(void) { return 1; }
 int host_hal_estop_active(void) { return 0; }
-
-void host_hal_feed_request(void) {
-  printf("host_hal_feed_request\n");
-}
-
-void host_hal_set_status_led(int on) {
-  (void)on;
-}
-
-void host_hal_set_buzzer(int on) {
-  (void)on;
-}
+void host_hal_trigger_launch(void) { printf("host_hal_trigger_launch\n"); }
+void host_hal_set_status_led(int on) { (void)on; }
+void host_hal_set_buzzer(int on) { (void)on; }

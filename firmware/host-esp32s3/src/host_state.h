@@ -5,31 +5,41 @@
 enum LaunchState {
   IDLE,
   SPINUP,
-  FEED_READY,
-  BALL_IN_POSITION,
+  READY,
   FIRE,
-  RELOAD,
+  COOLDOWN,
   FAULT,
   ESTOP,
 };
 
+enum SpinMode {
+  STRAIGHT = 0,
+  TOPSPIN = 1,
+  BACKSPIN = 2,
+  LEFT_CURVE = 3,
+  RIGHT_CURVE = 4,
+};
+
 struct HostCommand {
   int baseRpm;
-  float ux;
-  float uy;
+  int deltaRpm;
+  uint8_t spinMode;
   uint8_t fireRequest;
   uint8_t estop;
 };
 
 struct HostSensors {
-  uint8_t tubeBallPresent;
-  uint8_t chamberReady;
-  uint8_t exitDetected;
+  uint8_t ballLoaded;
+};
+
+struct WheelTelemetry {
+  int16_t targetRpm;
+  int16_t actualRpm;
+  uint8_t faultCode;
+  uint8_t state;
 };
 
 struct HostTelemetry {
-  uint8_t feedState;
-  uint8_t feedFaultReason;
   uint8_t hostFaultCode;
 };
 
@@ -37,7 +47,11 @@ struct HostState {
   LaunchState state;
   HostCommand cmd;
   HostSensors sensors;
+  WheelTelemetry wheel1;
+  WheelTelemetry wheel2;
+  WheelTelemetry wheel3;
   HostTelemetry telemetry;
+  uint32_t stateEnterMs;
 };
 
 HostState* host_state_get();
