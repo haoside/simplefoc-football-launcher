@@ -48,6 +48,10 @@ struct DebugOverride {
 
 struct HostTelemetry {
   uint8_t hostFaultCode;
+  int8_t envTempC;
+  uint8_t envHumidityPct;
+  uint8_t envWindSpeedDmps;
+  uint8_t envWindDir;
 };
 
 struct HostState {

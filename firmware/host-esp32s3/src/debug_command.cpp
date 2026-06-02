@@ -1,4 +1,5 @@
 #include "debug_command.h"
+#include "env_profiles.h"
 #include "host_fault.h"
 #include "host_state.h"
 #include "shot_presets.h"
@@ -26,10 +27,28 @@ static void apply_preset_by_name(const char* name) {
   }
 }
 
+static void apply_env_profile(const char* name) {
+  HostState* s = host_state_get();
+  const EnvProfile* env = host_find_env_profile(name);
+  if (!env) return;
+  s->telemetry.envTempC = (int8_t)env->tempC;
+  s->telemetry.envHumidityPct = (uint8_t)env->humidityPct;
+  s->telemetry.envWindSpeedDmps = (uint8_t)env->windSpeedDmps;
+  if (strcmp(env->windDir, "left") == 0) s->telemetry.envWindDir = 1;
+  else if (strcmp(env->windDir, "right") == 0) s->telemetry.envWindDir = 2;
+  else if (strcmp(env->windDir, "head") == 0) s->telemetry.envWindDir = 3;
+  else if (strcmp(env->windDir, "tail") == 0) s->telemetry.envWindDir = 4;
+  else s->telemetry.envWindDir = 0;
+}
+
 void host_debug_apply_text_command(const char* line) {
   HostState* s = host_state_get();
   if (!line || !line[0]) return;
 
+  if (strncmp(line, "env ", 4) == 0) {
+    apply_env_profile(line + 4);
+    return;
+  }
   if (strncmp(line, "preset ", 7) == 0) {
     apply_preset_by_name(line + 7);
     return;
