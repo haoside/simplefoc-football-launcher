@@ -1,0 +1,38 @@
+# P0-SIM parameters for 3-wheel SimpleFOC football launcher
+ball:
+  mass_kg: 0.43
+  diameter_m: 0.22
+wheel:
+  diameter_m: 0.11
+  rpm_min: 500
+  rpm_max: 3000
+  layout:
+    wheel1: "12:00"
+    wheel2: "4:00"
+    wheel3: "8:00"
+sweep:
+  friction_coeff: [0.45, 0.65, 0.85]
+  preload_mm: [5, 10, 15]
+  launch_angle_deg: [8, 12, 16]
+  spin_bias_rpm: [0, 200, 400, 600]
+  ramp_s: [4, 5, 6]
+presets:
+  straight:
+    launch_speed_mps: 15.0
+    launch_angle_deg: 10
+    spin_mode: STRAIGHT
+    spin_bias_rpm: 0
+  light_curve:
+    launch_speed_mps: 15.0
+    launch_angle_deg: 12
+    spin_mode: LEFT_CURVE
+    spin_bias_rpm: 250
+  standard_curve:
+    launch_speed_mps: 16.5
+    launch_angle_deg: 14
+    spin_mode: LEFT_CURVE
+    spin_bias_rpm: 450
+power:
+  battery_v: 24
+  current_cap_a: 120
+  ramp_s_default: 5
