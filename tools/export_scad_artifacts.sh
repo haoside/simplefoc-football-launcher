@@ -50,6 +50,7 @@ export_one "cad/3d-print/short-guide-tube-v1/short_guide_tube_v1.scad" "short_gu
 export_one "cad/3d-print/friction-wheel-v1/friction_wheel_v1.scad" "friction_wheel_v1"
 export_one "cad/vendor-placeholders/6374-motor-v1/6374_motor_placeholder_v1.scad" "6374_motor_placeholder_v1"
 export_one "cad/frame/mobile-base-v1/mobile_base_frame_v1.scad" "mobile_base_frame_v1"
+export_one "cad/mechanisms/radial-wheel-adjust-v1/radial_wheel_adjust_v1.scad" "radial_wheel_adjust_v1"
 export_assembly_views "cad/assembly/p0-single-ball-launcher-v1/p0_single_ball_launcher_assembly_v1.scad" "p0_single_ball_launcher_assembly_v1"
 
 cat > "$OUT_DIR/MANIFEST.md" <<MANIFEST
@@ -63,6 +64,7 @@ Generated from OpenSCAD sources.
 - friction_wheel_v1
 - 6374_motor_placeholder_v1
 - mobile_base_frame_v1
+- radial_wheel_adjust_v1
 - p0_single_ball_launcher_assembly_v1 (STL + isometric/front/side/top PNG views)
 
 ## Notes

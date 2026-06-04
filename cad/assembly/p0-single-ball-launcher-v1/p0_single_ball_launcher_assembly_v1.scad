@@ -48,6 +48,16 @@ module motor_plate(){
   }
 }
 
+
+module radial_adjust_visual(angle){
+  // Radial slide plate between support arm and motor plate.
+  rotate([0,0,angle]) translate([0, wheel_r_from_center+92, 0]) {
+    color("#94a3b8") cube([220,10,80],center=true);
+    color("#64748b") translate([0,-18,0]) cube([170,10,52],center=true);
+    color("#111827") for(x=[-45,45]) for(z=[-22,22]) translate([x,-30,z]) rotate([90,0,0]) cylinder(h=22,d=6,center=true);
+  }
+}
+
 module wheel_module(x,z,rot=0){
   translate([x,0,z]) {
     // Wheel axis along Y, wheel face visible from front.
@@ -196,6 +206,9 @@ module assembly(){
   // launcher head
   translate([0,0,head_z]) {
     ball();
+    radial_adjust_visual(0);
+    radial_adjust_visual(120);
+    radial_adjust_visual(240);
     // wheel positions in the vertical X/Z plane: 12:00, 4:00, 8:00
     wheel_module(0,  wheel_r_from_center, 0);      // wheel1 @ 12:00
     wheel_module( wheel_r_from_center*0.866, -wheel_r_from_center*0.5, 0); // wheel2 @ 4:00
