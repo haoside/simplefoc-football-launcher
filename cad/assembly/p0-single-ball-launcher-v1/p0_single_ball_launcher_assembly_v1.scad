@@ -142,12 +142,55 @@ module guard_supports(){
   }
 }
 
+
+module chassis_detail_v1(){
+  // More realistic mobile-base details: cross rails, diagonal braces, wheel brackets, battery tray.
+  color("#475569") {
+    // cross rails on base
+    for(x=[-320,0,320]) translate([x,0,105]) cube([42,760,42],center=true);
+    for(y=[-300,0,300]) translate([0,y,115]) cube([880,36,36],center=true);
+    // diagonal braces on top plane
+    translate([0,0,155]) rotate([0,0,33]) cube([960,28,32],center=true);
+    translate([0,0,155]) rotate([0,0,-33]) cube([960,28,32],center=true);
+    // rear wheel fork plates
+    for(x=[-380,380]) translate([x,455,150]) cube([34,24,260],center=true);
+    // front caster fork plates
+    for(x=[-380,380]) translate([x,-455,100]) cube([30,24,190],center=true);
+    // battery tray under middle-rear
+    translate([0,145,92]) cube([420,260,24],center=true);
+    translate([-220,145,145]) cube([24,260,90],center=true);
+    translate([ 220,145,145]) cube([24,260,90],center=true);
+  }
+}
+
+module motor_gussets_v1(){
+  // Visual gussets behind the three motor plates.
+  color("#64748b") {
+    for(a=[90,-30,210]) {
+      x = cos(a)*260;
+      z = head_z + sin(a)*260;
+      translate([x,84,z-55]) rotate([0,0,a]) cube([110,18,92],center=true);
+      translate([x,84,z+55]) rotate([0,0,a]) cube([110,18,92],center=true);
+    }
+  }
+}
+
+module guide_tube_fasteners_v1(){
+  // Small fastener pads around guide tube flange.
+  color("#334155") {
+    for(a=[0:60:300]) translate([-360,0,head_z]) rotate([a,0,0]) translate([0,126,0]) sphere(d=14);
+  }
+}
+
 module assembly(){
   base_frame();
+  chassis_detail_v1();
   battery_and_control();
   push_handle();
   head_support_ring();
   guide_tube_bracket();
+  guide_tube_fasteners_v1();
+  motor_gussets_v1();
   guard_supports();
 
   // launcher head
