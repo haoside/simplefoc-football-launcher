@@ -32,7 +32,8 @@ Output artifact:
 Expected files:
 
 - STL files for CAD/printing review
-- PNG preview if OpenSCAD image export succeeds
+- PNG previews if OpenSCAD image export succeeds
+- For assembly: isometric/front/side/top PNG views
 - `MANIFEST.md`
 
 ## Local usage
@@ -46,3 +47,15 @@ Requires OpenSCAD installed locally.
 ## Product note
 
 The assembly is a P0 layout/clearance model, not final manufacturing CAD. Vendor motor and wheel drawings must replace placeholders before fabrication freeze.
+
+
+## Assembly views
+
+The assembly export now generates multiple camera angles:
+
+- `p0_single_ball_launcher_assembly_v1_isometric.png`
+- `p0_single_ball_launcher_assembly_v1_front.png`
+- `p0_single_ball_launcher_assembly_v1_side.png`
+- `p0_single_ball_launcher_assembly_v1_top.png`
+
+This avoids relying on one OpenSCAD default camera that may hide frame/bracket details.
