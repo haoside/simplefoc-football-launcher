@@ -1,0 +1,31 @@
+name: CAD Export
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'cad/**/*.scad'
+      - 'tools/export_scad_artifacts.sh'
+      - '.github/workflows/cad-export.yml'
+
+jobs:
+  export-scad:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install OpenSCAD
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openscad xvfb
+
+      - name: Export STL/PNG artifacts
+        run: |
+          xvfb-run -a tools/export_scad_artifacts.sh build/cad-exports
+
+      - name: Upload CAD artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: p0-cad-exports
+          path: build/cad-exports
