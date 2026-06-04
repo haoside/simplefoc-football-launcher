@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1100" viewBox="0 0 1800 1100">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f8fafc"/><stop offset="1" stop-color="#e2e8f0"/></linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e5e7eb"/><stop offset="0.55" stop-color="#94a3b8"/><stop offset="1" stop-color="#334155"/></linearGradient>
+    <linearGradient id="pc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#bae6fd" stop-opacity="0.45"/><stop offset="1" stop-color="#0284c7" stop-opacity="0.18"/></linearGradient>
+    <radialGradient id="ball" cx="35%" cy="30%" r="65%"><stop offset="0" stop-color="#fff"/><stop offset="0.7" stop-color="#e5e7eb"/><stop offset="1" stop-color="#94a3b8"/></radialGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.18"/></filter>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#334155"/></marker>
+    <style>.title{font-family:Inter,Arial,sans-serif;font-size:38px;font-weight:800;fill:#0f172a}.label{font-family:Inter,Arial,sans-serif;font-size:21px;font-weight:700;fill:#111827}.small{font-family:Inter,Arial,sans-serif;font-size:16px;fill:#475569}.tiny{font-family:Inter,Arial,sans-serif;font-size:13px;fill:#64748b}.line{stroke:#334155;stroke-width:2;marker-end:url(#arrow)}</style>
+  </defs>
+  <rect width="1800" height="1100" fill="url(#bg)"/>
+  <text x="70" y="74" class="title">P0 CAD-derived exploded view</text>
+  <text x="70" y="112" class="small">Closer-to-build module layout based on current OpenSCAD files · single-ball 3-wheel football launcher</text>
+
+  <!-- center reference assembly -->
+  <g transform="translate(840 520)" filter="url(#shadow)">
+    <circle cx="0" cy="0" r="95" fill="url(#ball)" stroke="#0f172a" stroke-width="3"/>
+    <text x="-58" y="140" class="small">Size 5 football Ø220</text>
+  </g>
+
+  <!-- short guide tube exploded left -->
+  <g transform="translate(360 510)" filter="url(#shadow)">
+    <ellipse cx="0" cy="0" rx="145" ry="92" fill="#cbd5e1" stroke="#64748b" stroke-width="5"/>
+    <ellipse cx="0" cy="0" rx="124" ry="75" fill="#f8fafc" stroke="#94a3b8" stroke-width="4"/>
+    <path d="M0,-75 L205,-42 Q250,0 205,42 L0,75 Q55,50 55,0 Q55,-50 0,-75 Z" fill="#e2e8f0" stroke="#64748b" stroke-width="4"/>
+    <g fill="#334155"><circle cx="0" cy="-132" r="6"/><circle cx="115" cy="-68" r="6"/><circle cx="115" cy="68" r="6"/><circle cx="0" cy="132" r="6"/><circle cx="-115" cy="68" r="6"/><circle cx="-115" cy="-68" r="6"/></g>
+  </g>
+  <text x="195" y="315" class="label">Short guide tube</text>
+  <text x="195" y="342" class="small">SCAD: L=200 · ID=232 · flange Ø270 · flare Ø255</text>
+  <line x1="540" y1="510" x2="720" y2="510" class="line"/>
+
+  <!-- 3 motor mount plates/wheels exploded -->
+  <g transform="translate(840 205)" filter="url(#shadow)">
+    <rect x="-90" y="-70" width="180" height="140" rx="10" fill="url(#metal)" stroke="#334155" stroke-width="4"/>
+    <rect x="-60" y="-10" width="120" height="20" rx="10" fill="#475569" opacity="0.65"/>
+    <g fill="#0f172a"><circle cx="0" cy="0" r="12"/><circle cx="-35" cy="-35" r="5"/><circle cx="35" cy="-35" r="5"/><circle cx="-35" cy="35" r="5"/><circle cx="35" cy="35" r="5"/></g>
+    <ellipse cx="0" cy="130" rx="120" ry="46" fill="#020617"/><ellipse cx="0" cy="130" rx="80" ry="26" fill="#334155"/>
+  </g>
+  <text x="720" y="105" class="label">Motor mount + wheel module ×3</text>
+  <text x="720" y="132" class="small">SCAD plate: 180×140×8 · slot 120×20 · supports 110/130mm wheel module</text>
+  <line x1="840" y1="360" x2="840" y2="410" class="line"/>
+
+  <g transform="translate(1245 700) rotate(118)" filter="url(#shadow)">
+    <rect x="-90" y="-70" width="180" height="140" rx="10" fill="url(#metal)" stroke="#334155" stroke-width="4"/>
+    <rect x="-60" y="-10" width="120" height="20" rx="10" fill="#475569" opacity="0.65"/>
+    <g fill="#0f172a"><circle cx="0" cy="0" r="12"/><circle cx="-35" cy="-35" r="5"/><circle cx="35" cy="-35" r="5"/><circle cx="-35" cy="35" r="5"/><circle cx="35" cy="35" r="5"/></g>
+    <ellipse cx="0" cy="130" rx="120" ry="46" fill="#020617"/><ellipse cx="0" cy="130" rx="80" ry="26" fill="#334155"/>
+  </g>
+  <line x1="1160" y1="650" x2="935" y2="575" class="line"/>
+
+  <g transform="translate(435 700) rotate(-118)" filter="url(#shadow)">
+    <rect x="-90" y="-70" width="180" height="140" rx="10" fill="url(#metal)" stroke="#334155" stroke-width="4"/>
+    <rect x="-60" y="-10" width="120" height="20" rx="10" fill="#475569" opacity="0.65"/>
+    <g fill="#0f172a"><circle cx="0" cy="0" r="12"/><circle cx="-35" cy="-35" r="5"/><circle cx="35" cy="-35" r="5"/><circle cx="-35" cy="35" r="5"/><circle cx="35" cy="35" r="5"/></g>
+    <ellipse cx="0" cy="130" rx="120" ry="46" fill="#020617"/><ellipse cx="0" cy="130" rx="80" ry="26" fill="#334155"/>
+  </g>
+  <line x1="535" y1="650" x2="745" y2="575" class="line"/>
+
+  <!-- transparent guard exploded upper right -->
+  <g transform="translate(1260 300)">
+    <path d="M-160,-80 Q10,-160 210,-70 Q260,30 210,120 Q30,200 -160,110 Q-235,20 -160,-80 Z" fill="url(#pc)" stroke="#0284c7" stroke-width="5"/>
+    <rect x="80" y="20" width="220" height="40" rx="6" fill="url(#metal)" stroke="#334155" transform="rotate(8 190 40)"/>
+  </g>
+  <text x="1205" y="115" class="label">PC guard + guard bracket</text>
+  <text x="1205" y="142" class="small">Guard bracket SCAD: 220×40×4 · cover shape still needs sheet pattern</text>
+  <line x1="1210" y1="390" x2="950" y2="505" class="line"/>
+
+  <!-- e-stop/control bay -->
+  <g transform="translate(1370 850)" filter="url(#shadow)">
+    <polygon points="-70,-35 70,-55 120,-10 -20,15" fill="#cbd5e1" stroke="#334155" stroke-width="3"/>
+    <circle cx="28" cy="-20" r="28" fill="#dc2626" stroke="#7f1d1d" stroke-width="7"/>
+  </g>
+  <text x="1270" y="945" class="label">E-stop panel</text>
+  <text x="1270" y="972" class="small">SCAD: 100×80×3 · Ø22.5 button hole</text>
+  <line x1="1320" y1="830" x2="1000" y2="610" class="line"/>
+
+  <!-- mobile base and battery clamp -->
+  <g transform="translate(875 930)" filter="url(#shadow)">
+    <polygon points="-360,-80 360,-130 520,-50 -200,40" fill="#1f2937"/>
+    <rect x="-160" y="-55" width="260" height="35" rx="6" fill="url(#metal)" transform="rotate(-6 -30 -38)"/>
+    <ellipse cx="-340" cy="30" rx="80" ry="40" fill="#020617"/><ellipse cx="360" cy="-45" rx="80" ry="40" fill="#020617"/>
+    <ellipse cx="-115" cy="20" rx="46" ry="23" fill="#020617"/><ellipse cx="505" cy="-60" rx="46" ry="23" fill="#020617"/>
+  </g>
+  <text x="705" y="800" class="label">Mobile base + battery clamp</text>
+  <text x="705" y="827" class="small">Base target 1000×800 · battery clamp SCAD 260×35×4</text>
+  <line x1="875" y1="855" x2="875" y2="650" class="line"/>
+
+  <!-- notes -->
+  <g>
+    <rect x="70" y="900" width="520" height="135" rx="18" fill="#ffffff" opacity="0.92" stroke="#cbd5e1"/>
+    <text x="95" y="936" class="label">P0 boundary</text>
+    <text x="95" y="966" class="small">• Single-ball manual load only</text>
+    <text x="95" y="992" class="small">• No hopper / no feed tube / no gate</text>
+    <text x="95" y="1018" class="small">• Auto pickup only as future reserved interface</text>
+  </g>
+</svg>
