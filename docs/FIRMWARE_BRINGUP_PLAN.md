@@ -12,7 +12,7 @@
 ### 固件动作
 1. 上电打印版本号
 2. 初始化 GPIO / UART / CAN
-3. 轮询 `tube/chamber/exit/estop`
+3. 轮询 `ball_present / exit_detect / estop`
 4. 周期输出状态帧
 
 ### 验收
@@ -146,17 +146,19 @@
 
 ---
 
-## Phase 8 - 供球 / 发射状态机
+## Phase 8 - 单球手动上球 / 发射状态机
 ### 目标
+- 手动放球后才允许发射
 - 无球不发
-- 单球分离正常
-- 出球检测闭环完整
+- 出球检测 / 超时保护完整
 
 ### 固件动作
-1. Host 状态机接入传感器
-2. `SPINUP -> FEED_READY -> BALL_IN_POSITION -> FIRE -> RELOAD`
-3. 超时进入 `FAULT`
+1. Host 状态机接入 `ball_present / exit_detect / estop`
+2. `IDLE -> SPINUP -> READY -> FIRE -> COOLDOWN -> IDLE`
+3. `ball_present=0` 时禁止进入 `FIRE`
+4. 发射超时 / 出球未检测进入 `FAULT`
 
 ### 验收
-- 供球逻辑闭环完整
-- 卡球/无球能停机
+- 手动上球检测正确
+- 无球不能发射
+- 出球检测或超时保护有效
