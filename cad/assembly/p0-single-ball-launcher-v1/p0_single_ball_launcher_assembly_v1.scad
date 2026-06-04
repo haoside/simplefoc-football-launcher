@@ -1,51 +1,66 @@
-// P0 single-ball football launcher assembly placeholder v1
+// P0 single-ball football launcher assembly placeholder v2
 // Units: mm
-// This is a layout assembly for clearance/design review, not final manufacturing CAD.
+// Layout model for clearance/design review, not final manufacturing CAD.
+// Coordinate convention: X = left/right, Y = front/back, Z = vertical.
 
 $fn = 96;
 
 // Core parameters
 ball_d = 220;
-wheel_d = 110;     // P0-A default. Test 130 for P0-B candidate.
+wheel_d = 110;       // P0-A default. Use 130 for P0-B candidate clearance check.
 wheel_w = 45;
 preload = 10;
-wheel_radius_from_center = ball_d/2 + wheel_d/2 - preload;
+wheel_r_from_center = ball_d/2 + wheel_d/2 - preload;
+head_z = 620;        // ball center height from base top
+base_l = 1000;
+base_w = 800;
+base_h = 60;
 
-module ball(){ color("white") sphere(d=ball_d); }
-
-module wheel(){
-  difference(){
-    color("#111827") cylinder(h=wheel_w, d=wheel_d, center=true);
-    cylinder(h=wheel_w+2,d=8,center=true);
-  }
+module ball(){
+  color("white") sphere(d=ball_d);
 }
 
-module motor_placeholder(){
+module friction_wheel(){
+  difference(){
+    color("#111827") cylinder(h=wheel_w, d=wheel_d, center=true);
+    cylinder(h=wheel_w+2, d=8, center=true);
+  }
+  color("#475569") cylinder(h=18, d=36, center=true);
+}
+
+module motor_6374(){
+  // approximate 6374 envelope, axis along Y after placement
   color("#374151") union(){
-    cylinder(h=74,d=63,center=false);
-    translate([0,0,74]) cylinder(h=24,d=8,center=false);
+    cylinder(h=74, d=63, center=false);
+    translate([0,0,74]) cylinder(h=24, d=8, center=false);
   }
 }
 
 module motor_plate(){
   color("#94a3b8") difference(){
-    cube([180,140,8],center=true);
-    cylinder(h=10,d=24,center=true);
-    for(x=[-35,35]) for(y=[-35,35]) translate([x,y,0]) cylinder(h=10,d=5.5,center=true);
+    cube([180,8,140], center=true); // X/Y/Z, plate is vertical
+    rotate([90,0,0]) cylinder(h=12, d=24, center=true);
+    for(x=[-35,35]) for(z=[-35,35]) translate([x,0,z]) rotate([90,0,0]) cylinder(h=12, d=5.5, center=true);
+    hull(){
+      translate([-50,0,0]) rotate([90,0,0]) cylinder(h=12,d=20,center=true);
+      translate([ 50,0,0]) rotate([90,0,0]) cylinder(h=12,d=20,center=true);
+    }
   }
 }
 
-module wheel_module(angle){
-  rotate([0,0,angle]) translate([0,wheel_radius_from_center,0]) {
-    rotate([90,0,0]) wheel();
-    translate([0,70,0]) rotate([90,0,0]) motor_plate();
-    translate([0,150,-37]) rotate([90,0,0]) motor_placeholder();
+module wheel_module(x,z,rot=0){
+  translate([x,0,z]) {
+    // Wheel axis along Y, wheel face visible from front.
+    rotate([90,0,0]) friction_wheel();
+    translate([0,70,0]) motor_plate();
+    translate([0,116,0]) rotate([90,0,0]) motor_6374();
   }
 }
 
 module short_guide_tube(){
-  // Based on short_guide_tube_v1.scad: L=200, ID=232, wall=4, flange OD=270
-  color("#e5e7eb",0.75)
+  // Based on short_guide_tube_v1.scad: L=200, ID=232, wall=4, flange OD=270.
+  // Axis along X; placed as short manual-entry stabilizer, not a feed tube.
+  color("#e5e7eb",0.72)
   rotate([0,90,0]) difference(){
     union(){
       cylinder(h=165,d=240);
@@ -57,30 +72,63 @@ module short_guide_tube(){
 }
 
 module pc_guard_envelope(){
-  color("#7dd3fc",0.22)
-  translate([0,0,0]) scale([1.25,1.25,0.75]) sphere(d=520);
+  // Transparent guard envelope with front output clearance.
+  color("#7dd3fc",0.20)
+  translate([0,18,head_z]) scale([1.05,0.58,1.05]) sphere(d=560);
 }
 
 module base_frame(){
-  color("#334155") {
-    translate([0,0,-330]) cube([1000,800,60],center=true);
-    translate([-380,430,-230]) rotate([90,0,0]) cylinder(h=70,d=300,center=true);
-    translate([ 380,430,-230]) rotate([90,0,0]) cylinder(h=70,d=300,center=true);
-    translate([-380,-430,-280]) rotate([90,0,0]) cylinder(h=50,d=200,center=true);
-    translate([ 380,-430,-280]) rotate([90,0,0]) cylinder(h=50,d=200,center=true);
+  color("#334155") union(){
+    translate([0,0,base_h/2]) cube([base_l,base_w,base_h],center=true);
+    translate([0,0,base_h+40]) cube([base_l*0.72,40,80],center=true);
+    translate([0, base_w/2-30, 360]) cube([base_l*0.82,40,620],center=true);
+    translate([0,-base_w/2+30, 360]) cube([base_l*0.82,40,620],center=true);
+    translate([-base_l/2+40,0,360]) cube([40,base_w,620],center=true);
+    translate([ base_l/2-40,0,360]) cube([40,base_w,620],center=true);
+  }
+  // wheels visual
+  color("#111827") {
+    translate([-base_l/2+120, base_w/2+35,150]) rotate([90,0,0]) cylinder(h=70,d=300,center=true);
+    translate([ base_l/2-120, base_w/2+35,150]) rotate([90,0,0]) cylinder(h=70,d=300,center=true);
+    translate([-base_l/2+120,-base_w/2-25,100]) rotate([90,0,0]) cylinder(h=50,d=200,center=true);
+    translate([ base_l/2-120,-base_w/2-25,100]) rotate([90,0,0]) cylinder(h=50,d=200,center=true);
+  }
+}
+
+module battery_and_control(){
+  color("#111827") translate([0,120,125]) cube([360,220,120], center=true);
+  color("#475569") translate([300,-260,500]) cube([260,160,120], center=true);
+  color("red") translate([430,-350,550]) sphere(d=55);
+}
+
+module push_handle(){
+  color("#334155") union(){
+    translate([0,455,760]) rotate([90,0,90]) cylinder(h=650,d=28,center=true);
+    translate([-325,410,520]) rotate([0,0,0]) cylinder(h=260,d=24,center=false);
+    translate([ 325,410,520]) rotate([0,0,0]) cylinder(h=260,d=24,center=false);
   }
 }
 
 module assembly(){
   base_frame();
-  translate([0,0,40]) {
+  battery_and_control();
+  push_handle();
+
+  // launcher head
+  translate([0,0,head_z]) {
     ball();
-    wheel_module(0);    // wheel1 @ 12:00
-    wheel_module(120);  // wheel2 @ 4:00-ish in top view
-    wheel_module(240);  // wheel3 @ 8:00-ish in top view
-    translate([-315,0,0]) short_guide_tube();
-    pc_guard_envelope();
+    // wheel positions in the vertical X/Z plane: 12:00, 4:00, 8:00
+    wheel_module(0,  wheel_r_from_center, 0);      // wheel1 @ 12:00
+    wheel_module( wheel_r_from_center*0.866, -wheel_r_from_center*0.5, 0); // wheel2 @ 4:00
+    wheel_module(-wheel_r_from_center*0.866, -wheel_r_from_center*0.5, 0); // wheel3 @ 8:00
   }
+
+  // manual short guide entry from left into launcher head
+  translate([-360,0,head_z]) short_guide_tube();
+  pc_guard_envelope();
+
+  // simple output direction marker / window zone
+  color("#f59e0b",0.35) translate([330,0,head_z]) rotate([0,90,0]) cylinder(h=80,d=170,center=true);
 }
 
 assembly();
