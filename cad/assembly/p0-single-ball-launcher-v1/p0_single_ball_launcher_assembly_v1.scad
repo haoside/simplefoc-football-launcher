@@ -109,10 +109,46 @@ module push_handle(){
   }
 }
 
+
+module head_support_ring(){
+  // Physical-looking support ring/triangular carrier for wheel modules.
+  color("#64748b") {
+    translate([0,8,head_z]) rotate([90,0,0]) difference(){
+      cylinder(h=28,d=560,center=true);
+      cylinder(h=32,d=380,center=true);
+    }
+    // three radial motor support arms in X/Z plane
+    for(a=[90,-30,210]) {
+      x = cos(a)*260;
+      z = sin(a)*260;
+      translate([x/2,10,head_z+z/2]) rotate([0,0,a]) cube([260,32,48],center=true);
+    }
+  }
+}
+
+module guide_tube_bracket(){
+  color("#94a3b8") {
+    translate([-280,0,head_z-150]) cube([180,28,280],center=true);
+    translate([-240,0,head_z-285]) cube([260,36,42],center=true);
+  }
+}
+
+module guard_supports(){
+  color("#94a3b8") {
+    translate([-260,-225,head_z+210]) cube([520,22,28],center=true);
+    translate([ 260,-225,head_z+210]) cube([22,22,360],center=true);
+    translate([-260,-225,head_z+210]) cube([22,22,360],center=true);
+    translate([0,-238,head_z-35]) cube([650,18,22],center=true);
+  }
+}
+
 module assembly(){
   base_frame();
   battery_and_control();
   push_handle();
+  head_support_ring();
+  guide_tube_bracket();
+  guard_supports();
 
   // launcher head
   translate([0,0,head_z]) {
