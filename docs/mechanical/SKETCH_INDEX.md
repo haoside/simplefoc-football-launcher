@@ -10,6 +10,8 @@
 - `hardware/sketches/motor_mount_plate_sketch.svg`
 - `hardware/sketches/guard_cover_sketch.svg`
 - `hardware/sketches/control_power_bay_sketch.svg`
+- `docs/mechanical/MOTOR_MOUNT_INTERFACE_63XX_V1.md`
+- `docs/mechanical/OUTER_ROTOR_PARAMETRIC_MODEL_V1.md`
 
 ## 渲染图（已发群）
 - 单球整体渲染图

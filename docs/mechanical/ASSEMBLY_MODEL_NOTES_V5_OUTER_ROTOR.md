@@ -2,15 +2,15 @@
 
 ## Change summary
 
-This revision adds a new concept assembly placeholder for the updated launcher head direction:
+This revision tracks the currently frozen launcher-head concept:
 
-- replaces the previous `3 parallel friction wheel` visual assumption
-- uses `3 x 6374 outer-rotor motor cans` as the direct ball-contact bodies
-- motor axes are no longer parallel; each axis tilts inward toward the ball center
-- keeps `120°` circumferential distribution around the football
-- keeps the guide ring recessed so it does not become the primary contact surface
+- uses `3 x short 63-series outer-rotor BLDC motors` with `6354` placeholder length
+- motors are `bottom-face mounted only`
+- motors are arranged `around a central launch ring / barrel`
+- the rotating outer cylindrical shell surfaces pass through `3 barrel wall cutouts` and directly contact the football
+- the concept must be read as a `triangular motor-axis relationship around the ring`, not as a star-shaped set of axes converging to one point
 
-## Added CAD placeholder
+## CAD placeholder
 
 - `cad/assembly/p0-single-ball-launcher-v2/p0_single_ball_launcher_outer_rotor_assembly_v2.scad`
 
@@ -18,28 +18,33 @@ This revision adds a new concept assembly placeholder for the updated launcher h
 
 Use this concept model to review:
 
-1. whether the cylindrical outer shell surfaces can achieve real 3-point contact with a size-5 ball
-2. motor tilt / support-arm clearance around the launcher head
-3. guide-ring retreat vs. ball entry path
-4. overall head proportion on the existing mobile-base envelope
+1. ring + 3 cutout geometry around the ball
+2. clearance benefit of shorter `6354`-class motors versus `6374`
+3. bottom-face motor support arrangement
+4. launcher-head proportion on the existing base envelope
 
 ## Model assumptions
 
 - football diameter: `220mm`
-- 6374 outer-rotor can diameter: `63mm` placeholder
-- thin rubber sleeve on motor outer shell: `2mm`
+- motor body diameter: `63mm`
+- placeholder motor length: `53.5mm` (`6354` class)
+- shaft diameter: `10mm`
+- thin rubber sleeve on outer shell: `2mm`
 - preload target: `4mm`
-- motor-axis inward tilt: `28°` placeholder
 
-## Not yet fabrication-ready
+## Frozen mechanical wording
+
+> Three short 63-series outer-rotor motors are installed around the central launch ring. The motor outer cylindrical shells pass through three barrel wall cutouts and directly contact the football. Motors are bottom-face mounted. The motor-axis relationship is triangular around the ring and must not be interpreted as a star-shaped axis convergence.
+
+## Still not fabrication-ready
 
 The following still need confirmation before fabrication freeze:
 
-1. exact 6374 vendor drawing and mounting face
+1. exact selected 6354 vendor drawing and bottom-face mounting interface
 2. allowable radial load on the chosen motor bearings
 3. real outer-shell friction sleeve material / retention method / balance process
-4. final motor tilt angle from actual shooting-direction testing
-5. stator bracket stiffness and serviceability review
+4. exact barrel cutout edge geometry and remaining ring stiffness
+5. final support bracket stiffness / serviceability review
 
 ## Boundary reminder
 
