@@ -23,7 +23,10 @@ Compared against `6360` and `6374`, the current concept favors `6354` because it
 ## Mainline model files
 
 ### Primary parametric concept
-- `cad/assembly/p0-single-ball-launcher-v2/p0_single_ball_launcher_outer_rotor_parametric_v7.scad`
+- `cad/assembly/p0-single-ball-launcher-v2/p0_single_ball_launcher_outer_rotor_mainline_v3.scad`
+
+### Latest explicit parametric revision source
+- `cad/assembly/p0-single-ball-launcher-v2/p0_single_ball_launcher_outer_rotor_parametric_v9.scad`
 
 ### Ring-focused review model
 - `cad/assembly/p0-single-ball-launcher-v2/p0_single_ball_launcher_ring_focus_v2.scad`
