@@ -6,6 +6,7 @@
 // - bottom-face mounted only
 // - central launch ring / barrel
 // - 3 shell-contact cutouts
+// - motor centerlines form an equilateral triangle in one plane
 // - non-star interpretation
 // - ring ears + stubs + link plates + outer mount plates
 // - selectable outer frame support mode: radial side plates or triangular bracket
