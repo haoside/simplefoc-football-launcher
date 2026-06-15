@@ -12,6 +12,9 @@
 | 文档 | MANUFACTURING_FILESET_V1.md | v1 | 制造文件索引 |
 | 文档 | CAD_EXPORT_GUIDE_V1.md | v1 | 导出规范 |
 | 文档 | PRE_FAB_CHECKLIST_V1.md | v1 | 加工前复核 |
+| 装配 CAD | outrunner_launch_tube_v1.scad | v1 | 端面固定发射筒，筒身开口，外转子直驱接触 |
+| 文档 | OUTRUNNER_LAUNCH_TUBE_V1.md | v1 | 外转子直驱发射筒设计说明 |
+| 渲染/三视图 | OUTRUNNER_LAUNCH_TUBE_THREE_VIEW_V1.svg | v1 | 发射筒三视图说明 |
 
 ## 版本规则
 - 尺寸修改：升小版本（v1 -> v2）

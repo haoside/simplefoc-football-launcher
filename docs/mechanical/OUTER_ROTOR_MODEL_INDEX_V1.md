@@ -4,9 +4,15 @@
 
 Use this file first when reviewing the current preferred launcher-head concept:
 
-- `cad/assembly/p0-single-ball-launcher-v2/p0_single_ball_launcher_outer_rotor_mainline_v3.scad`
+- `cad/assembly/p0-single-ball-launcher-v3/outrunner_launch_tube_v1.scad`
 
-This file currently wraps the latest preferred `6354`-based integrated concept.
+This file is the latest preferred launcher-head concept: end-face motor mounting, launch-tube body with three side windows, and direct football contact through the outrunner shell. It replaces the older separate friction-wheel / shaft-driven expression.
+
+## Current design note
+
+- `docs/mechanical/OUTRUNNER_LAUNCH_TUBE_V1.md`
+- `docs/renders/OUTRUNNER_LAUNCH_TUBE_THREE_VIEW_V1.svg`
+
 
 ## Supporting files
 
@@ -15,6 +21,9 @@ This file currently wraps the latest preferred `6354`-based integrated concept.
 
 ### Motor placeholder
 - `cad/vendor-placeholders/63xx-motor-v2/63xx_outer_rotor_bottom_mount_placeholder_v2.scad`
+
+### Previous mainline / comparison
+- `cad/assembly/p0-single-ball-launcher-v2/p0_single_ball_launcher_outer_rotor_mainline_v3.scad`
 
 ## Historical / comparison parametric files
 

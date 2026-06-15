@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1050" viewBox="0 0 1600 1050">
+  <defs><style>
+    .bg{fill:#f7f8fb}.panel{fill:white;stroke:#d8dde8;stroke-width:2}.title{font:700 30px system-ui,-apple-system,'Segoe UI',sans-serif;fill:#101828}.sub{font:15px system-ui,-apple-system,'Segoe UI',sans-serif;fill:#667085}.h{font:700 22px system-ui,-apple-system,'Segoe UI',sans-serif;fill:#101828}.t{font:16px system-ui,-apple-system,'Segoe UI',sans-serif;fill:#253044}.s{font:13px system-ui,-apple-system,'Segoe UI',sans-serif;fill:#667085}.dim{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;fill:#0b65c2}.tube{fill:#ffd9df;stroke:#151b29;stroke-width:3}.tube2{fill:#ffe8ec;stroke:#151b29;stroke-width:3}.motor{fill:#f4f7fb;stroke:#151b29;stroke-width:3}.cap{fill:#0875d1;stroke:#151b29;stroke-width:3}.cut{fill:#fff;stroke:#151b29;stroke-width:2}.win{fill:#e8f4ff;stroke:#1677ff;stroke-width:2}.contact{fill:#ffe66d;stroke:#d48b00;stroke-width:1.5}.center{stroke:#1677ff;stroke-width:1.4;stroke-dasharray:6 5}.dash{stroke:#98a2b3;stroke-width:1.6;stroke-dasharray:7 6;fill:none}.line{stroke:#151b29;stroke-width:3;fill:none}.thin{stroke:#667085;stroke-width:1.4;fill:none}.warn{fill:#fff4e6;stroke:#ff9f1a;stroke-width:1.5}</style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b65c2"/></marker>
+    <g id="motorSide"><rect x="-60" y="-37" width="120" height="74" rx="12" class="motor"/><rect x="-72" y="-43" width="24" height="86" rx="8" class="cap"/><rect x="48" y="-43" width="24" height="86" rx="8" class="cap"/></g>
+    <g id="motorEnd"><circle cx="0" cy="0" r="42" class="motor"/><circle cx="0" cy="0" r="13" class="cut"/><circle cx="-23" cy="-23" r="4" class="cut"/><circle cx="23" cy="-23" r="4" class="cut"/><circle cx="-23" cy="23" r="4" class="cut"/><circle cx="23" cy="23" r="4" class="cut"/></g>
+  </defs>
+  <rect class="bg" width="1600" height="1050"/>
+  <text x="64" y="62" class="title">端面固定发射筒｜筒身开口 + 外转子直驱接触 v1</text>
+  <text x="64" y="94" class="sub">结构方向：中心发射筒承载球路，筒身三处开窗；6374 外转子穿窗直接压球，电机通过两端端面板固定，轴不作为外露驱动件。</text>
+
+  <g transform="translate(64,130)">
+    <rect class="panel" width="470" height="410" rx="20"/><text x="24" y="42" class="h">A. 正视图 / 筒口与三开窗</text>
+    <g transform="translate(235,225)">
+      <circle cx="0" cy="0" r="132" class="tube"/><circle cx="0" cy="0" r="116" fill="#fff" stroke="#151b29" stroke-width="3"/>
+      <circle cx="0" cy="0" r="110" class="dash"/><text x="-48" y="6" class="dim">球 Ø220</text><text x="-56" y="-122" class="dim">筒 ID Ø232</text>
+      <g transform="rotate(-90)"><rect x="-48" y="-139" width="96" height="44" rx="8" class="win"/><ellipse cx="0" cy="-110" rx="44" ry="8" class="contact"/><use href="#motorEnd" x="0" y="-186"/><text x="-17" y="-244" class="s" transform="rotate(90 -17 -244)">M1 端面固定</text></g>
+      <g transform="rotate(30)"><rect x="-48" y="-139" width="96" height="44" rx="8" class="win"/><ellipse cx="0" cy="-110" rx="44" ry="8" class="contact"/><use href="#motorEnd" x="0" y="-186"/></g>
+      <g transform="rotate(150)"><rect x="-48" y="-139" width="96" height="44" rx="8" class="win"/><ellipse cx="0" cy="-110" rx="44" ry="8" class="contact"/><use href="#motorEnd" x="0" y="-186"/></g>
+      <path d="M0,-174 A174,174 0 0 1 151,87" stroke="#1677ff" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/><text x="96" y="-45" class="dim">120°</text>
+    </g>
+  </g>
+
+  <g transform="translate(565,130)">
+    <rect class="panel" width="470" height="410" rx="20"/><text x="24" y="42" class="h">B. 侧视图 / 发射筒开口</text>
+    <g transform="translate(45,112)">
+      <path d="M45,58 L315,58 L352,80 L352,230 L315,252 L45,252 L8,230 L8,80 Z" class="tube2"/>
+      <rect x="80" y="92" width="200" height="126" rx="12" fill="#fff" stroke="#151b29" stroke-width="2"/>
+      <rect x="114" y="72" width="132" height="166" rx="10" class="win"/><text x="128" y="63" class="dim">筒身开口</text>
+      <circle cx="180" cy="155" r="108" class="dash"/><text x="142" y="160" class="dim">球路</text>
+      <g transform="translate(180,42)"><use href="#motorSide"/></g><ellipse cx="180" cy="94" rx="52" ry="8" class="contact"/>
+      <line x1="180" y1="26" x2="180" y2="276" class="center"/><line x1="0" y1="155" x2="390" y2="155" class="center"/>
+      <text x="20" y="292" class="s">前后喇叭口保留；开口边缘需倒角/包胶，避免刮球。</text>
+    </g>
+  </g>
+
+  <g transform="translate(1066,130)">
+    <rect class="panel" width="470" height="410" rx="20"/><text x="24" y="42" class="h">C. 单电机端面固定模块</text>
+    <g transform="translate(48,94)">
+      <rect x="20" y="86" width="320" height="116" rx="14" class="tube2"/><rect x="116" y="58" width="130" height="172" rx="12" class="win"/>
+      <g transform="translate(181,34)"><use href="#motorSide"/></g><ellipse cx="181" cy="86" rx="52" ry="8" class="contact"/>
+      <rect x="92" y="12" width="12" height="104" rx="3" class="tube"/><rect x="258" y="12" width="12" height="104" rx="3" class="tube"/>
+      <path d="M98,12 L264,12" class="line"/><text x="48" y="8" class="dim">双端面板 + 背桥</text>
+      <circle cx="98" cy="44" r="4" class="cut"/><circle cx="98" cy="84" r="4" class="cut"/><circle cx="264" cy="44" r="4" class="cut"/><circle cx="264" cy="84" r="4" class="cut"/>
+      <text x="24" y="258" class="s">端面板固定电机/适配板；中间留出旋转外壳与筒身开口。</text>
+    </g>
+  </g>
+
+  <g transform="translate(64,575)">
+    <rect class="panel" width="970" height="380" rx="20"/><text x="24" y="42" class="h">设计说明</text>
+    <text x="34" y="90" class="t">配色：粉色为发射筒与固定架；蓝色为筒身开口；白色为外转子壳体；黄色为压球接触带。</text>
+    <text x="34" y="135" class="t">布局：发射筒 ID 232mm 起步，三处开口 120° 均布，电机轴线沿筒切线方向，外转子穿窗接触足球。</text>
+    <text x="34" y="180" class="t">关键元素：前后喇叭口、三处加强肋开窗、双端面固定板、背桥、端面 M5 孔、接触胶套、防护罩接口。</text>
+    <text x="34" y="225" class="t">机械原则：筒负责导向和安全边界；电机端面负责定位；旋转外壳周向留 3mm+ 安全间隙；窗口边缘必须倒角/软包。</text>
+    <text x="34" y="270" class="t">当前 CAD：参数化 OpenSCAD 已输出，可调整 tube_len、inner_d、motor_d、contact_sink、window_z_len。</text>
+  </g>
+
+  <g transform="translate(1066,575)">
+    <rect class="panel" width="470" height="380" rx="20"/><text x="24" y="42" class="h">待复核</text>
+    <rect x="24" y="72" width="422" height="84" rx="12" class="warn"/><text x="42" y="104" class="t">端面孔位是占位：必须按实际 6374/适配板孔距修正。</text>
+    <text x="42" y="196" class="t">1. 外转子直径/长度实测</text><text x="42" y="232" class="t">2. 外壳包胶后动平衡</text><text x="42" y="268" class="t">3. 筒窗边缘不刮球</text><text x="42" y="304" class="t">4. 低速压紧量 2–3mm 起测</text><text x="42" y="340" class="t">5. 三侧透明防护罩覆盖开窗</text>
+  </g>
+</svg>
