@@ -15,6 +15,10 @@
 | 装配 CAD | outrunner_launch_tube_v1.scad | v1 | 端面固定发射筒，筒身开口，外转子直驱接触 |
 | 文档 | OUTRUNNER_LAUNCH_TUBE_V1.md | v1 | 外转子直驱发射筒设计说明 |
 | 渲染/三视图 | OUTRUNNER_LAUNCH_TUBE_THREE_VIEW_V1.svg | v1 | 发射筒三视图说明 |
+| 装配 CAD | outrunner_launch_tube_v1_1.scad | v1.1 | 6354 外转子发射筒，2–3mm 可调压紧，防护罩孔位/加强肋补强 |
+| 文档 | OUTRUNNER_LAUNCH_TUBE_V1_1.md | v1.1 | 外转子直驱发射筒 v1.1 设计说明 |
+| 渲染/三视图 | OUTRUNNER_LAUNCH_TUBE_THREE_VIEW_V1_1.svg | v1.1 | 发射筒三视图说明 v1.1 |
+| 文档 | MAINLINE_MODEL_ADJUSTMENT_V2.md | v2 | 主线并线检查、参数同步与工程验证入口结论 |
 
 ## 版本规则
 - 尺寸修改：升小版本（v1 -> v2）
