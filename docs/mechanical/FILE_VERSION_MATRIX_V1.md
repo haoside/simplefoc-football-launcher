@@ -19,6 +19,7 @@
 | 文档 | OUTRUNNER_LAUNCH_TUBE_V1_1.md | v1.1 | 外转子直驱发射筒 v1.1 设计说明 |
 | 渲染/三视图 | OUTRUNNER_LAUNCH_TUBE_THREE_VIEW_V1_1.svg | v1.1 | 发射筒三视图说明 v1.1 |
 | 文档 | MAINLINE_MODEL_ADJUSTMENT_V2.md | v2 | 主线并线检查、参数同步与工程验证入口结论 |
+| 文档 | ENGINEERING_VALIDATION_V1_2.md | v1.2 | 工程验证总表、方法、通过标准、风险等级与失败修改路径 |
 
 ## 版本规则
 - 尺寸修改：升小版本（v1 -> v2）
