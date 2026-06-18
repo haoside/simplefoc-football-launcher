@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@100;300;400;500;600&family=Roboto+Flex:opsz,wght@8..144,400;8..144,500;8..144,600&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bloome-blue: #2556b6;
+        --bloome-black: #0e0807;
+        --bloome-cream: #f8f6f3;
+        --bloome-white: #ffffff;
+        --bloome-orange: #f36440;
+        --text-primary: #0e0807;
+        --text-secondary: rgba(14, 8, 7, 0.72);
+        --text-muted: rgba(14, 8, 7, 0.48);
+        --text-faint: rgba(14, 8, 7, 0.2);
+        --border-default: rgba(0, 0, 0, 0.08);
+        --font-display: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif;
+        --font-meta: 'Roboto Flex', -apple-system, BlinkMacSystemFont, sans-serif;
+        --card-radius: 14px;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bloome-cream);
+        color: var(--text-primary);
+        font-family: var(--font-display);
+      }
+      .app {
+        max-width: 1220px;
+        margin: 0 auto;
+        padding: 20px;
+        display: grid;
+        gap: 16px;
+      }
+      .hero {
+        border: 1px solid var(--border-default);
+        background: var(--bloome-cream);
+        padding: 24px;
+      }
+      .eyebrow {
+        color: var(--text-muted);
+        font-family: var(--font-meta);
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      h1 {
+        margin: 10px 0 12px;
+        font-size: clamp(30px, 6vw, 62px);
+        line-height: 0.98;
+        font-weight: 400;
+      }
+      .thin { font-weight: 100; }
+      .hero p {
+        margin: 0;
+        max-width: 900px;
+        color: var(--text-secondary);
+        font-size: 14px;
+        line-height: 1.6;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 360px minmax(0, 1fr);
+        gap: 16px;
+      }
+      .panel, .board {
+        border: 1px solid var(--border-default);
+        background: var(--bloome-white);
+        border-radius: var(--card-radius);
+      }
+      .panel { padding: 18px; display: grid; gap: 18px; }
+      .board { padding: 18px; display: grid; gap: 16px; }
+      .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+      .section-title {
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .section-note {
+        color: var(--text-muted);
+        font-family: var(--font-meta);
+        font-size: 12px;
+      }
+      .block {
+        border: 1px solid var(--border-default);
+        border-radius: 14px;
+        padding: 14px;
+        background: #fff;
+      }
+      .controls {
+        display: grid;
+        gap: 14px;
+      }
+      .field {
+        display: grid;
+        gap: 8px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border-default);
+      }
+      .field:last-child { border-bottom: 0; padding-bottom: 0; }
+      .field label {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .meta {
+        color: var(--text-muted);
+        font-family: var(--font-meta);
+        font-size: 12px;
+      }
+      input[type="range"] {
+        width: 100%;
+        accent-color: var(--bloome-blue);
+      }
+      input[type="number"], select {
+        width: 100%;
+        min-height: 44px;
+        border: 1px solid var(--border-default);
+        border-radius: 12px;
+        padding: 0 12px;
+        background: var(--bloome-white);
+        color: var(--text-primary);
+        font: inherit;
+      }
+      .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .pill {
+        min-height: 34px;
+        padding: 7px 12px;
+        border: 1px solid var(--border-default);
+        border-radius: 999px;
+        background: #fff;
+        color: var(--text-secondary);
+        font-family: var(--font-meta);
+        font-size: 12px;
+      }
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .metric {
+        border: 1px solid var(--border-default);
+        border-radius: 12px;
+        padding: 14px;
+        background: #fff;
+      }
+      .metric .k {
+        color: var(--text-muted);
+        font-family: var(--font-meta);
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .metric .v {
+        margin-top: 10px;
+        font-size: 28px;
+        line-height: 1;
+        font-weight: 500;
+      }
+      .metric .s {
+        margin-top: 8px;
+        color: var(--text-secondary);
+        font-size: 12px;
+        line-height: 1.4;
+      }
+      .viz-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.95fr);
+        gap: 16px;
+      }
+      .card {
+        border: 1px solid var(--border-default);
+        border-radius: 14px;
+        padding: 16px;
+        background: #fff;
+      }
+      .card h3 {
+        margin: 0 0 4px;
+        font-size: 15px;
+      }
+      .card p {
+        margin: 0 0 12px;
+        color: var(--text-muted);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+      svg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 14px;
+        color: var(--text-secondary);
+        font-family: var(--font-meta);
+        font-size: 12px;
+      }
+      .legend-item { display: flex; align-items: center; gap: 8px; }
+      .swatch {
+        width: 12px;
+        height: 12px;
+        border-radius: 999px;
+      }
+      .table {
+        display: grid;
+        gap: 8px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1.4fr 0.8fr 0.8fr 1fr;
+        gap: 10px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border-default);
+        font-size: 12px;
+      }
+      .row.head {
+        color: var(--text-muted);
+        font-family: var(--font-meta);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .row:last-child { border-bottom: 0; }
+      .compare-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .compare-card {
+        border: 1px solid var(--border-default);
+        border-radius: 12px;
+        padding: 14px;
+      }
+      .compare-card .name {
+        color: var(--text-muted);
+        font-family: var(--font-meta);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .compare-card .main {
+        margin-top: 8px;
+        font-size: 22px;
+        font-weight: 500;
+      }
+      .compare-card .delta {
+        margin-top: 6px;
+        font-size: 12px;
+      }
+      .hint-list {
+        display: grid;
+        gap: 8px;
+      }
+      .hint {
+        padding: 10px 12px;
+        border: 1px solid var(--border-default);
+        border-radius: 12px;
+        font-size: 12px;
+        line-height: 1.5;
+        color: var(--text-secondary);
+      }
+      .risk-low { color: #12683a; }
+      .risk-med { color: #9a5a00; }
+      .risk-high { color: #b42318; }
+      .foot {
+        color: var(--text-muted);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+      @media (max-width: 960px) {
+        .layout, .viz-grid, .metrics, .compare-grid { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 520px) {
+        .app { padding: 12px; }
+        .hero, .panel, .board, .card, .block { padding: 14px; }
+        .metrics { grid-template-columns: 1fr 1fr; }
+        .row, .two-col { grid-template-columns: 1fr; gap: 6px; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="hero">
+        <div class="eyebrow">Simulation Mainline</div>
+        <h1>交互可视化 <span class="thin">仿真验证</span></h1>
+        <p>
+          直接调 `RPM / preload / friction / spin bias / launch angle`，实时看轨迹、落点、RPM 分配和敏感度；
+          也能把实测速度 / 射程 / 横向偏移 / 电流峰值填进来，同屏对比“仿真 vs 实测”。
+        </p>
+      </section>
+
+      <section class="layout">
+        <aside class="panel">
+          <section class="block">
+            <div class="section-head">
+              <div class="section-title">仿真参数</div>
+              <div class="section-note">当前主线输入</div>
+            </div>
+            <div class="controls">
+              <div class="field">
+                <label><span>场景预设</span><span class="meta" id="presetLabel">straight_validation</span></label>
+                <select id="presetSelect">
+                  <option value="straight_validation">straight_validation</option>
+                  <option value="light_curve_validation">light_curve_validation</option>
+                  <option value="standard_curve_validation">standard_curve_validation</option>
+                  <option value="custom">custom</option>
+                </select>
+              </div>
+              <div class="field">
+                <label><span>目标出球速度</span><span class="meta"><span id="targetSpeedValue">15.0</span> m/s</span></label>
+                <input id="targetSpeed" type="range" min="10" max="20" step="0.1" value="15.0" />
+              </div>
+              <div class="field">
+                <label><span>发射角</span><span class="meta"><span id="angleValue">10</span>°</span></label>
+                <input id="launchAngle" type="range" min="6" max="20" step="1" value="10" />
+              </div>
+              <div class="field">
+                <label><span>预压量 preload</span><span class="meta"><span id="preloadValue">10</span> mm</span></label>
+                <input id="preload" type="range" min="5" max="15" step="1" value="10" />
+              </div>
+              <div class="field">
+                <label><span>摩擦系数 friction</span><span class="meta"><span id="frictionValue">0.65</span></span></label>
+                <input id="friction" type="range" min="0.45" max="0.85" step="0.01" value="0.65" />
+              </div>
+              <div class="field">
+                <label><span>spin bias</span><span class="meta"><span id="spinBiasValue">0</span> rpm</span></label>
+                <input id="spinBias" type="range" min="0" max="700" step="10" value="0" />
+              </div>
+              <div class="field">
+                <label><span>ramp</span><span class="meta"><span id="rampValue">5</span> s</span></label>
+                <input id="ramp" type="range" min="4" max="7" step="1" value="5" />
+              </div>
+              <div class="field">
+                <label><span>spin mode</span><span class="meta" id="spinModeLabel">STRAIGHT</span></label>
+                <select id="spinMode">
+                  <option value="STRAIGHT">STRAIGHT</option>
+                  <option value="TOPSPIN">TOPSPIN</option>
+                  <option value="BACKSPIN">BACKSPIN</option>
+                  <option value="LEFT_CURVE">LEFT_CURVE</option>
+                  <option value="RIGHT_CURVE">RIGHT_CURVE</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <section class="block">
+            <div class="section-head">
+              <div class="section-title">实测回填</div>
+              <div class="section-note">可选，不填则只看仿真</div>
+            </div>
+            <div class="controls">
+              <div class="field">
+                <label><span>实测出球速度</span><span class="meta">m/s</span></label>
+                <input id="measuredLaunch" type="number" min="0" step="0.1" placeholder="例如 13.4" />
+              </div>
+              <div class="field">
+                <label><span>实测射程</span><span class="meta">m</span></label>
+                <input id="measuredRange" type="number" min="0" step="0.1" placeholder="例如 8.6" />
+              </div>
+              <div class="field">
+                <label><span>实测横向偏移</span><span class="meta">m</span></label>
+                <input id="measuredLateral" type="number" step="0.01" placeholder="例如 0.28 / -0.28" />
+              </div>
+              <div class="field">
+                <label><span>实测电流峰值</span><span class="meta">A</span></label>
+                <input id="measuredCurrent" type="number" min="0" step="1" placeholder="例如 92" />
+              </div>
+            </div>
+          </section>
+        </aside>
+
+        <section class="board">
+          <div class="metrics" id="metrics"></div>
+
+          <div class="viz-grid">
+            <section class="card">
+              <h3>轨迹与落点</h3>
+              <p>横轴是前向距离，纵轴是高度。右上小图看横向弧线偏移。</p>
+              <svg id="trajectorySvg" viewBox="0 0 760 360" aria-label="trajectory"></svg>
+              <div class="legend">
+                <div class="legend-item"><span class="swatch" style="background:#2556b6"></span>飞行轨迹</div>
+                <div class="legend-item"><span class="swatch" style="background:#f36440"></span>仿真落点</div>
+                <div class="legend-item"><span class="swatch" style="background:#0e0807"></span>发射点</div>
+              </div>
+            </section>
+
+            <section class="card">
+              <h3>三电机 RPM 分配</h3>
+              <p>按 120° 布局计算 wheel1 / wheel2 / wheel3 的目标 RPM。</p>
+              <svg id="rpmSvg" viewBox="0 0 420 360" aria-label="rpm split"></svg>
+              <div class="pills" id="summaryPills"></div>
+            </section>
+          </div>
+
+          <section class="card">
+            <h3>仿真 vs 实测</h3>
+            <p>把实测值填进来后，直接看偏差和可能要回填/修正的方向。</p>
+            <div class="compare-grid" id="compareGrid"></div>
+          </section>
+
+          <section class="card">
+            <h3>校准提示</h3>
+            <p>不是自动调参，只是先指出最可能错在哪一层：摩擦 / preload / Magnus / 电流窗口。</p>
+            <div class="hint-list" id="hintList"></div>
+          </section>
+
+          <section class="card">
+            <h3>敏感度快照</h3>
+            <p>围绕当前设定，给出 preload × friction 的邻域结果，判断测试窗口是否稳定。</p>
+            <div class="table" id="sensitivityTable"></div>
+          </section>
+
+          <div class="foot">
+            当前是工程筛选级可视化，不是 CFD/FEA。用途是先锁主线测试窗口，再把雷达测速、慢动作、轮速和电流实测回填。
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script>
+      const BALL_RADIUS_M = 0.11;
+      const WHEEL_RADIUS_M = 0.055;
+      const G = 9.81;
+      const RHO = 1.225;
+      const CD = 0.25;
+      const BALL_MASS_KG = 0.43;
+      const BALL_AREA_M2 = Math.PI * BALL_RADIUS_M * BALL_RADIUS_M;
+      const RPM_MIN = 500;
+      const RPM_MAX = 3000;
+      const CURRENT_CAP_A = 120;
+
+      const PRESETS = {
+        straight_validation: { targetSpeed: 15.0, launchAngle: 10, spinMode: 'STRAIGHT', spinBias: 0, preload: 10, friction: 0.65, ramp: 5 },
+        light_curve_validation: { targetSpeed: 15.0, launchAngle: 12, spinMode: 'LEFT_CURVE', spinBias: 250, preload: 10, friction: 0.65, ramp: 5 },
+        standard_curve_validation: { targetSpeed: 16.5, launchAngle: 14, spinMode: 'LEFT_CURVE', spinBias: 450, preload: 10, friction: 0.65, ramp: 6 },
+      };
+
+      const els = {
+        presetSelect: document.getElementById('presetSelect'),
+        presetLabel: document.getElementById('presetLabel'),
+        targetSpeed: document.getElementById('targetSpeed'),
+        targetSpeedValue: document.getElementById('targetSpeedValue'),
+        launchAngle: document.getElementById('launchAngle'),
+        angleValue: document.getElementById('angleValue'),
+        preload: document.getElementById('preload'),
+        preloadValue: document.getElementById('preloadValue'),
+        friction: document.getElementById('friction'),
+        frictionValue: document.getElementById('frictionValue'),
+        spinBias: document.getElementById('spinBias'),
+        spinBiasValue: document.getElementById('spinBiasValue'),
+        ramp: document.getElementById('ramp'),
+        rampValue: document.getElementById('rampValue'),
+        spinMode: document.getElementById('spinMode'),
+        spinModeLabel: document.getElementById('spinModeLabel'),
+        measuredLaunch: document.getElementById('measuredLaunch'),
+        measuredRange: document.getElementById('measuredRange'),
+        measuredLateral: document.getElementById('measuredLateral'),
+        measuredCurrent: document.getElementById('measuredCurrent'),
+        metrics: document.getElementById('metrics'),
+        trajectorySvg: document.getElementById('trajectorySvg'),
+        rpmSvg: document.getElementById('rpmSvg'),
+        summaryPills: document.getElementById('summaryPills'),
+        compareGrid: document.getElementById('compareGrid'),
+        hintList: document.getElementById('hintList'),
+        sensitivityTable: document.getElementById('sensitivityTable'),
+      };
+
+      function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+      function wheelSurfaceSpeedToRpm(speed) { return speed / (2 * Math.PI * WHEEL_RADIUS_M) * 60; }
+      function rpmToSurfaceSpeed(rpm) { return rpm / 60 * (2 * Math.PI * WHEEL_RADIUS_M); }
+      function fmt(n, d = 2) { return Number(n).toFixed(d); }
+
+      function rpmMixer120deg(targetSpeed, spinMode, spinBias) {
+        const base = wheelSurfaceSpeedToRpm(targetSpeed);
+        const d = spinBias;
+        let w;
+        if (spinMode === 'STRAIGHT') w = [base, base, base];
+        else if (spinMode === 'TOPSPIN') w = [base + d, base - d / 2, base - d / 2];
+        else if (spinMode === 'BACKSPIN') w = [base - d, base + d / 2, base + d / 2];
+        else if (spinMode === 'LEFT_CURVE') w = [base, base + d, base - d];
+        else if (spinMode === 'RIGHT_CURVE') w = [base, base - d, base + d];
+        else w = [base, base, base];
+        return w.map(x => Math.round(clamp(x, RPM_MIN, RPM_MAX)));
+      }
+
+      function contactEfficiency(mu, preloadMm) {
+        const preloadGain = 0.82 + 0.018 * Math.min(preloadMm, 12);
+        const overloadLoss = Math.max(preloadMm - 12, 0) * 0.015;
+        const muGain = 0.72 + 0.32 * clamp((mu - 0.45) / (0.85 - 0.45), 0, 1);
+        return clamp(preloadGain * muGain - overloadLoss, 0.55, 0.94);
+      }
+
+      function estimateLaunch(wheelRpms, mu, preloadMm) {
+        const speeds = wheelRpms.map(rpmToSurfaceSpeed);
+        const avgSpeed = speeds.reduce((a, b) => a + b, 0) / 3;
+        const eff = contactEfficiency(mu, preloadMm);
+        const launchSpeed = avgSpeed * eff;
+        const spreadSpeed = Math.max(...speeds) - Math.min(...speeds);
+        const spinRateRps = (spreadSpeed / (2 * Math.PI * BALL_RADIUS_M)) * eff;
+        return { launchSpeed, spinRateRps, eff };
+      }
+
+      function spinAccel(spinMode, spinRateRps) {
+        const kLat = 0.42;
+        const kVert = 0.30;
+        if (spinMode === 'LEFT_CURVE') return { ay: kLat * spinRateRps, az: 0 };
+        if (spinMode === 'RIGHT_CURVE') return { ay: -kLat * spinRateRps, az: 0 };
+        if (spinMode === 'TOPSPIN') return { ay: 0, az: -kVert * spinRateRps };
+        if (spinMode === 'BACKSPIN') return { ay: 0, az: kVert * spinRateRps };
+        return { ay: 0, az: 0 };
+      }
+
+      function trajectory(speed, angleDeg, spinMode, spinRateRps) {
+        const angle = angleDeg * Math.PI / 180;
+        let x = 0, y = 0, z = 0.35;
+        let vx = speed * Math.cos(angle);
+        let vy = 0;
+        let vz = speed * Math.sin(angle);
+        const dt = 0.01;
+        let t = 0;
+        let peakZ = z;
+        const { ay: aySpin, az: azSpin } = spinAccel(spinMode, spinRateRps);
+        const points = [];
+        while (z >= 0 && x <= 60 && t <= 8.0) {
+          points.push({ x, y, z, t });
+          const v = Math.sqrt(vx * vx + vy * vy + vz * vz);
+          const dragAcc = 0.5 * RHO * CD * BALL_AREA_M2 * v * v / BALL_MASS_KG;
+          const axD = v > 1e-6 ? -dragAcc * vx / v : 0;
+          const ayD = v > 1e-6 ? -dragAcc * vy / v : 0;
+          const azD = v > 1e-6 ? -dragAcc * vz / v : 0;
+          vx += axD * dt;
+          vy += (ayD + aySpin) * dt;
+          vz += (azD + azSpin - G) * dt;
+          x += vx * dt;
+          y += vy * dt;
+          z += vz * dt;
+          peakZ = Math.max(peakZ, z);
+          t += dt;
+        }
+        return { points, range: x, lateral: y, peak: peakZ, time: t };
+      }
+
+      function currentRisk(wheelRpms, rampS) {
+        const maxRpm = Math.max(...wheelRpms);
+        if (rampS < 4) return { text: 'HIGH: ramp too aggressive', cls: 'risk-high' };
+        if (maxRpm >= 2800 && rampS <= 4) return { text: 'HIGH: high RPM with short ramp', cls: 'risk-high' };
+        if (maxRpm >= 2500 && rampS <= 5) return { text: 'MEDIUM: watch BMS / branch current', cls: 'risk-med' };
+        return { text: 'LOW', cls: 'risk-low' };
+      }
+
+      function estimatedPeakCurrent(wheelRpms, rampS, preloadMm) {
+        const avgRpm = wheelRpms.reduce((a, b) => a + b, 0) / wheelRpms.length;
+        const rpmFactor = avgRpm / 3000;
+        const preloadFactor = 0.78 + preloadMm / 20;
+        const rampFactor = 5 / rampS;
+        return CURRENT_CAP_A * 0.56 * rpmFactor * preloadFactor * rampFactor;
+      }
+
+      function numOrNull(v) {
+        const n = parseFloat(v);
+        return Number.isFinite(n) ? n : null;
+      }
+
+      function getState() {
+        return {
+          preset: els.presetSelect.value,
+          targetSpeed: parseFloat(els.targetSpeed.value),
+          launchAngle: parseFloat(els.launchAngle.value),
+          preload: parseFloat(els.preload.value),
+          friction: parseFloat(els.friction.value),
+          spinBias: parseFloat(els.spinBias.value),
+          ramp: parseFloat(els.ramp.value),
+          spinMode: els.spinMode.value,
+          measuredLaunch: numOrNull(els.measuredLaunch.value),
+          measuredRange: numOrNull(els.measuredRange.value),
+          measuredLateral: numOrNull(els.measuredLateral.value),
+          measuredCurrent: numOrNull(els.measuredCurrent.value),
+        };
+      }
+
+      function setControls(presetName) {
+        const preset = PRESETS[presetName];
+        if (!preset) return;
+        els.targetSpeed.value = preset.targetSpeed;
+        els.launchAngle.value = preset.launchAngle;
+        els.preload.value = preset.preload;
+        els.friction.value = preset.friction;
+        els.spinBias.value = preset.spinBias;
+        els.ramp.value = preset.ramp;
+        els.spinMode.value = preset.spinMode;
+      }
+
+      function syncLabels(state) {
+        els.presetLabel.textContent = state.preset;
+        els.targetSpeedValue.textContent = fmt(state.targetSpeed, 1);
+        els.angleValue.textContent = fmt(state.launchAngle, 0);
+        els.preloadValue.textContent = fmt(state.preload, 0);
+        els.frictionValue.textContent = fmt(state.friction, 2);
+        els.spinBiasValue.textContent = fmt(state.spinBias, 0);
+        els.rampValue.textContent = fmt(state.ramp, 0);
+        els.spinModeLabel.textContent = state.spinMode;
+      }
+
+      function renderMetrics(result) {
+        const risk = result.risk;
+        const cards = [
+          ['launch speed', `${fmt(result.launch.launchSpeed, 2)} m/s`, '当前仿真估算出球速度'],
+          ['range', `${fmt(result.traj.range, 1)} m`, '前向落点距离'],
+          ['lateral', `${fmt(result.traj.lateral, 2)} m`, '横向弧线偏移'],
+          ['risk', risk.text, '电流/加速风险等级'],
+        ];
+        els.metrics.innerHTML = cards.map(([k, v, s], i) => `
+          <div class="metric">
+            <div class="k">${k}</div>
+            <div class="v ${i === 3 ? risk.cls : ''}">${v}</div>
+            <div class="s">${s}</div>
+          </div>
+        `).join('');
+      }
+
+      function renderTrajectory(result) {
+        const svg = els.trajectorySvg;
+        const w = 760, h = 360, pad = 28;
+        const rangeMax = Math.max(12, result.traj.range * 1.1);
+        const peakMax = Math.max(1.2, result.traj.peak * 1.2);
+        const project = p => ({
+          x: pad + (p.x / rangeMax) * (w - pad * 2),
+          y: h - pad - (Math.max(0, p.z) / peakMax) * (h - pad * 2)
+        });
+        const path = result.traj.points.map((p, idx) => {
+          const q = project(p);
+          return `${idx === 0 ? 'M' : 'L'} ${q.x.toFixed(2)} ${q.y.toFixed(2)}`;
+        }).join(' ');
+        const landing = project({ x: result.traj.range, z: 0 });
+        const launch = project({ x: 0, z: 0.35 });
+        const insetX = 520, insetY = 22, insetW = 210, insetH = 120;
+        const latMax = Math.max(0.7, Math.abs(result.traj.lateral) * 1.6, Math.abs(result.state.measuredLateral || 0) * 1.6);
+        const insetPoints = result.traj.points.map((p, idx) => {
+          const x = insetX + (p.x / rangeMax) * insetW;
+          const y = insetY + insetH / 2 - (p.y / latMax) * (insetH / 2 - 12);
+          return `${idx === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`;
+        }).join(' ');
+        const endInsetY = insetY + insetH / 2 - (result.traj.lateral / latMax) * (insetH / 2 - 12);
+        const measuredMark = result.state.measuredRange !== null ? `
+          <circle cx="${pad + (result.state.measuredRange / rangeMax) * (w - pad * 2)}" cy="${h - pad}" r="6" fill="#0e0807" opacity="0.85" />
+        ` : '';
+        const measuredLateralMark = result.state.measuredLateral !== null ? `
+          <circle cx="${insetX + insetW - 14}" cy="${insetY + insetH / 2 - (result.state.measuredLateral / latMax) * (insetH / 2 - 12)}" r="4" fill="#0e0807" opacity="0.85" />
+        ` : '';
+        svg.innerHTML = `
+          <rect x="0" y="0" width="${w}" height="${h}" fill="#fff" rx="14" />
+          <line x1="${pad}" y1="${h - pad}" x2="${w - pad}" y2="${h - pad}" stroke="rgba(0,0,0,0.16)" />
+          <line x1="${pad}" y1="${pad}" x2="${pad}" y2="${h - pad}" stroke="rgba(0,0,0,0.16)" />
+          <path d="${path}" fill="none" stroke="#2556b6" stroke-width="4" stroke-linecap="round" />
+          <circle cx="${launch.x}" cy="${launch.y}" r="5" fill="#0e0807" />
+          <circle cx="${landing.x}" cy="${landing.y}" r="6" fill="#f36440" />
+          ${measuredMark}
+          <text x="${pad}" y="${pad - 8}" font-size="12" fill="rgba(14,8,7,0.48)">高度 ${fmt(peakMax,1)}m</text>
+          <text x="${w - pad - 72}" y="${h - 8}" font-size="12" fill="rgba(14,8,7,0.48)">距离 ${fmt(rangeMax,1)}m</text>
+          <rect x="${insetX}" y="${insetY}" width="${insetW}" height="${insetH}" rx="12" fill="#f8f6f3" stroke="rgba(0,0,0,0.08)" />
+          <line x1="${insetX + 10}" y1="${insetY + insetH / 2}" x2="${insetX + insetW - 10}" y2="${insetY + insetH / 2}" stroke="rgba(0,0,0,0.12)" stroke-dasharray="5 4" />
+          <path d="${insetPoints}" fill="none" stroke="#f36440" stroke-width="3" />
+          <circle cx="${insetX + insetW - 10}" cy="${endInsetY}" r="4" fill="#f36440" />
+          ${measuredLateralMark}
+          <text x="${insetX + 12}" y="${insetY + 18}" font-size="12" fill="rgba(14,8,7,0.48)">横向偏移俯视</text>
+          <text x="${insetX + 12}" y="${insetY + insetH - 10}" font-size="11" fill="rgba(14,8,7,0.48)">sim ${fmt(result.traj.lateral,2)}m${result.state.measuredLateral !== null ? ` · measured ${fmt(result.state.measuredLateral,2)}m` : ''}</text>
+        `;
+      }
+
+      function renderRpm(result) {
+        const svg = els.rpmSvg;
+        const w = 420, h = 360;
+        const cx = 210, cy = 165, r = 112;
+        const labels = ['wheel1', 'wheel2', 'wheel3'];
+        const angles = [-90, 30, 150];
+        const bars = result.rpms.map(rpm => (rpm / RPM_MAX) * 120);
+        const colors = ['#2556b6', '#0e0807', '#f36440'];
+        let nodes = '';
+        for (let i = 0; i < 3; i++) {
+          const a = angles[i] * Math.PI / 180;
+          const x = cx + Math.cos(a) * r;
+          const y = cy + Math.sin(a) * r;
+          const barY = 300 - bars[i];
+          nodes += `
+            <line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="rgba(0,0,0,0.08)" />
+            <circle cx="${x}" cy="${y}" r="34" fill="#fff" stroke="${colors[i]}" stroke-width="3" />
+            <text x="${x}" y="${y - 4}" text-anchor="middle" font-size="12" fill="rgba(14,8,7,0.48)">${labels[i]}</text>
+            <text x="${x}" y="${y + 14}" text-anchor="middle" font-size="18" fill="#0e0807">${result.rpms[i]}</text>
+            <rect x="${48 + i * 118}" y="${barY}" width="68" height="${bars[i]}" rx="10" fill="${colors[i]}" opacity="0.85" />
+            <text x="${82 + i * 118}" y="322" text-anchor="middle" font-size="12" fill="rgba(14,8,7,0.48)">${labels[i]}</text>
+          `;
+        }
+        svg.innerHTML = `
+          <rect x="0" y="0" width="${w}" height="${h}" fill="#fff" rx="14" />
+          ${nodes}
+          <circle cx="${cx}" cy="${cy}" r="52" fill="#f8f6f3" stroke="rgba(0,0,0,0.08)" />
+          <text x="${cx}" y="${cy - 4}" text-anchor="middle" font-size="12" fill="rgba(14,8,7,0.48)">spin mode</text>
+          <text x="${cx}" y="${cy + 18}" text-anchor="middle" font-size="16" fill="#0e0807">${result.state.spinMode}</text>
+        `;
+        const peakCurrent = estimatedPeakCurrent(result.rpms, result.state.ramp, result.state.preload);
+        els.summaryPills.innerHTML = `
+          <span class="pill">efficiency ${fmt(result.launch.eff, 2)}</span>
+          <span class="pill">spin ${fmt(result.launch.spinRateRps, 2)} rps</span>
+          <span class="pill">ramp ${result.state.ramp}s</span>
+          <span class="pill">preload ${result.state.preload} mm</span>
+          <span class="pill">peak current est. ${fmt(peakCurrent, 0)} A</span>
+        `;
+      }
+
+      function renderComparison(result) {
+        const metrics = [
+          { key: 'measuredLaunch', label: '速度偏差', sim: result.launch.launchSpeed, unit: 'm/s' },
+          { key: 'measuredRange', label: '射程偏差', sim: result.traj.range, unit: 'm' },
+          { key: 'measuredLateral', label: '横向偏移偏差', sim: result.traj.lateral, unit: 'm' },
+        ];
+        const html = metrics.map(item => {
+          const measured = result.state[item.key];
+          if (measured === null) {
+            return `<div class="compare-card"><div class="name">${item.label}</div><div class="main">待回填</div><div class="delta">sim ${fmt(item.sim, 2)} ${item.unit}</div></div>`;
+          }
+          const delta = measured - item.sim;
+          const pct = item.sim !== 0 ? (delta / item.sim) * 100 : 0;
+          const cls = Math.abs(pct) > 15 ? 'risk-high' : Math.abs(pct) > 8 ? 'risk-med' : 'risk-low';
+          return `<div class="compare-card"><div class="name">${item.label}</div><div class="main ${cls}">${delta >= 0 ? '+' : ''}${fmt(delta, 2)} ${item.unit}</div><div class="delta">sim ${fmt(item.sim, 2)} · measured ${fmt(measured, 2)} · ${delta >= 0 ? '+' : ''}${fmt(pct, 1)}%</div></div>`;
+        }).join('');
+        const peakCurrent = estimatedPeakCurrent(result.rpms, result.state.ramp, result.state.preload);
+        const measuredCurrent = result.state.measuredCurrent;
+        const currentCard = measuredCurrent === null
+          ? `<div class="compare-card"><div class="name">电流峰值</div><div class="main">待回填</div><div class="delta">sim est. ${fmt(peakCurrent, 0)} A</div></div>`
+          : (() => {
+              const delta = measuredCurrent - peakCurrent;
+              const cls = delta > 15 ? 'risk-high' : delta > 5 ? 'risk-med' : 'risk-low';
+              return `<div class="compare-card"><div class="name">电流峰值</div><div class="main ${cls}">${delta >= 0 ? '+' : ''}${fmt(delta, 0)} A</div><div class="delta">sim est. ${fmt(peakCurrent, 0)} · measured ${fmt(measuredCurrent, 0)} · cap ${CURRENT_CAP_A}A</div></div>`;
+            })();
+        els.compareGrid.innerHTML = html + currentCard;
+      }
+
+      function renderHints(result) {
+        const hints = [];
+        const s = result.state;
+        if (s.measuredLaunch !== null) {
+          const ratio = s.measuredLaunch / result.launch.launchSpeed;
+          if (ratio < 0.9) hints.push('实测速度明显低于仿真：优先回查 friction / preload / 打滑，而不是先改大结构。');
+          else if (ratio > 1.1) hints.push('实测速度高于仿真：当前 contact efficiency 可能偏保守，可以回填效率模型。');
+        }
+        if (s.measuredLateral !== null) {
+          const d = s.measuredLateral - result.traj.lateral;
+          if (Math.abs(d) > 0.18) hints.push('横向偏移偏差较大：优先回查 spin bias、Magnus 系数和实际轮速差，不先改窗口几何。');
+        }
+        if (s.measuredCurrent !== null) {
+          const peakCurrent = estimatedPeakCurrent(result.rpms, result.state.ramp, result.state.preload);
+          if (s.measuredCurrent > peakCurrent + 10) hints.push('实测电流峰值高于估算：优先拉长 ramp 或降低 preload，再看控制侧限流。');
+          if (s.measuredCurrent > CURRENT_CAP_A) hints.push('电流峰值超过当前 120A 口径，先收缩测试窗口，不要继续推大差速。');
+        }
+        if (!hints.length) {
+          hints.push('当前还是仿真筛选态。先做 straight，再做 light curve，再做 standard curve，不要一上来高 preload + 高 spin bias。');
+          hints.push('如果准备进首轮实测，建议先把 friction 锁在 0.55~0.65、preload 锁在 8~10mm。');
+        }
+        els.hintList.innerHTML = hints.map(t => `<div class="hint">${t}</div>`).join('');
+      }
+
+      function renderSensitivity(result) {
+        const preloadCandidates = [...new Set([Math.max(5, result.state.preload - 2), result.state.preload, Math.min(15, result.state.preload + 2)])];
+        const frictionCandidates = [...new Set([
+          Math.max(0.45, +(result.state.friction - 0.10).toFixed(2)),
+          +result.state.friction.toFixed(2),
+          Math.min(0.85, +(result.state.friction + 0.10).toFixed(2))
+        ])];
+        const rows = [];
+        for (const mu of frictionCandidates) {
+          for (const pre of preloadCandidates) {
+            const rpms = rpmMixer120deg(result.state.targetSpeed, result.state.spinMode, result.state.spinBias);
+            const launch = estimateLaunch(rpms, mu, pre);
+            const traj = trajectory(launch.launchSpeed, result.state.launchAngle, result.state.spinMode, launch.spinRateRps);
+            const risk = currentRisk(rpms, result.state.ramp);
+            rows.push({ mu, pre, launch: launch.launchSpeed, range: traj.range, lat: traj.lateral, risk: risk.text, cls: risk.cls });
+          }
+        }
+        els.sensitivityTable.innerHTML = `
+          <div class="row head"><div>组合</div><div>launch</div><div>range</div><div>risk</div></div>
+          ${rows.map(r => `<div class="row"><div>μ=${fmt(r.mu,2)} · preload=${fmt(r.pre,0)}mm</div><div>${fmt(r.launch,2)} m/s</div><div>${fmt(r.range,1)} m</div><div class="${r.cls}">${r.risk}</div></div>`).join('')}
+        `;
+      }
+
+      function render() {
+        const state = getState();
+        syncLabels(state);
+        const rpms = rpmMixer120deg(state.targetSpeed, state.spinMode, state.spinBias);
+        const launch = estimateLaunch(rpms, state.friction, state.preload);
+        const traj = trajectory(launch.launchSpeed, state.launchAngle, state.spinMode, launch.spinRateRps);
+        const risk = currentRisk(rpms, state.ramp);
+        const result = { state, rpms, launch, traj, risk };
+        renderMetrics(result);
+        renderTrajectory(result);
+        renderRpm(result);
+        renderComparison(result);
+        renderHints(result);
+        renderSensitivity(result);
+      }
+
+      els.presetSelect.addEventListener('change', (e) => {
+        if (e.target.value !== 'custom') setControls(e.target.value);
+        render();
+      });
+      [els.targetSpeed, els.launchAngle, els.preload, els.friction, els.spinBias, els.ramp, els.spinMode, els.measuredLaunch, els.measuredRange, els.measuredLateral, els.measuredCurrent].forEach(el => {
+        el.addEventListener('input', () => {
+          if (['targetSpeed','launchAngle','preload','friction','spinBias','ramp','spinMode'].includes(el.id) && els.presetSelect.value !== 'custom') {
+            els.presetSelect.value = 'custom';
+          }
+          render();
+        });
+        el.addEventListener('change', () => {
+          if (['targetSpeed','launchAngle','preload','friction','spinBias','ramp','spinMode'].includes(el.id) && els.presetSelect.value !== 'custom') {
+            els.presetSelect.value = 'custom';
+          }
+          render();
+        });
+      });
+
+      setControls('straight_validation');
+      render();
+    </script>
+  </body>
+</html>
