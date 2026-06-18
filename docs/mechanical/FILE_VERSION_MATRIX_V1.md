@@ -27,3 +27,5 @@
 - 采购件确认后再进入“rev-A”口径
 | 文档 | MEASUREMENT_SHEET_6354_V1.md | v1 | 6354 实测接口记录表，用于锁外径/长度/端面孔距 |
 | 文档 | PRELOAD_COUPLING_MATRIX_V1.md | v1 | 包胶厚度与压紧量联动矩阵，一阶风险筛选 |
+| 文档 | SIM_VALIDATION_MAINLINE_V1.md | v1 | 仿真验证主线说明，明确当前推进口径转向仿真优先 |
+| 数据 | SIM_SENSITIVITY_MATRIX_V1.csv | v1 | 仿真敏感度矩阵，记录 friction/preload 对输出的影响 |
