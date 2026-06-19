@@ -784,24 +784,75 @@
       const grid = new THREE.GridHelper(6, 12, 0xdddddd, 0xe9e9e9); scene.add(grid);
       const launchBall = new THREE.Mesh(new THREE.SphereGeometry(BALL_RADIUS_M, 40, 40), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9, metalness: 0.0 }));
       launchBall.position.set(0, BALL_RADIUS_M, 0); scene.add(launchBall);
-      const rotorGroup = new THREE.Group(); scene.add(rotorGroup);
-      const motorGeometry = new THREE.CylinderGeometry(0.055, 0.055, 0.11, 32);
-      const motorMaterial = new THREE.MeshStandardMaterial({ color: 0x0e0807, roughness: 0.45 });
-      const orbitR = 0.18;
-      [-Math.PI/2, Math.PI/6, 5*Math.PI/6].forEach(angle => {
-        const motor = new THREE.Mesh(motorGeometry, motorMaterial);
-        motor.rotation.z = Math.PI/2;
-        motor.position.set(Math.cos(angle)*orbitR, BALL_RADIUS_M, Math.sin(angle)*orbitR);
-        motor.lookAt(0, BALL_RADIUS_M, 0);
-        rotorGroup.add(motor);
-      });
+      const launcherGroup = new THREE.Group(); scene.add(launcherGroup);
+      const shortRing = new THREE.Mesh(
+        new THREE.TorusGeometry(0.14, 0.022, 22, 72),
+        new THREE.MeshStandardMaterial({ color: 0xf1b7c4, roughness: 0.82 })
+      );
+      shortRing.rotation.y = Math.PI / 2;
+      shortRing.position.set(0, BALL_RADIUS_M, 0);
+      launcherGroup.add(shortRing);
+      const mainMountPlate = new THREE.Mesh(
+        new THREE.BoxGeometry(0.22, 0.018, 0.14),
+        new THREE.MeshStandardMaterial({ color: 0xf1b7c4, roughness: 0.82 })
+      );
+      mainMountPlate.position.set(0, 0.018, 0);
+      launcherGroup.add(mainMountPlate);
+      const motorShellMaterial = new THREE.MeshStandardMaterial({ color: 0x2f65d4, roughness: 0.35, metalness: 0.55 });
+      const motorCanMaterial = new THREE.MeshStandardMaterial({ color: 0xf3f4f6, roughness: 0.4, metalness: 0.15 });
+      const armMaterial = new THREE.MeshStandardMaterial({ color: 0xf1b7c4, roughness: 0.82 });
+      function createMotorAssembly(angle) {
+        const g = new THREE.Group();
+        const radial = new THREE.Vector3(Math.cos(angle), 0, Math.sin(angle));
+        const tangent = new THREE.Vector3(-Math.sin(angle), 0, Math.cos(angle));
+        const up = new THREE.Vector3(0, 1, 0);
+        const center = radial.clone().multiplyScalar(0.18).setY(BALL_RADIUS_M);
+        const bodyLen = 0.11;
+        const bodyR = 0.055;
+        const motorBody = new THREE.Group();
+        const can = new THREE.Mesh(new THREE.CylinderGeometry(bodyR * 0.74, bodyR * 0.74, bodyLen * 0.68, 28), motorCanMaterial);
+        const frontShell = new THREE.Mesh(new THREE.CylinderGeometry(bodyR, bodyR, bodyLen * 0.16, 28), motorShellMaterial);
+        const rearShell = frontShell.clone();
+        frontShell.position.y = bodyLen * 0.32;
+        rearShell.position.y = -bodyLen * 0.32;
+        motorBody.add(can, frontShell, rearShell);
+        motorBody.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), tangent.clone().normalize());
+        motorBody.position.copy(center);
+        g.add(motorBody);
+        const bracket = new THREE.Group();
+        const armBox = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.022, 0.05), armMaterial);
+        armBox.position.copy(center.clone().add(radial.clone().multiplyScalar(-0.06)).add(up.clone().multiplyScalar(-0.055)));
+        armBox.lookAt(center.clone().add(tangent));
+        bracket.add(armBox);
+        const neck = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.035, 0.028), armMaterial);
+        neck.position.copy(center.clone().add(radial.clone().multiplyScalar(-0.11)).add(up.clone().multiplyScalar(-0.02)));
+        neck.lookAt(center.clone().add(tangent));
+        bracket.add(neck);
+        const singleEndPlate = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.012, 0.075), armMaterial);
+        singleEndPlate.position.copy(center.clone().add(tangent.clone().multiplyScalar(-0.052)).add(radial.clone().multiplyScalar(-0.125)).add(up.clone().multiplyScalar(0.01)));
+        singleEndPlate.lookAt(center.clone().add(radial));
+        bracket.add(singleEndPlate);
+        const holeGeo = new THREE.CylinderGeometry(0.005, 0.005, 0.014, 14);
+        const holeMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.5 });
+        [[-0.018,-0.018],[0.018,-0.018],[-0.018,0.018],[0.018,0.018]].forEach(([dx,dz]) => {
+          const hole = new THREE.Mesh(holeGeo, holeMat);
+          hole.rotation.x = Math.PI / 2;
+          hole.position.copy(singleEndPlate.position.clone().add(new THREE.Vector3(dx, 0.008, dz)));
+          bracket.add(hole);
+        });
+        g.add(bracket);
+        return g;
+      }
+      [-Math.PI/2, Math.PI/6, 5*Math.PI/6].forEach(angle => launcherGroup.add(createMotorAssembly(angle)));
       const directionArrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, BALL_RADIUS_M + 0.01, 0), 0.45, 0x2556b6, 0.08, 0.04);
       scene.add(directionArrow);
       let line3D = null;
       let landingMarker = null;
+      let measuredMarker3D = null;
       function render3DTrajectory(result) {
         if (line3D) scene.remove(line3D);
         if (landingMarker) scene.remove(landingMarker);
+        if (measuredMarker3D) scene.remove(measuredMarker3D);
         const pts = result.traj.points.map(p => new THREE.Vector3(p.x * 0.08, p.z, p.y * 0.35));
         const geo = new THREE.BufferGeometry().setFromPoints(pts);
         const mat = new THREE.LineBasicMaterial({ color: 0x2556b6, linewidth: 2 });
@@ -809,6 +860,11 @@
         landingMarker = new THREE.Mesh(new THREE.SphereGeometry(0.018, 16, 16), new THREE.MeshStandardMaterial({ color: 0xf36440 }));
         landingMarker.position.set(result.traj.range * 0.08, 0.018, result.traj.lateral * 0.35);
         scene.add(landingMarker);
+        if (result.state.measuredRange !== null || result.state.measuredLateral !== null) {
+          measuredMarker3D = new THREE.Mesh(new THREE.SphereGeometry(0.018, 16, 16), new THREE.MeshStandardMaterial({ color: 0x0e0807 }));
+          measuredMarker3D.position.set((result.state.measuredRange ?? result.traj.range) * 0.08, 0.02, (result.state.measuredLateral ?? 0) * 0.35);
+          scene.add(measuredMarker3D);
+        }
       }
       function resize3D() {
         const rect = els.threeStage.getBoundingClientRect();
