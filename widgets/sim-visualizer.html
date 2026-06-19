@@ -846,13 +846,50 @@
       [-Math.PI/2, Math.PI/6, 5*Math.PI/6].forEach(angle => launcherGroup.add(createMotorAssembly(angle)));
       const directionArrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, BALL_RADIUS_M + 0.01, 0), 0.45, 0x2556b6, 0.08, 0.04);
       scene.add(directionArrow);
+      const arcGroup = new THREE.Group();
+      scene.add(arcGroup);
+      function buildLaunchArc180() {
+        while (arcGroup.children.length) arcGroup.remove(arcGroup.children[0]);
+        const arcRadius = 1.15;
+        const arcY = 0.02;
+        const points = [];
+        for (let i = 0; i <= 72; i++) {
+          const t = -Math.PI / 2 + (Math.PI * i / 72);
+          points.push(new THREE.Vector3(Math.cos(t) * arcRadius, arcY, Math.sin(t) * arcRadius));
+        }
+        const arcLine = new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints(points),
+          new THREE.LineBasicMaterial({ color: 0xf36440, transparent: true, opacity: 0.85 })
+        );
+        arcGroup.add(arcLine);
+        [-90, -45, 0, 45, 90].forEach(deg => {
+          const r = deg * Math.PI / 180;
+          const ray = new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints([
+              new THREE.Vector3(0, arcY, 0),
+              new THREE.Vector3(Math.cos(r) * arcRadius, arcY, Math.sin(r) * arcRadius)
+            ]),
+            new THREE.LineBasicMaterial({ color: 0xf1b7c4, transparent: true, opacity: 0.55 })
+          );
+          arcGroup.add(ray);
+          const tick = new THREE.Mesh(
+            new THREE.SphereGeometry(0.012, 10, 10),
+            new THREE.MeshStandardMaterial({ color: 0xf36440, roughness: 0.5 })
+          );
+          tick.position.set(Math.cos(r) * arcRadius, arcY, Math.sin(r) * arcRadius);
+          arcGroup.add(tick);
+        });
+      }
+      buildLaunchArc180();
       let line3D = null;
       let landingMarker = null;
       let measuredMarker3D = null;
+      let launchHeadingMarker = null;
       function render3DTrajectory(result) {
         if (line3D) scene.remove(line3D);
         if (landingMarker) scene.remove(landingMarker);
         if (measuredMarker3D) scene.remove(measuredMarker3D);
+        if (launchHeadingMarker) scene.remove(launchHeadingMarker);
         const pts = result.traj.points.map(p => new THREE.Vector3(p.x * 0.08, p.z, p.y * 0.35));
         const geo = new THREE.BufferGeometry().setFromPoints(pts);
         const mat = new THREE.LineBasicMaterial({ color: 0x2556b6, linewidth: 2 });
@@ -865,6 +902,16 @@
           measuredMarker3D.position.set((result.state.measuredRange ?? result.traj.range) * 0.08, 0.02, (result.state.measuredLateral ?? 0) * 0.35);
           scene.add(measuredMarker3D);
         }
+        const headingAngle = Math.atan2(result.traj.lateral, Math.max(result.traj.range, 1e-6));
+        const headingLen = 0.95;
+        launchHeadingMarker = new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(0, 0.025, 0),
+            new THREE.Vector3(Math.cos(headingAngle) * headingLen, 0.025, Math.sin(headingAngle) * headingLen)
+          ]),
+          new THREE.LineBasicMaterial({ color: 0x2556b6, transparent: true, opacity: 0.7 })
+        );
+        scene.add(launchHeadingMarker);
       }
       function resize3D() {
         const rect = els.threeStage.getBoundingClientRect();
