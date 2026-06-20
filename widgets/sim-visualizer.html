@@ -340,12 +340,12 @@
                 </select>
               </div>
               <div class="field">
-                <label><span>目标出球速度</span><span class="meta"><span id="targetSpeedValue">15.0</span> m/s</span></label>
-                <input id="targetSpeed" type="range" min="10" max="20" step="0.1" value="15.0" />
+                <label><span>目标出球速度</span><span class="meta"><span id="targetSpeedValue">24.0</span> m/s</span></label>
+                <input id="targetSpeed" type="range" min="12" max="32" step="0.1" value="24.0" />
               </div>
               <div class="field">
-                <label><span>发射角</span><span class="meta"><span id="angleValue">10</span>°</span></label>
-                <input id="launchAngle" type="range" min="6" max="20" step="1" value="10" />
+                <label><span>发射角</span><span class="meta"><span id="angleValue">16</span>°</span></label>
+                <input id="launchAngle" type="range" min="6" max="28" step="1" value="16" />
               </div>
               <div class="field">
                 <label><span>preload</span><span class="meta"><span id="preloadValue">10</span> mm</span></label>
@@ -357,7 +357,7 @@
               </div>
               <div class="field">
                 <label><span>spin bias</span><span class="meta"><span id="spinBiasValue">0</span> rpm</span></label>
-                <input id="spinBias" type="range" min="0" max="700" step="10" value="0" />
+                <input id="spinBias" type="range" min="0" max="1200" step="10" value="0" />
               </div>
               <div class="field">
                 <label><span>ramp</span><span class="meta"><span id="rampValue">5</span> s</span></label>
@@ -372,6 +372,10 @@
                   <option value="LEFT_CURVE">LEFT_CURVE</option>
                   <option value="RIGHT_CURVE">RIGHT_CURVE</option>
                 </select>
+              </div>
+              <div class="field">
+                <label><span>180° 发射方位</span><span class="meta"><span id="headingValue">0</span>°</span></label>
+                <input id="headingDeg" type="range" min="-90" max="90" step="1" value="0" />
               </div>
             </div>
           </section>
@@ -454,13 +458,13 @@
       const BALL_MASS_KG = 0.43;
       const BALL_AREA_M2 = Math.PI * BALL_RADIUS_M * BALL_RADIUS_M;
       const RPM_MIN = 500;
-      const RPM_MAX = 3000;
+      const RPM_MAX = 6500;
       const CURRENT_CAP_A = 120;
 
       const PRESETS = {
-        straight_validation: { targetSpeed: 15.0, launchAngle: 10, spinMode: 'STRAIGHT', spinBias: 0, preload: 10, friction: 0.65, ramp: 5 },
-        light_curve_validation: { targetSpeed: 15.0, launchAngle: 12, spinMode: 'LEFT_CURVE', spinBias: 250, preload: 10, friction: 0.65, ramp: 5 },
-        standard_curve_validation: { targetSpeed: 16.5, launchAngle: 14, spinMode: 'LEFT_CURVE', spinBias: 450, preload: 10, friction: 0.65, ramp: 6 },
+        straight_validation: { targetSpeed: 24.0, launchAngle: 16, spinMode: 'STRAIGHT', spinBias: 0, preload: 10, friction: 0.70, ramp: 5, headingDeg: 0 },
+        light_curve_validation: { targetSpeed: 26.0, launchAngle: 18, spinMode: 'LEFT_CURVE', spinBias: 450, preload: 10, friction: 0.72, ramp: 5, headingDeg: -25 },
+        standard_curve_validation: { targetSpeed: 28.0, launchAngle: 20, spinMode: 'LEFT_CURVE', spinBias: 700, preload: 11, friction: 0.74, ramp: 6, headingDeg: 35 },
       };
 
       const els = {
@@ -480,6 +484,8 @@
         rampValue: document.getElementById('rampValue'),
         spinMode: document.getElementById('spinMode'),
         spinModeLabel: document.getElementById('spinModeLabel'),
+        headingDeg: document.getElementById('headingDeg'),
+        headingValue: document.getElementById('headingValue'),
         measuredLaunch: document.getElementById('measuredLaunch'),
         measuredRange: document.getElementById('measuredRange'),
         measuredLateral: document.getElementById('measuredLateral'),
@@ -596,6 +602,7 @@
           spinBias: parseFloat(els.spinBias.value),
           ramp: parseFloat(els.ramp.value),
           spinMode: els.spinMode.value,
+          headingDeg: parseFloat(els.headingDeg.value),
           measuredLaunch: numOrNull(els.measuredLaunch.value),
           measuredRange: numOrNull(els.measuredRange.value),
           measuredLateral: numOrNull(els.measuredLateral.value),
@@ -613,6 +620,7 @@
         els.spinBias.value = preset.spinBias;
         els.ramp.value = preset.ramp;
         els.spinMode.value = preset.spinMode;
+        els.headingDeg.value = preset.headingDeg ?? 0;
       }
 
       function syncLabels(state) {
@@ -624,14 +632,15 @@
         els.spinBiasValue.textContent = fmt(state.spinBias, 0);
         els.rampValue.textContent = fmt(state.ramp, 0);
         els.spinModeLabel.textContent = state.spinMode;
+        els.headingValue.textContent = fmt(state.headingDeg, 0);
       }
 
       function renderMetrics(result) {
         const risk = result.risk;
         const cards = [
           ['launch speed', `${fmt(result.launch.launchSpeed, 2)} m/s`, '当前仿真估算出球速度'],
-          ['range', `${fmt(result.traj.range, 1)} m`, '前向落点距离'],
-          ['lateral', `${fmt(result.traj.lateral, 2)} m`, '横向弧线偏移'],
+          ['range', `${fmt(result.traj.range, 1)} m`, '前向落点距离，目标向 50m 提升'],
+          ['heading', `${fmt(result.state.headingDeg, 0)}°`, '180° 发射弧线内的当前方位'],
           ['risk', risk.text, '电流/加速风险等级'],
         ];
         els.metrics.innerHTML = cards.map(([k, v, s], i) => `
@@ -746,6 +755,7 @@
         if (!hints.length) {
           hints.push('先跑 straight，再跑 light_curve，再上 standard_curve，不要一上来高 preload + 高 spin bias。');
           hints.push('如果准备进首轮实测，建议先把 friction 锁在 0.55~0.65、preload 锁在 8~10mm。');
+          hints.push('3D 仿真后续按“由简入繁”推进：先方向与射程，再加护罩、维护空间、碰撞与控制窗口。');
         }
         els.hintList.innerHTML = hints.map(t => `<div class="hint">${t}</div>`).join('');
       }
@@ -785,28 +795,26 @@
       const launchBall = new THREE.Mesh(new THREE.SphereGeometry(BALL_RADIUS_M, 40, 40), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9, metalness: 0.0 }));
       launchBall.position.set(0, BALL_RADIUS_M, 0); scene.add(launchBall);
       const launcherGroup = new THREE.Group(); scene.add(launcherGroup);
-      const shortRing = new THREE.Mesh(
-        new THREE.TorusGeometry(0.14, 0.022, 22, 72),
-        new THREE.MeshStandardMaterial({ color: 0xf1b7c4, roughness: 0.82 })
-      );
-      shortRing.rotation.y = Math.PI / 2;
-      shortRing.position.set(0, BALL_RADIUS_M, 0);
-      launcherGroup.add(shortRing);
+      const tubeMaterial = new THREE.MeshStandardMaterial({ color: 0xd9dde4, roughness: 0.72, metalness: 0.08, side: THREE.DoubleSide });
+      const tubeOuter = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.34, 48, 1, true), tubeMaterial);
+      tubeOuter.rotation.z = Math.PI / 2;
+      tubeOuter.position.set(0, BALL_RADIUS_M, 0);
+      launcherGroup.add(tubeOuter);
       const mainMountPlate = new THREE.Mesh(
-        new THREE.BoxGeometry(0.22, 0.018, 0.14),
-        new THREE.MeshStandardMaterial({ color: 0xf1b7c4, roughness: 0.82 })
+        new THREE.BoxGeometry(0.26, 0.016, 0.16),
+        new THREE.MeshStandardMaterial({ color: 0xbfc7d2, roughness: 0.88 })
       );
-      mainMountPlate.position.set(0, 0.018, 0);
+      mainMountPlate.position.set(0, 0.016, 0);
       launcherGroup.add(mainMountPlate);
       const motorShellMaterial = new THREE.MeshStandardMaterial({ color: 0x2f65d4, roughness: 0.35, metalness: 0.55 });
       const motorCanMaterial = new THREE.MeshStandardMaterial({ color: 0xf3f4f6, roughness: 0.4, metalness: 0.15 });
-      const armMaterial = new THREE.MeshStandardMaterial({ color: 0xf1b7c4, roughness: 0.82 });
+      const armMaterial = new THREE.MeshStandardMaterial({ color: 0xbfc7d2, roughness: 0.82 });
       function createMotorAssembly(angle) {
         const g = new THREE.Group();
         const radial = new THREE.Vector3(Math.cos(angle), 0, Math.sin(angle));
         const tangent = new THREE.Vector3(-Math.sin(angle), 0, Math.cos(angle));
         const up = new THREE.Vector3(0, 1, 0);
-        const center = radial.clone().multiplyScalar(0.18).setY(BALL_RADIUS_M);
+        const center = radial.clone().multiplyScalar(0.153).setY(BALL_RADIUS_M);
         const bodyLen = 0.11;
         const bodyR = 0.055;
         const motorBody = new THREE.Group();
@@ -819,28 +827,26 @@
         motorBody.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), tangent.clone().normalize());
         motorBody.position.copy(center);
         g.add(motorBody);
-        const bracket = new THREE.Group();
-        const armBox = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.022, 0.05), armMaterial);
-        armBox.position.copy(center.clone().add(radial.clone().multiplyScalar(-0.06)).add(up.clone().multiplyScalar(-0.055)));
-        armBox.lookAt(center.clone().add(tangent));
-        bracket.add(armBox);
-        const neck = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.035, 0.028), armMaterial);
-        neck.position.copy(center.clone().add(radial.clone().multiplyScalar(-0.11)).add(up.clone().multiplyScalar(-0.02)));
+        const embedSaddle = new THREE.Mesh(new THREE.BoxGeometry(0.068, 0.028, 0.07), armMaterial);
+        embedSaddle.position.copy(center.clone().add(radial.clone().multiplyScalar(-0.032)).add(up.clone().multiplyScalar(-0.048)));
+        embedSaddle.lookAt(center.clone().add(tangent));
+        g.add(embedSaddle);
+        const neck = new THREE.Mesh(new THREE.BoxGeometry(0.095, 0.034, 0.03), armMaterial);
+        neck.position.copy(center.clone().add(radial.clone().multiplyScalar(-0.088)).add(up.clone().multiplyScalar(-0.026)));
         neck.lookAt(center.clone().add(tangent));
-        bracket.add(neck);
+        g.add(neck);
         const singleEndPlate = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.012, 0.075), armMaterial);
-        singleEndPlate.position.copy(center.clone().add(tangent.clone().multiplyScalar(-0.052)).add(radial.clone().multiplyScalar(-0.125)).add(up.clone().multiplyScalar(0.01)));
+        singleEndPlate.position.copy(center.clone().add(tangent.clone().multiplyScalar(-0.052)).add(radial.clone().multiplyScalar(-0.125)).add(up.clone().multiplyScalar(0.012)));
         singleEndPlate.lookAt(center.clone().add(radial));
-        bracket.add(singleEndPlate);
+        g.add(singleEndPlate);
         const holeGeo = new THREE.CylinderGeometry(0.005, 0.005, 0.014, 14);
         const holeMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.5 });
         [[-0.018,-0.018],[0.018,-0.018],[-0.018,0.018],[0.018,0.018]].forEach(([dx,dz]) => {
           const hole = new THREE.Mesh(holeGeo, holeMat);
           hole.rotation.x = Math.PI / 2;
           hole.position.copy(singleEndPlate.position.clone().add(new THREE.Vector3(dx, 0.008, dz)));
-          bracket.add(hole);
+          g.add(hole);
         });
-        g.add(bracket);
         return g;
       }
       [-Math.PI/2, Math.PI/6, 5*Math.PI/6].forEach(angle => launcherGroup.add(createMotorAssembly(angle)));
@@ -890,20 +896,28 @@
         if (landingMarker) scene.remove(landingMarker);
         if (measuredMarker3D) scene.remove(measuredMarker3D);
         if (launchHeadingMarker) scene.remove(launchHeadingMarker);
-        const pts = result.traj.points.map(p => new THREE.Vector3(p.x * 0.08, p.z, p.y * 0.35));
+        const headingRad = (result.state.headingDeg || 0) * Math.PI / 180;
+        const pts = result.traj.points.map(p => new THREE.Vector3(
+          p.x * 0.08 * Math.cos(headingRad) - p.y * 0.35 * Math.sin(headingRad),
+          p.z,
+          p.x * 0.08 * Math.sin(headingRad) + p.y * 0.35 * Math.cos(headingRad)
+        ));
         const geo = new THREE.BufferGeometry().setFromPoints(pts);
         const mat = new THREE.LineBasicMaterial({ color: 0x2556b6, linewidth: 2 });
         line3D = new THREE.Line(geo, mat); scene.add(line3D);
         landingMarker = new THREE.Mesh(new THREE.SphereGeometry(0.018, 16, 16), new THREE.MeshStandardMaterial({ color: 0xf36440 }));
-        landingMarker.position.set(result.traj.range * 0.08, 0.018, result.traj.lateral * 0.35);
+        const headingRad2 = (result.state.headingDeg || 0) * Math.PI / 180;
+        landingMarker.position.set(result.traj.range * 0.08 * Math.cos(headingRad2) - result.traj.lateral * 0.35 * Math.sin(headingRad2), 0.018, result.traj.range * 0.08 * Math.sin(headingRad2) + result.traj.lateral * 0.35 * Math.cos(headingRad2));
         scene.add(landingMarker);
         if (result.state.measuredRange !== null || result.state.measuredLateral !== null) {
           measuredMarker3D = new THREE.Mesh(new THREE.SphereGeometry(0.018, 16, 16), new THREE.MeshStandardMaterial({ color: 0x0e0807 }));
-          measuredMarker3D.position.set((result.state.measuredRange ?? result.traj.range) * 0.08, 0.02, (result.state.measuredLateral ?? 0) * 0.35);
+          const mr = (result.state.measuredRange ?? result.traj.range) * 0.08;
+          const ml = (result.state.measuredLateral ?? 0) * 0.35;
+          measuredMarker3D.position.set(mr * Math.cos(headingRad2) - ml * Math.sin(headingRad2), 0.02, mr * Math.sin(headingRad2) + ml * Math.cos(headingRad2));
           scene.add(measuredMarker3D);
         }
-        const headingAngle = Math.atan2(result.traj.lateral, Math.max(result.traj.range, 1e-6));
-        const headingLen = 0.95;
+        const headingAngle = ((result.state.headingDeg || 0) * Math.PI / 180) + Math.atan2(result.traj.lateral, Math.max(result.traj.range, 1e-6));
+        const headingLen = 1.05;
         launchHeadingMarker = new THREE.Line(
           new THREE.BufferGeometry().setFromPoints([
             new THREE.Vector3(0, 0.025, 0),
@@ -944,9 +958,9 @@
       }
 
       els.presetSelect.addEventListener('change', (e) => { if (e.target.value !== 'custom') setControls(e.target.value); renderAll(); });
-      [els.targetSpeed, els.launchAngle, els.preload, els.friction, els.spinBias, els.ramp, els.spinMode, els.measuredLaunch, els.measuredRange, els.measuredLateral, els.measuredCurrent].forEach(el => {
-        el.addEventListener('input', () => { if (['targetSpeed','launchAngle','preload','friction','spinBias','ramp','spinMode'].includes(el.id) && els.presetSelect.value !== 'custom') els.presetSelect.value = 'custom'; renderAll(); });
-        el.addEventListener('change', () => { if (['targetSpeed','launchAngle','preload','friction','spinBias','ramp','spinMode'].includes(el.id) && els.presetSelect.value !== 'custom') els.presetSelect.value = 'custom'; renderAll(); });
+      [els.targetSpeed, els.launchAngle, els.preload, els.friction, els.spinBias, els.ramp, els.spinMode, els.headingDeg, els.measuredLaunch, els.measuredRange, els.measuredLateral, els.measuredCurrent].forEach(el => {
+        el.addEventListener('input', () => { if (['targetSpeed','launchAngle','preload','friction','spinBias','ramp','spinMode','headingDeg'].includes(el.id) && els.presetSelect.value !== 'custom') els.presetSelect.value = 'custom'; renderAll(); });
+        el.addEventListener('change', () => { if (['targetSpeed','launchAngle','preload','friction','spinBias','ramp','spinMode','headingDeg'].includes(el.id) && els.presetSelect.value !== 'custom') els.presetSelect.value = 'custom'; renderAll(); });
       });
 
       setControls('straight_validation');
