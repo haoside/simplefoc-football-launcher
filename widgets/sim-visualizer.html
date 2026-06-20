@@ -419,7 +419,7 @@
           <div class="viz-grid">
             <section class="card">
               <h3>2D 轨迹与落点</h3>
-              <p>横轴前向距离，纵轴高度。右上小图看横向偏移。</p>
+              <p>横轴前向距离（圆管出口方向），纵轴高度。右上小图看横向偏移。</p>
               <svg id="trajectorySvg" viewBox="0 0 760 360" aria-label="trajectory"></svg>
             </section>
             <section class="card">
@@ -640,7 +640,7 @@
         const cards = [
           ['launch speed', `${fmt(result.launch.launchSpeed, 2)} m/s`, '当前仿真估算出球速度'],
           ['range', `${fmt(result.traj.range, 1)} m`, '前向落点距离，目标向 50m 提升'],
-          ['heading', `${fmt(result.state.headingDeg, 0)}°`, '180° 发射弧线内的当前方位'],
+          ['heading', `${fmt(result.state.headingDeg, 0)}°`, '以圆管出口为基准的 180° 发射方位'],
           ['risk', risk.text, '电流/加速风险等级'],
         ];
         els.metrics.innerHTML = cards.map(([k, v, s], i) => `
@@ -675,6 +675,7 @@
           <line x1="${pad}" y1="${pad}" x2="${pad}" y2="${h - pad}" stroke="rgba(0,0,0,0.16)" />
           <path d="${path}" fill="none" stroke="#2556b6" stroke-width="4" stroke-linecap="round" />
           <circle cx="${launch.x}" cy="${launch.y}" r="5" fill="#0e0807" />
+          <text x="${launch.x + 8}" y="${launch.y - 8}" font-size="11" fill="rgba(14,8,7,0.48)">圆管出口</text>
           <circle cx="${landing.x}" cy="${landing.y}" r="6" fill="#f36440" />
           ${measuredMark}
           <rect x="${insetX}" y="${insetY}" width="${insetW}" height="${insetH}" rx="12" fill="#f8f6f3" stroke="rgba(0,0,0,0.08)" />
@@ -786,7 +787,7 @@
       els.threeStage.appendChild(renderer.domElement);
       const controls = new OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
-      controls.target.set(0.25, 0.12, 0);
+      controls.target.set(0.22, 0.11, 0);
       const hemi = new THREE.HemisphereLight(0xffffff, 0x999999, 1.3); scene.add(hemi);
       const dir = new THREE.DirectionalLight(0xffffff, 1.1); dir.position.set(2, 3, 2); scene.add(dir);
       const floor = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 }));
@@ -850,18 +851,19 @@
         return g;
       }
       [-Math.PI/2, Math.PI/6, 5*Math.PI/6].forEach(angle => launcherGroup.add(createMotorAssembly(angle)));
-      const directionArrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, BALL_RADIUS_M + 0.01, 0), 0.45, 0x2556b6, 0.08, 0.04);
+      const tubeExit = new THREE.Vector3(0.17, BALL_RADIUS_M, 0);
+      const directionArrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), tubeExit.clone(), 0.45, 0x2556b6, 0.08, 0.04);
       scene.add(directionArrow);
       const arcGroup = new THREE.Group();
       scene.add(arcGroup);
       function buildLaunchArc180() {
         while (arcGroup.children.length) arcGroup.remove(arcGroup.children[0]);
-        const arcRadius = 1.15;
+        const arcRadius = 1.05;
         const arcY = 0.02;
         const points = [];
         for (let i = 0; i <= 72; i++) {
           const t = -Math.PI / 2 + (Math.PI * i / 72);
-          points.push(new THREE.Vector3(Math.cos(t) * arcRadius, arcY, Math.sin(t) * arcRadius));
+          points.push(new THREE.Vector3(tubeExit.x + Math.cos(t) * arcRadius, arcY, tubeExit.z + Math.sin(t) * arcRadius));
         }
         const arcLine = new THREE.Line(
           new THREE.BufferGeometry().setFromPoints(points),
@@ -872,17 +874,17 @@
           const r = deg * Math.PI / 180;
           const ray = new THREE.Line(
             new THREE.BufferGeometry().setFromPoints([
-              new THREE.Vector3(0, arcY, 0),
-              new THREE.Vector3(Math.cos(r) * arcRadius, arcY, Math.sin(r) * arcRadius)
+              new THREE.Vector3(tubeExit.x, arcY, tubeExit.z),
+              new THREE.Vector3(tubeExit.x + Math.cos(r) * arcRadius, arcY, tubeExit.z + Math.sin(r) * arcRadius)
             ]),
-            new THREE.LineBasicMaterial({ color: 0xf1b7c4, transparent: true, opacity: 0.55 })
+            new THREE.LineBasicMaterial({ color: 0xbfc7d2, transparent: true, opacity: 0.55 })
           );
           arcGroup.add(ray);
           const tick = new THREE.Mesh(
             new THREE.SphereGeometry(0.012, 10, 10),
             new THREE.MeshStandardMaterial({ color: 0xf36440, roughness: 0.5 })
           );
-          tick.position.set(Math.cos(r) * arcRadius, arcY, Math.sin(r) * arcRadius);
+          tick.position.set(tubeExit.x + Math.cos(r) * arcRadius, arcY, tubeExit.z + Math.sin(r) * arcRadius);
           arcGroup.add(tick);
         });
       }
@@ -898,30 +900,30 @@
         if (launchHeadingMarker) scene.remove(launchHeadingMarker);
         const headingRad = (result.state.headingDeg || 0) * Math.PI / 180;
         const pts = result.traj.points.map(p => new THREE.Vector3(
-          p.x * 0.08 * Math.cos(headingRad) - p.y * 0.35 * Math.sin(headingRad),
+          tubeExit.x + p.x * 0.08 * Math.cos(headingRad) - p.y * 0.35 * Math.sin(headingRad),
           p.z,
-          p.x * 0.08 * Math.sin(headingRad) + p.y * 0.35 * Math.cos(headingRad)
+          tubeExit.z + p.x * 0.08 * Math.sin(headingRad) + p.y * 0.35 * Math.cos(headingRad)
         ));
         const geo = new THREE.BufferGeometry().setFromPoints(pts);
         const mat = new THREE.LineBasicMaterial({ color: 0x2556b6, linewidth: 2 });
         line3D = new THREE.Line(geo, mat); scene.add(line3D);
         landingMarker = new THREE.Mesh(new THREE.SphereGeometry(0.018, 16, 16), new THREE.MeshStandardMaterial({ color: 0xf36440 }));
         const headingRad2 = (result.state.headingDeg || 0) * Math.PI / 180;
-        landingMarker.position.set(result.traj.range * 0.08 * Math.cos(headingRad2) - result.traj.lateral * 0.35 * Math.sin(headingRad2), 0.018, result.traj.range * 0.08 * Math.sin(headingRad2) + result.traj.lateral * 0.35 * Math.cos(headingRad2));
+        landingMarker.position.set(tubeExit.x + result.traj.range * 0.08 * Math.cos(headingRad2) - result.traj.lateral * 0.35 * Math.sin(headingRad2), 0.018, tubeExit.z + result.traj.range * 0.08 * Math.sin(headingRad2) + result.traj.lateral * 0.35 * Math.cos(headingRad2));
         scene.add(landingMarker);
         if (result.state.measuredRange !== null || result.state.measuredLateral !== null) {
           measuredMarker3D = new THREE.Mesh(new THREE.SphereGeometry(0.018, 16, 16), new THREE.MeshStandardMaterial({ color: 0x0e0807 }));
           const mr = (result.state.measuredRange ?? result.traj.range) * 0.08;
           const ml = (result.state.measuredLateral ?? 0) * 0.35;
-          measuredMarker3D.position.set(mr * Math.cos(headingRad2) - ml * Math.sin(headingRad2), 0.02, mr * Math.sin(headingRad2) + ml * Math.cos(headingRad2));
+          measuredMarker3D.position.set(tubeExit.x + mr * Math.cos(headingRad2) - ml * Math.sin(headingRad2), 0.02, tubeExit.z + mr * Math.sin(headingRad2) + ml * Math.cos(headingRad2));
           scene.add(measuredMarker3D);
         }
         const headingAngle = ((result.state.headingDeg || 0) * Math.PI / 180) + Math.atan2(result.traj.lateral, Math.max(result.traj.range, 1e-6));
         const headingLen = 1.05;
         launchHeadingMarker = new THREE.Line(
           new THREE.BufferGeometry().setFromPoints([
-            new THREE.Vector3(0, 0.025, 0),
-            new THREE.Vector3(Math.cos(headingAngle) * headingLen, 0.025, Math.sin(headingAngle) * headingLen)
+            new THREE.Vector3(tubeExit.x, 0.025, tubeExit.z),
+            new THREE.Vector3(tubeExit.x + Math.cos(headingAngle) * headingLen, 0.025, tubeExit.z + Math.sin(headingAngle) * headingLen)
           ]),
           new THREE.LineBasicMaterial({ color: 0x2556b6, transparent: true, opacity: 0.7 })
         );
