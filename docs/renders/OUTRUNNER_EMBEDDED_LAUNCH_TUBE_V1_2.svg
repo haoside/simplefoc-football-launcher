@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1000" viewBox="0 0 1500 1000">
+  <defs>
+    <style>
+      .title{font:700 28px Inter,'PingFang SC','Microsoft YaHei',sans-serif;fill:#111827}.sub{font:500 14px Inter,'PingFang SC','Microsoft YaHei',sans-serif;fill:#6b7280}.label{font:700 17px Inter,'PingFang SC','Microsoft YaHei',sans-serif;fill:#374151}.small{font:500 13px Inter,'PingFang SC','Microsoft YaHei',sans-serif;fill:#4b5563}.tiny{font:500 12px Inter,'PingFang SC','Microsoft YaHei',sans-serif;fill:#6b7280}
+      .tube{fill:#ffe45c;stroke:#ca8a04;stroke-width:2.2}.tube2{fill:#fff3a3;stroke:#ca8a04;stroke-width:1.7}.motor{fill:#dbeafe;stroke:#1d4ed8;stroke-width:2}.metal{fill:#f59e0b;stroke:#b45309;stroke-width:1.8}.mount{fill:#fbbf24;stroke:#92400e;stroke-width:1.5}.ball{fill:#22c55e;opacity:.35;stroke:#15803d;stroke-width:1.4}.patch{fill:#facc15;stroke:#a16207;stroke-width:1}.axis{stroke:#94a3b8;stroke-width:1.2;stroke-dasharray:8 6}.guide{stroke:#9ca3af;stroke-width:1;stroke-dasharray:4 4}.dim{stroke:#111827;stroke-width:1.2;marker-start:url(#arrow);marker-end:url(#arrow)}.danger{fill:#fee2e2;stroke:#dc2626;stroke-width:1.3}.arc{fill:none;stroke:#22c55e;stroke-width:18;stroke-linecap:round;opacity:.28}
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="#111827"/></marker>
+  </defs>
+  <rect width="1500" height="1000" fill="#fffdf2"/>
+  <text x="48" y="54" class="title">OUTRUNNER EMBEDDED LAUNCH TUBE v1.2</text>
+  <text x="48" y="82" class="sub">去独立圆环 · 3 外转子嵌入发射圆管 · 电机翻转 180° · 单端 45×45 固定 · 50m / 180° 弧线进入仿真验证</text>
+
+  <text x="90" y="130" class="label">正视：3 电机嵌入圆管</text>
+  <g transform="translate(305,365)">
+    <line x1="-230" y1="0" x2="230" y2="0" class="axis"/><line x1="0" y1="-230" x2="0" y2="230" class="axis"/>
+    <circle r="126" class="tube"/><circle r="116" fill="#111" opacity=".82" stroke="#ca8a04" stroke-width="1.7"/>
+    <circle r="110" fill="none" stroke="#fef08a" stroke-width="1.2" opacity=".7"/>
+    <g transform="rotate(-90)"><rect x="-40" y="106" width="80" height="84" rx="14" class="tube2"/><rect x="-32" y="132" width="64" height="58" rx="12" class="motor"/><rect x="-46" y="122" width="92" height="12" rx="4" class="metal"/><rect x="-46" y="190" width="92" height="10" rx="4" class="metal"/><rect x="-24" y="107" width="48" height="8" rx="3" class="patch"/></g>
+    <g transform="rotate(30)"><rect x="-40" y="106" width="80" height="84" rx="14" class="tube2"/><rect x="-32" y="132" width="64" height="58" rx="12" class="motor"/><rect x="-46" y="122" width="92" height="12" rx="4" class="metal"/><rect x="-46" y="190" width="92" height="10" rx="4" class="metal"/><rect x="-24" y="107" width="48" height="8" rx="3" class="patch"/></g>
+    <g transform="rotate(150)"><rect x="-40" y="106" width="80" height="84" rx="14" class="tube2"/><rect x="-32" y="132" width="64" height="58" rx="12" class="motor"/><rect x="-46" y="122" width="92" height="12" rx="4" class="metal"/><rect x="-46" y="190" width="92" height="10" rx="4" class="metal"/><rect x="-24" y="107" width="48" height="8" rx="3" class="patch"/></g>
+    <text x="-98" y="-150" class="small">圆管本体承载，不再外置粉色环</text><line x1="-20" y1="-142" x2="-88" y2="-92" class="guide"/>
+    <text x="54" y="200" class="small">外转子嵌入管壁</text><line x1="52" y1="190" x2="14" y2="150" class="guide"/>
+  </g>
+
+  <text x="560" y="130" class="label">侧视：电机翻转 180° + 单端安装</text>
+  <g transform="translate(745,365)">
+    <line x1="-250" y1="0" x2="250" y2="0" class="axis"/><line x1="0" y1="-200" x2="0" y2="200" class="axis"/>
+    <rect x="-95" y="-126" width="190" height="252" rx="18" class="tube"/><rect x="-95" y="-116" width="190" height="232" rx="14" fill="#111" opacity=".82" stroke="#ca8a04" stroke-width="1.4"/>
+    <rect x="-98" y="-44" width="196" height="88" rx="14" class="tube2"/><rect x="-28" y="-32" width="56" height="64" rx="12" class="motor"/>
+    <rect x="28" y="-44" width="8" height="88" rx="3" class="metal"/><rect x="-48" y="-44" width="12" height="88" rx="3" class="metal"/>
+    <path d="M-58 -70 L-20 -70 L-20 -48 L-58 -48 Z" class="mount"/><path d="M20 48 L58 48 L58 70 L20 70 Z" class="mount"/>
+    <text x="54" y="-62" class="small">固定/线束端翻转 180°</text><line x1="54" y1="-56" x2="32" y2="-30" class="guide"/>
+    <rect x="-43" y="142" width="86" height="10" rx="4" class="mount"/>
+    <circle cx="-22.5" cy="147" r="3" fill="#fff" stroke="#92400e"/><circle cx="22.5" cy="147" r="3" fill="#fff" stroke="#92400e"/>
+    <circle cx="-22.5" cy="192" r="3" fill="#fff" stroke="#92400e"/><circle cx="22.5" cy="192" r="3" fill="#fff" stroke="#92400e"/>
+    <line x1="-22.5" y1="147" x2="22.5" y2="147" class="dim"/><text x="-13" y="137" class="small">45</text>
+    <line x1="60" y1="147" x2="60" y2="192" class="dim"/><text x="68" y="174" class="small">45</text>
+    <text x="80" y="166" class="small">单端 4 螺丝 45×45</text><line x1="78" y1="158" x2="42" y2="147" class="guide"/>
+  </g>
+
+  <text x="1030" y="130" class="label">轨迹目标：50m / 180° 可控</text>
+  <g transform="translate(1120,360)">
+    <rect x="-135" y="70" width="270" height="18" rx="8" class="tube"/>
+    <circle cx="0" cy="79" r="26" class="ball"/>
+    <path d="M-120 65 C -30 -90, 110 -90, 160 25" class="arc"/>
+    <path d="M-120 65 C -20 -10, 100 -10, 170 60" fill="none" stroke="#22c55e" stroke-width="10" stroke-linecap="round" opacity=".22"/>
+    <path d="M-120 65 C -40 130, 80 130, 165 88" fill="none" stroke="#22c55e" stroke-width="10" stroke-linecap="round" opacity=".18"/>
+    <text x="-116" y="-112" class="small">180° 弧线控制 = 三电机差速 + 发射角 + 测速反馈</text>
+    <text x="-116" y="-82" class="small">50m = 初速/RPM/摩擦/接触时间共同验证</text>
+    <text x="-116" y="142" class="tiny">注意：静态 CAD 只表达结构空间，性能由仿真和台架验证闭环。</text>
+  </g>
+
+  <g transform="translate(70,710)">
+    <text x="0" y="0" class="label">本次更新结论</text>
+    <text x="0" y="34" class="small">1. 去掉独立粉色圆环：发射圆管成为主承载结构。</text>
+    <text x="0" y="64" class="small">2. 三个 6354 外转子嵌入圆管壁，工作面伸入球道，压紧量仍 2–3mm。</text>
+    <text x="0" y="94" class="small">3. 电机方向按图翻转 180°，固定端/线束端在 CAD 中参数化。</text>
+    <text x="0" y="124" class="small">4. 一端 4 螺丝 45×45 固定继续保留，用于主框架接口。</text>
+    <text x="0" y="154" class="small">5. 50m 和 180° 弧线不做口头承诺，拆成 5 阶段仿真验证。</text>
+
+    <text x="700" y="0" class="label">仿真由简入繁</text>
+    <text x="700" y="34" class="small">Phase 1：几何干涉</text>
+    <text x="700" y="64" class="small">Phase 2：运动包络 / 包胶外径</text>
+    <text x="700" y="94" class="small">Phase 3：50m 初速与 RPM 反推</text>
+    <text x="700" y="124" class="small">Phase 4：接触摩擦 / 压紧量扫描</text>
+    <text x="700" y="154" class="small">Phase 5：三电机差速 / 180° 弧线控制</text>
+  </g>
+</svg>

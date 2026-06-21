@@ -29,3 +29,8 @@
 | 文档 | PRELOAD_COUPLING_MATRIX_V1.md | v1 | 包胶厚度与压紧量联动矩阵，一阶风险筛选 |
 | 文档 | SIM_VALIDATION_MAINLINE_V1.md | v1 | 仿真验证主线说明，明确当前推进口径转向仿真优先 |
 | 数据 | SIM_SENSITIVITY_MATRIX_V1.csv | v1 | 仿真敏感度矩阵，记录 friction/preload 对输出的影响 |
+| 装配 CAD | outrunner_embedded_launch_tube_v1_2.scad | v1.2 | 嵌入式 3 外转子发射圆管，45×45 单端安装，圆管出口为发射基准 |
+| 文档 | OUTRUNNER_EMBEDDED_LAUNCH_TUBE_V1_2.md | v1.2 | 嵌入式发射圆管结构说明 |
+| 文档 | ENGINEERING_SIMULATION_PLAN_V1_2.md | v1.2 | v1.2 几何干涉/运动包络/50m/RPM/180° 弧线仿真计划 |
+| 渲染/三视图 | OUTRUNNER_EMBEDDED_LAUNCH_TUBE_V1_2.svg | v1.2 | 嵌入式发射圆管结构说明图 |
+| 文档 | GEOMETRY_INTERFERENCE_REVIEW_V1_2.md | v1.2 | v1.2 主线并线几何干涉快速复核 |
