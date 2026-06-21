@@ -404,8 +404,9 @@
               <div id="threeStage"></div>
               <div class="legend">
                 <div class="legend-item"><span class="swatch" style="background:#2556b6"></span>仿真轨迹</div>
-                <div class="legend-item"><span class="swatch" style="background:#f36440"></span>仿真落点</div>
-                <div class="legend-item"><span class="swatch" style="background:#0e0807"></span>三电机包络</div>
+                <div class="legend-item"><span class="swatch" style="background:#f36440"></span>50m / 极限扇区</div>
+                <div class="legend-item"><span class="swatch" style="background:#2556b6"></span>推荐中路 ±30°</div>
+                <div class="legend-item"><span class="swatch" style="background:#0e0807"></span>嵌入式三电机</div>
               </div>
             </section>
             <section class="card">
@@ -756,7 +757,7 @@
         if (!hints.length) {
           hints.push('先跑 straight，再跑 light_curve，再上 standard_curve，不要一上来高 preload + 高 spin bias。');
           hints.push('如果准备进首轮实测，建议先把 friction 锁在 0.55~0.65、preload 锁在 8~10mm。');
-          hints.push('3D 仿真后续按“由简入繁”推进：先方向与射程，再加护罩、维护空间、碰撞与控制窗口。');
+          hints.push('3D 仿真按“由简入繁”推进：当前已加 50m 射程刻度、推荐/极限扇区、嵌入接触窗口；后续再加护罩、维护空间、碰撞与控制窗口。');
         }
         els.hintList.innerHTML = hints.map(t => `<div class="hint">${t}</div>`).join('');
       }
@@ -781,18 +782,18 @@
       const scene = new THREE.Scene();
       scene.background = new THREE.Color('#f8f6f3');
       const camera = new THREE.PerspectiveCamera(45, 1.2, 0.01, 100);
-      camera.position.set(1.2, 0.9, 1.5);
+      camera.position.set(3.8, 2.2, 4.2);
       const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
       els.threeStage.appendChild(renderer.domElement);
       const controls = new OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
-      controls.target.set(0.22, 0.11, 0);
+      controls.target.set(1.8, 0.12, 0);
       const hemi = new THREE.HemisphereLight(0xffffff, 0x999999, 1.3); scene.add(hemi);
       const dir = new THREE.DirectionalLight(0xffffff, 1.1); dir.position.set(2, 3, 2); scene.add(dir);
-      const floor = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 }));
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(9, 9), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 }));
       floor.rotation.x = -Math.PI/2; floor.position.y = -0.001; scene.add(floor);
-      const grid = new THREE.GridHelper(6, 12, 0xdddddd, 0xe9e9e9); scene.add(grid);
+      const grid = new THREE.GridHelper(8, 16, 0xdddddd, 0xe9e9e9); scene.add(grid);
       const launchBall = new THREE.Mesh(new THREE.SphereGeometry(BALL_RADIUS_M, 40, 40), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9, metalness: 0.0 }));
       launchBall.position.set(0, BALL_RADIUS_M, 0); scene.add(launchBall);
       const launcherGroup = new THREE.Group(); scene.add(launcherGroup);
@@ -801,6 +802,15 @@
       tubeOuter.rotation.z = Math.PI / 2;
       tubeOuter.position.set(0, BALL_RADIUS_M, 0);
       launcherGroup.add(tubeOuter);
+      const contactWindowMaterial = new THREE.MeshStandardMaterial({ color: 0xf36440, transparent: true, opacity: 0.22, roughness: 0.6 });
+      [-Math.PI/2, Math.PI/6, 5*Math.PI/6].forEach(angle => {
+        const radial = new THREE.Vector3(Math.cos(angle), 0, Math.sin(angle));
+        const tangent = new THREE.Vector3(-Math.sin(angle), 0, Math.cos(angle));
+        const windowPatch = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.055, 0.028), contactWindowMaterial);
+        windowPatch.position.copy(radial.clone().multiplyScalar(0.135).setY(BALL_RADIUS_M));
+        windowPatch.lookAt(windowPatch.position.clone().add(tangent));
+        launcherGroup.add(windowPatch);
+      });
       const mainMountPlate = new THREE.Mesh(
         new THREE.BoxGeometry(0.26, 0.016, 0.16),
         new THREE.MeshStandardMaterial({ color: 0xbfc7d2, roughness: 0.88 })
@@ -856,36 +866,54 @@
       scene.add(directionArrow);
       const arcGroup = new THREE.Group();
       scene.add(arcGroup);
+      function makeFanShape(radius, startDeg, endDeg, y, color, opacity) {
+        const shape = new THREE.Shape();
+        shape.moveTo(tubeExit.x, tubeExit.z);
+        for (let i = 0; i <= 48; i++) {
+          const t = (startDeg + (endDeg - startDeg) * i / 48) * Math.PI / 180;
+          const x = tubeExit.x + Math.cos(t) * radius;
+          const z = tubeExit.z + Math.sin(t) * radius;
+          if (i === 0) shape.lineTo(x, z); else shape.lineTo(x, z);
+        }
+        shape.lineTo(tubeExit.x, tubeExit.z);
+        const geo = new THREE.ShapeGeometry(shape);
+        const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity, side: THREE.DoubleSide });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.rotation.x = -Math.PI / 2;
+        mesh.position.y = y;
+        return mesh;
+      }
       function buildLaunchArc180() {
         while (arcGroup.children.length) arcGroup.remove(arcGroup.children[0]);
-        const arcRadius = 1.05;
-        const arcY = 0.02;
-        const points = [];
-        for (let i = 0; i <= 72; i++) {
-          const t = -Math.PI / 2 + (Math.PI * i / 72);
-          points.push(new THREE.Vector3(tubeExit.x + Math.cos(t) * arcRadius, arcY, tubeExit.z + Math.sin(t) * arcRadius));
-        }
-        const arcLine = new THREE.Line(
-          new THREE.BufferGeometry().setFromPoints(points),
-          new THREE.LineBasicMaterial({ color: 0xf36440, transparent: true, opacity: 0.85 })
-        );
-        arcGroup.add(arcLine);
-        [-90, -45, 0, 45, 90].forEach(deg => {
+        const arcRadius = 4.0; // 50m mapped by 0.08 scale
+        const arcY = 0.018;
+        arcGroup.add(makeFanShape(arcRadius, -90, 90, arcY - 0.004, 0xf36440, 0.045));
+        arcGroup.add(makeFanShape(arcRadius, -30, 30, arcY - 0.003, 0x2556b6, 0.060));
+        [0.8, 1.6, 2.4, 3.2, 4.0].forEach((radius, idx) => {
+          const pts = [];
+          for (let i = 0; i <= 72; i++) {
+            const t = -Math.PI / 2 + (Math.PI * i / 72);
+            pts.push(new THREE.Vector3(tubeExit.x + Math.cos(t) * radius, arcY + idx * 0.0006, tubeExit.z + Math.sin(t) * radius));
+          }
+          const ring = new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints(pts),
+            new THREE.LineBasicMaterial({ color: idx === 4 ? 0xf36440 : 0xbfc7d2, transparent: true, opacity: idx === 4 ? 0.9 : 0.45 })
+          );
+          arcGroup.add(ring);
+          const tick = new THREE.Mesh(new THREE.SphereGeometry(idx === 4 ? 0.018 : 0.012, 10, 10), new THREE.MeshStandardMaterial({ color: idx === 4 ? 0xf36440 : 0xbfc7d2, roughness: 0.5 }));
+          tick.position.set(tubeExit.x + radius, arcY + 0.006, tubeExit.z);
+          arcGroup.add(tick);
+        });
+        [-90, -60, -30, 0, 30, 60, 90].forEach(deg => {
           const r = deg * Math.PI / 180;
           const ray = new THREE.Line(
             new THREE.BufferGeometry().setFromPoints([
               new THREE.Vector3(tubeExit.x, arcY, tubeExit.z),
               new THREE.Vector3(tubeExit.x + Math.cos(r) * arcRadius, arcY, tubeExit.z + Math.sin(r) * arcRadius)
             ]),
-            new THREE.LineBasicMaterial({ color: 0xbfc7d2, transparent: true, opacity: 0.55 })
+            new THREE.LineBasicMaterial({ color: Math.abs(deg) <= 30 ? 0x2556b6 : 0xbfc7d2, transparent: true, opacity: Math.abs(deg) <= 30 ? 0.55 : 0.35 })
           );
           arcGroup.add(ray);
-          const tick = new THREE.Mesh(
-            new THREE.SphereGeometry(0.012, 10, 10),
-            new THREE.MeshStandardMaterial({ color: 0xf36440, roughness: 0.5 })
-          );
-          tick.position.set(tubeExit.x + Math.cos(r) * arcRadius, arcY, tubeExit.z + Math.sin(r) * arcRadius);
-          arcGroup.add(tick);
         });
       }
       buildLaunchArc180();
