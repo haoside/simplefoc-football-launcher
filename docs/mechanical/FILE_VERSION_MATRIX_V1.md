@@ -34,3 +34,6 @@
 | 文档 | ENGINEERING_SIMULATION_PLAN_V1_2.md | v1.2 | v1.2 几何干涉/运动包络/50m/RPM/180° 弧线仿真计划 |
 | 渲染/三视图 | OUTRUNNER_EMBEDDED_LAUNCH_TUBE_V1_2.svg | v1.2 | 嵌入式发射圆管结构说明图 |
 | 文档 | GEOMETRY_INTERFERENCE_REVIEW_V1_2.md | v1.2 | v1.2 主线并线几何干涉快速复核 |
+| 装配 CAD | outrunner_embedded_short_tube_v1_2a.scad | v1.2a | 76mm 短圆管/短环，三外转子嵌入夹持，+Z 出口轴线为发射方向 |
+| 文档 | OUTRUNNER_EMBEDDED_SHORT_TUBE_V1_2A.md | v1.2a | v1.2a 短圆管嵌入版结构说明 |
+| 文档 | SHORT_TUBE_V1_2A_ENGINEERING_REVIEW.md | v1.2a | v1.2a 并线工程复核，覆盖短管导向/口袋干涉/旋转包络/45×45/出口轴线 |
