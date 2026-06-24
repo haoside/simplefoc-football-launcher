@@ -317,8 +317,8 @@
         <div class="eyebrow">Simulation Mainline</div>
         <h1>三维 <span class="thin">仿真可视化</span></h1>
         <p>
-          v1.2a 口径：中心 76mm 短圆管，发射方向锁定短圆管 +Z 出口轴线。
-          3 个 6354 外转子不是只堆速度，而是用 A/B/C 三点差速生成足球比赛里的左弧、右弧、下坠、挑高和复合弧线。
+          v1.2b 口径：去除保护罩表达，突出 3 个 6354 外转子嵌入 76mm 短发射管。
+          出球方向不再按圆管出口单独定义，而由 A/B/C 三电机共同作用的合力方向决定；圆管只提供短导向与结构基准。
         </p>
       </section>
 
@@ -378,7 +378,7 @@
                 </select>
               </div>
               <div class="field">
-                <label><span>180° 发射方位</span><span class="meta"><span id="headingValue">0</span>°</span></label>
+                <label><span>合力方向微调</span><span class="meta"><span id="headingValue">0</span>°</span></label>
                 <input id="headingDeg" type="range" min="-90" max="90" step="1" value="0" />
               </div>
               <div class="field">
@@ -416,13 +416,13 @@
           <div class="top-grid">
             <section class="card">
               <h3>3D 发射场景</h3>
-              <p>球体、三电机布局、发射方向和弧线轨迹都放进三维场景里。可手势/鼠标拖动旋转。</p>
+              <p>去掉保护罩层，重点看三电机嵌入短发射管，以及 A/B/C 合力方向如何决定出球方向。</p>
               <div id="threeStage"></div>
               <div class="legend">
                 <div class="legend-item"><span class="swatch" style="background:#2556b6"></span>仿真轨迹</div>
                 <div class="legend-item"><span class="swatch" style="background:#f36440"></span>50m / 极限扇区</div>
                 <div class="legend-item"><span class="swatch" style="background:#2556b6"></span>推荐中路 ±30°</div>
-                <div class="legend-item"><span class="swatch" style="background:#0e0807"></span>嵌入式三电机</div>
+                <div class="legend-item"><span class="swatch" style="background:#0e0807"></span>嵌入发射管的三电机</div>
               </div>
             </section>
             <section class="card">
@@ -436,7 +436,7 @@
           <div class="viz-grid">
             <section class="card">
               <h3>2D 轨迹与落点</h3>
-              <p>主轨迹 + 实战轨迹族同屏；横向偏移来自 A/B/C 差速侧旋。</p>
+              <p>主轨迹 + 实战轨迹族同屏；出球初始方向由 A/B/C 合力方向给出，飞行中继续受侧旋影响。</p>
               <svg id="trajectorySvg" viewBox="0 0 760 360" aria-label="trajectory"></svg>
             </section>
             <section class="card">
@@ -582,6 +582,14 @@
         return { ay, az };
       }
 
+      function resultantHeadingDeg(state, rpms) {
+        const [a, b, c] = rpms;
+        // 合力方向简化：A/C 差速给左右分量，B 参与稳定和复合侧旋；headingDeg 只作为总装微调。
+        const lateralFromMotors = clamp((a - c) / 55, -75, 75);
+        const bTrim = clamp((b - (a + c) / 2) / 120, -10, 10);
+        return clamp((state.headingDeg || 0) + lateralFromMotors + bTrim, -90, 90);
+      }
+
       function trajectory(speed, angleDeg, spinMode, spinRateRps, rpms = null) {
         const angle = angleDeg * Math.PI / 180;
         let x = 0, y = 0, z = 0.35;
@@ -687,8 +695,8 @@
         const risk = result.risk;
         const cards = [
           ['launch speed', `${fmt(result.launch.launchSpeed, 2)} m/s`, '当前仿真估算出球速度'],
-          ['range', `${fmt(result.traj.range, 1)} m`, '前向落点距离，目标向 50m 提升'],
-          ['side-spin', `${fmt(result.launch.spinRateRps, 2)} rps`, '三点差速生成的侧旋强度'],
+          ['range', `${fmt(result.traj.range, 1)} m`, '合力方向上的落点距离，目标向 50m 提升'],
+          ['force dir', `${fmt(result.forceHeadingDeg, 0)}°`, 'A/B/C 三电机共同作用合力方向'],
           ['risk', risk.text, '电流/加速风险等级'],
         ];
         els.metrics.innerHTML = cards.map(([k, v, s], i) => `
@@ -748,7 +756,7 @@
           <path d="${path}" fill="none" stroke="#2556b6" stroke-width="5" stroke-linecap="round" />
           ${familyLegend}
           <circle cx="${launch.x}" cy="${launch.y}" r="5" fill="#0e0807" />
-          <text x="${launch.x + 8}" y="${launch.y - 8}" font-size="11" fill="rgba(14,8,7,0.48)">圆管出口</text>
+          <text x="${launch.x + 8}" y="${launch.y - 8}" font-size="11" fill="rgba(14,8,7,0.48)">三电机合力出球</text>
           <circle cx="${landing.x}" cy="${landing.y}" r="6" fill="#f36440" />
           ${measuredMark}
           <rect x="${insetX}" y="${insetY}" width="${insetW}" height="${insetH}" rx="12" fill="#f8f6f3" stroke="rgba(0,0,0,0.08)" />
@@ -829,12 +837,12 @@
         }
         const spread = Math.max(...result.rpms) - Math.min(...result.rpms);
         if (spread >= 700 && s.preload < 2.5 && s.friction <= 0.55) hints.push('当前进入侧旋不可控高风险区：ΔRPM 高、preload 偏低、friction 偏低，先不要实测。');
-        if (Math.abs(result.traj.lateral) > 8) hints.push('横向偏移过大：防护罩出口和短圆管出口后的避让空间要同步放大。');
+        if (Math.abs(result.traj.lateral) > 8) hints.push('横向偏移过大：不再加保护罩，优先检查短发射管出口后的开放避让空间。');
         if (result.state.preset === 'long_pass_50m' && result.traj.range < 45) hints.push('50m 长传预设未达标：先提高基准 RPM / 摩擦效率，再评估是否需要更长接触时间。');
         if (!hints.length) {
           hints.push('按实战顺序跑：直线基准 → 左右弧线 → 上旋/下旋 → 复合弧线 → 50m 长传。');
           hints.push('首轮实测建议 friction 0.65~0.75、preload 2.4~2.7mm、ΔRPM 200~500。');
-          hints.push('3D 仿真当前锁 v1.2a：76mm 短圆管、+Z 出口轴线、A/B/C 三点差速侧旋。');
+          hints.push('3D 仿真当前锁 v1.2b：无保护罩、三电机嵌入短发射管、A/B/C 合力方向出球。');
         }
         els.hintList.innerHTML = hints.map(t => `<div class="hint">${t}</div>`).join('');
       }
@@ -939,7 +947,7 @@
       }
       [-Math.PI/2, Math.PI/6, 5*Math.PI/6].forEach(angle => launcherGroup.add(createMotorAssembly(angle)));
       const tubeExit = new THREE.Vector3(0.17, BALL_RADIUS_M, 0);
-      const directionArrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), tubeExit.clone(), 0.45, 0x2556b6, 0.08, 0.04);
+      const directionArrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), tubeExit.clone(), 0.55, 0x2556b6, 0.08, 0.04);
       scene.add(directionArrow);
       const arcGroup = new THREE.Group();
       scene.add(arcGroup);
@@ -1006,7 +1014,8 @@
         if (landingMarker) scene.remove(landingMarker);
         if (measuredMarker3D) scene.remove(measuredMarker3D);
         if (launchHeadingMarker) scene.remove(launchHeadingMarker);
-        const headingRad = (result.state.headingDeg || 0) * Math.PI / 180;
+        const headingRad = (result.forceHeadingDeg || 0) * Math.PI / 180;
+        directionArrow.setDirection(new THREE.Vector3(Math.cos(headingRad), 0, Math.sin(headingRad)).normalize());
         const to3D = (p, hdg = headingRad) => new THREE.Vector3(
           tubeExit.x + p.x * 0.08 * Math.cos(hdg) - p.y * 0.35 * Math.sin(hdg),
           p.z,
@@ -1027,7 +1036,7 @@
         const mat = new THREE.LineBasicMaterial({ color: 0x2556b6, linewidth: 2 });
         line3D = new THREE.Line(geo, mat); scene.add(line3D);
         landingMarker = new THREE.Mesh(new THREE.SphereGeometry(0.018, 16, 16), new THREE.MeshStandardMaterial({ color: 0xf36440 }));
-        const headingRad2 = (result.state.headingDeg || 0) * Math.PI / 180;
+        const headingRad2 = (result.forceHeadingDeg || 0) * Math.PI / 180;
         landingMarker.position.set(tubeExit.x + result.traj.range * 0.08 * Math.cos(headingRad2) - result.traj.lateral * 0.35 * Math.sin(headingRad2), 0.018, tubeExit.z + result.traj.range * 0.08 * Math.sin(headingRad2) + result.traj.lateral * 0.35 * Math.cos(headingRad2));
         scene.add(landingMarker);
         if (result.state.measuredRange !== null || result.state.measuredLateral !== null) {
@@ -1037,7 +1046,7 @@
           measuredMarker3D.position.set(tubeExit.x + mr * Math.cos(headingRad2) - ml * Math.sin(headingRad2), 0.02, tubeExit.z + mr * Math.sin(headingRad2) + ml * Math.cos(headingRad2));
           scene.add(measuredMarker3D);
         }
-        const headingAngle = ((result.state.headingDeg || 0) * Math.PI / 180) + Math.atan2(result.traj.lateral, Math.max(result.traj.range, 1e-6));
+        const headingAngle = ((result.forceHeadingDeg || 0) * Math.PI / 180) + Math.atan2(result.traj.lateral, Math.max(result.traj.range, 1e-6));
         const headingLen = 1.05;
         launchHeadingMarker = new THREE.Line(
           new THREE.BufferGeometry().setFromPoints([
@@ -1067,7 +1076,8 @@
         const launch = estimateLaunch(rpms, state.friction, state.preload);
         const traj = trajectory(launch.launchSpeed, state.launchAngle, state.spinMode, launch.spinRateRps, rpms);
         const risk = currentRisk(rpms, state.ramp, state.preload, state.friction);
-        const result = { state, rpms, launch, traj, risk };
+        const forceHeadingDeg = resultantHeadingDeg(state, rpms);
+        const result = { state, rpms, launch, traj, risk, forceHeadingDeg };
         renderMetrics(result);
         renderTrajectory(result);
         renderRpm(result);

@@ -37,3 +37,5 @@
 | 装配 CAD | outrunner_embedded_short_tube_v1_2a.scad | v1.2a | 76mm 短圆管/短环，三外转子嵌入夹持，+Z 出口轴线为发射方向 |
 | 文档 | OUTRUNNER_EMBEDDED_SHORT_TUBE_V1_2A.md | v1.2a | v1.2a 短圆管嵌入版结构说明 |
 | 文档 | SHORT_TUBE_V1_2A_ENGINEERING_REVIEW.md | v1.2a | v1.2a 并线工程复核，覆盖短管导向/口袋干涉/旋转包络/45×45/出口轴线 |
+| 装配 CAD | outrunner_embedded_short_tube_v1_2b.scad | v1.2b | 去除保护罩表达，突出三电机嵌入短发射管，发射方向按三电机合力方向 |
+| 文档 | SIM_VISUALIZER_V10_RESULTANT_UPDATE.md | v10 | 仿真可视化改为三电机合力方向出球，无保护罩口径 |
