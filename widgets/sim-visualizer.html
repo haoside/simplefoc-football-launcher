@@ -433,6 +433,12 @@
             </section>
           </div>
 
+          <section class="card">
+            <h3>A/B/C 合力矢量分解</h3>
+            <p>把三电机接触作用拆成 A 上方、B 左下、C 右下三条力矢量，再合成为当前出球方向。</p>
+            <svg id="forceSvg" viewBox="0 0 760 300" aria-label="force vector decomposition"></svg>
+          </section>
+
           <div class="viz-grid">
             <section class="card">
               <h3>2D 轨迹与落点</h3>
@@ -458,7 +464,7 @@
             <div class="table" id="sensitivityTable"></div>
           </section>
 
-          <div class="foot">这是工程筛选级 3D 可视化，不是 CFD/FEA。目的仍是锁测试窗口，再回填实测。</div>
+          <div class="foot">这是工程筛选级 3D 可视化，不是 CFD/FEA。当前重点：三电机嵌入发射管、合力方向出球、实战轨迹族。</div>
         </section>
       </section>
     </main>
@@ -519,6 +525,7 @@
         measuredCurrent: document.getElementById('measuredCurrent'),
         metrics: document.getElementById('metrics'),
         trajectorySvg: document.getElementById('trajectorySvg'),
+        forceSvg: document.getElementById('forceSvg'),
         rpmSvg: document.getElementById('rpmSvg'),
         summaryPills: document.getElementById('summaryPills'),
         compareGrid: document.getElementById('compareGrid'),
@@ -588,6 +595,17 @@
         const lateralFromMotors = clamp((a - c) / 55, -75, 75);
         const bTrim = clamp((b - (a + c) / 2) / 120, -10, 10);
         return clamp((state.headingDeg || 0) + lateralFromMotors + bTrim, -90, 90);
+      }
+
+      function forceComponents(rpms) {
+        const base = rpms.reduce((a, b) => a + b, 0) / 3;
+        const angles = [-90, 150, 30]; // A 上、B 左下、C 右下，屏幕坐标用
+        return rpms.map((rpm, i) => {
+          const gain = clamp((rpm - base) / 1200, -1, 1);
+          const mag = 0.65 + Math.abs(gain) * 0.55;
+          const a = angles[i] * Math.PI / 180;
+          return { label: ['A 上方','B 左下','C 右下'][i], rpm, gain, mag, x: Math.cos(a) * mag, y: Math.sin(a) * mag };
+        });
       }
 
       function trajectory(speed, angleDeg, spinMode, spinRateRps, rpms = null) {
@@ -721,6 +739,44 @@
           const traj = trajectory(launch.launchSpeed, st.launchAngle, st.spinMode, launch.spinRateRps, rpms);
           return { name, state: st, rpms, launch, traj };
         });
+      }
+
+      function renderForceVector(result) {
+        const svg = els.forceSvg;
+        const w = 760, h = 300, cx = 210, cy = 148;
+        const comps = forceComponents(result.rpms);
+        const colors = ['#2556b6', '#0e0807', '#f36440'];
+        const scale = 82;
+        const headingRad = (result.forceHeadingDeg || 0) * Math.PI / 180;
+        const hx = Math.cos(headingRad) * 150;
+        const hy = Math.sin(headingRad) * 150;
+        const arrows = comps.map((c, i) => {
+          const x2 = cx + c.x * scale;
+          const y2 = cy + c.y * scale;
+          const width = 2 + Math.abs(c.gain) * 5;
+          const status = c.gain >= 0 ? '加速/主导' : '减速/释放';
+          return `<line x1="${cx}" y1="${cy}" x2="${x2}" y2="${y2}" stroke="${colors[i]}" stroke-width="${width}" stroke-linecap="round" marker-end="url(#arrow-${i})" />
+            <circle cx="${x2}" cy="${y2}" r="26" fill="#fff" stroke="${colors[i]}" stroke-width="2" />
+            <text x="${x2}" y="${y2-4}" text-anchor="middle" font-size="11" fill="rgba(14,8,7,0.48)">${c.label}</text>
+            <text x="${x2}" y="${y2+13}" text-anchor="middle" font-size="13" fill="#0e0807">${c.rpm}</text>
+            <text x="430" y="${82 + i * 48}" font-size="13" fill="#0e0807">${c.label}</text>
+            <text x="540" y="${82 + i * 48}" font-size="13" fill="${colors[i]}">${c.rpm} rpm</text>
+            <text x="635" y="${82 + i * 48}" font-size="12" fill="rgba(14,8,7,0.58)">${status}</text>`;
+        }).join('');
+        const spread = Math.max(...result.rpms) - Math.min(...result.rpms);
+        svg.innerHTML = `<rect x="0" y="0" width="${w}" height="${h}" rx="14" fill="#fff" />
+          <defs>
+            ${colors.map((c,i)=>`<marker id="arrow-${i}" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="${c}" /></marker>`).join('')}
+            <marker id="arrow-force" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#f36440" /></marker>
+          </defs>
+          <circle cx="${cx}" cy="${cy}" r="56" fill="#f8f6f3" stroke="rgba(0,0,0,0.08)" />
+          <circle cx="${cx}" cy="${cy}" r="18" fill="#fff" stroke="rgba(0,0,0,0.15)" />
+          <line x1="${cx}" y1="${cy}" x2="${cx + hx}" y2="${cy + hy}" stroke="#f36440" stroke-width="5" stroke-linecap="round" marker-end="url(#arrow-force)" />
+          ${arrows}
+          <text x="${cx}" y="${cy + 4}" text-anchor="middle" font-size="12" fill="rgba(14,8,7,0.62)">球心</text>
+          <text x="430" y="36" font-size="12" fill="rgba(14,8,7,0.48)">合力方向</text>
+          <text x="430" y="60" font-size="28" fill="#f36440">${fmt(result.forceHeadingDeg,0)}°</text>
+          <text x="540" y="60" font-size="13" fill="rgba(14,8,7,0.62)">ΔRPM ${spread} · side-spin ${fmt(result.launch.spinRateRps,2)} rps</text>`;
       }
 
       function renderTrajectory(result) {
@@ -882,7 +938,7 @@
       const launchBall = new THREE.Mesh(new THREE.SphereGeometry(BALL_RADIUS_M, 40, 40), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9, metalness: 0.0 }));
       launchBall.position.set(0, BALL_RADIUS_M, 0); scene.add(launchBall);
       const launcherGroup = new THREE.Group(); scene.add(launcherGroup);
-      const tubeMaterial = new THREE.MeshStandardMaterial({ color: 0xd9dde4, roughness: 0.72, metalness: 0.08, side: THREE.DoubleSide });
+      const tubeMaterial = new THREE.MeshStandardMaterial({ color: 0xd9dde4, roughness: 0.72, metalness: 0.08, transparent: true, opacity: 0.46, side: THREE.DoubleSide });
       const tubeOuter = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.34, 48, 1, true), tubeMaterial);
       tubeOuter.rotation.z = Math.PI / 2;
       tubeOuter.position.set(0, BALL_RADIUS_M, 0);
@@ -902,8 +958,8 @@
       );
       mainMountPlate.position.set(0, 0.016, 0);
       launcherGroup.add(mainMountPlate);
-      const motorShellMaterial = new THREE.MeshStandardMaterial({ color: 0x2f65d4, roughness: 0.35, metalness: 0.55 });
-      const motorCanMaterial = new THREE.MeshStandardMaterial({ color: 0xf3f4f6, roughness: 0.4, metalness: 0.15 });
+      const motorShellMaterial = new THREE.MeshStandardMaterial({ color: 0x0e0807, roughness: 0.35, metalness: 0.45 });
+      const motorCanMaterial = new THREE.MeshStandardMaterial({ color: 0x2556b6, roughness: 0.4, metalness: 0.2 });
       const armMaterial = new THREE.MeshStandardMaterial({ color: 0xbfc7d2, roughness: 0.82 });
       function createMotorAssembly(angle) {
         const g = new THREE.Group();
@@ -1002,11 +1058,31 @@
         });
       }
       buildLaunchArc180();
+      const forceVectorGroup = new THREE.Group();
+      scene.add(forceVectorGroup);
       let scenarioLines3D = [];
       let line3D = null;
       let landingMarker = null;
       let measuredMarker3D = null;
       let launchHeadingMarker = null;
+      function update3DForceVectors(result) {
+        while (forceVectorGroup.children.length) forceVectorGroup.remove(forceVectorGroup.children[0]);
+        const comps = forceComponents(result.rpms);
+        const colors = [0x2556b6, 0x0e0807, 0xf36440];
+        const motorAngles = [-Math.PI/2, 5*Math.PI/6, Math.PI/6];
+        comps.forEach((c, i) => {
+          const radial = new THREE.Vector3(Math.cos(motorAngles[i]), 0, Math.sin(motorAngles[i]));
+          const origin = radial.clone().multiplyScalar(0.28).setY(BALL_RADIUS_M + 0.02);
+          const towardBall = radial.clone().multiplyScalar(-1).normalize();
+          const length = 0.18 + Math.abs(c.gain) * 0.18;
+          const arrow = new THREE.ArrowHelper(towardBall, origin, length, colors[i], 0.045, 0.025);
+          forceVectorGroup.add(arrow);
+        });
+        const headingRad = (result.forceHeadingDeg || 0) * Math.PI / 180;
+        const resultant = new THREE.ArrowHelper(new THREE.Vector3(Math.cos(headingRad), 0, Math.sin(headingRad)).normalize(), tubeExit.clone().add(new THREE.Vector3(0,0.035,0)), 0.72, 0xf36440, 0.09, 0.05);
+        forceVectorGroup.add(resultant);
+      }
+
       function render3DTrajectory(result) {
         scenarioLines3D.forEach(obj => scene.remove(obj));
         scenarioLines3D = [];
@@ -1016,6 +1092,7 @@
         if (launchHeadingMarker) scene.remove(launchHeadingMarker);
         const headingRad = (result.forceHeadingDeg || 0) * Math.PI / 180;
         directionArrow.setDirection(new THREE.Vector3(Math.cos(headingRad), 0, Math.sin(headingRad)).normalize());
+        update3DForceVectors(result);
         const to3D = (p, hdg = headingRad) => new THREE.Vector3(
           tubeExit.x + p.x * 0.08 * Math.cos(hdg) - p.y * 0.35 * Math.sin(hdg),
           p.z,
@@ -1081,6 +1158,7 @@
         renderMetrics(result);
         renderTrajectory(result);
         renderRpm(result);
+        renderForceVector(result);
         renderComparison(result);
         renderHints(result);
         renderSensitivity(result);
