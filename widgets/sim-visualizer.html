@@ -317,8 +317,8 @@
         <div class="eyebrow">Simulation Mainline</div>
         <h1>三维 <span class="thin">仿真可视化</span></h1>
         <p>
-          在原来的 2D 轨迹和参数面板上，加一个 3D 场景：看三电机 120° 布局、球体、发射方向、弧线轨迹和横向偏移。
-          用它做当前主线评审：先确认仿真窗口，再决定实测和结构修正顺序。
+          v1.2a 口径：中心 76mm 短圆管，发射方向锁定短圆管 +Z 出口轴线。
+          3 个 6354 外转子不是只堆速度，而是用 A/B/C 三点差速生成足球比赛里的左弧、右弧、下坠、挑高和复合弧线。
         </p>
       </section>
 
@@ -333,9 +333,13 @@
               <div class="field">
                 <label><span>场景预设</span><span class="meta" id="presetLabel">straight_validation</span></label>
                 <select id="presetSelect">
-                  <option value="straight_validation">straight_validation</option>
-                  <option value="light_curve_validation">light_curve_validation</option>
-                  <option value="standard_curve_validation">standard_curve_validation</option>
+                  <option value="straight_validation">straight 强射基准</option>
+                  <option value="left_curve_match">左弧 / 绕人墙</option>
+                  <option value="right_curve_match">右弧 / 传中</option>
+                  <option value="topspin_drop_match">下坠球</option>
+                  <option value="backspin_lift_match">挑高球</option>
+                  <option value="diagonal_curve_match">斜向复合弧线</option>
+                  <option value="long_pass_50m">50m 长传增强</option>
                   <option value="custom">custom</option>
                 </select>
               </div>
@@ -348,8 +352,8 @@
                 <input id="launchAngle" type="range" min="6" max="28" step="1" value="16" />
               </div>
               <div class="field">
-                <label><span>preload</span><span class="meta"><span id="preloadValue">10</span> mm</span></label>
-                <input id="preload" type="range" min="5" max="15" step="1" value="10" />
+                <label><span>preload</span><span class="meta"><span id="preloadValue">2.5</span> mm</span></label>
+                <input id="preload" type="range" min="2" max="3" step="0.1" value="2.5" />
               </div>
               <div class="field">
                 <label><span>friction</span><span class="meta"><span id="frictionValue">0.65</span></span></label>
@@ -376,6 +380,18 @@
               <div class="field">
                 <label><span>180° 发射方位</span><span class="meta"><span id="headingValue">0</span>°</span></label>
                 <input id="headingDeg" type="range" min="-90" max="90" step="1" value="0" />
+              </div>
+              <div class="field">
+                <label><span>A 上方电机修正</span><span class="meta"><span id="rpmAOffsetValue">0</span> rpm</span></label>
+                <input id="rpmAOffset" type="range" min="-1200" max="1200" step="50" value="0" />
+              </div>
+              <div class="field">
+                <label><span>B 左下电机修正</span><span class="meta"><span id="rpmBOffsetValue">0</span> rpm</span></label>
+                <input id="rpmBOffset" type="range" min="-1200" max="1200" step="50" value="0" />
+              </div>
+              <div class="field">
+                <label><span>C 右下电机修正</span><span class="meta"><span id="rpmCOffsetValue">0</span> rpm</span></label>
+                <input id="rpmCOffset" type="range" min="-1200" max="1200" step="50" value="0" />
               </div>
             </div>
           </section>
@@ -411,7 +427,7 @@
             </section>
             <section class="card">
               <h3>三电机 RPM 分配</h3>
-              <p>按 120° 布局映射 wheel1 / wheel2 / wheel3 的目标 RPM。</p>
+              <p>A/B/C = 上方、左下、右下三电机。先看三点差速，再看 50m 距离。</p>
               <svg id="rpmSvg" viewBox="0 0 420 360" aria-label="rpm split"></svg>
               <div class="pills" id="summaryPills"></div>
             </section>
@@ -420,7 +436,7 @@
           <div class="viz-grid">
             <section class="card">
               <h3>2D 轨迹与落点</h3>
-              <p>横轴前向距离（圆管出口方向），纵轴高度。右上小图看横向偏移。</p>
+              <p>主轨迹 + 实战轨迹族同屏；横向偏移来自 A/B/C 差速侧旋。</p>
               <svg id="trajectorySvg" viewBox="0 0 760 360" aria-label="trajectory"></svg>
             </section>
             <section class="card">
@@ -463,9 +479,13 @@
       const CURRENT_CAP_A = 120;
 
       const PRESETS = {
-        straight_validation: { targetSpeed: 24.0, launchAngle: 16, spinMode: 'STRAIGHT', spinBias: 0, preload: 10, friction: 0.70, ramp: 5, headingDeg: 0 },
-        light_curve_validation: { targetSpeed: 26.0, launchAngle: 18, spinMode: 'LEFT_CURVE', spinBias: 450, preload: 10, friction: 0.72, ramp: 5, headingDeg: -25 },
-        standard_curve_validation: { targetSpeed: 28.0, launchAngle: 20, spinMode: 'LEFT_CURVE', spinBias: 700, preload: 11, friction: 0.74, ramp: 6, headingDeg: 35 },
+        straight_validation: { targetSpeed: 24.0, launchAngle: 16, spinMode: 'STRAIGHT', spinBias: 0, preload: 2.5, friction: 0.70, ramp: 5, headingDeg: 0, rpmAOffset: 0, rpmBOffset: 0, rpmCOffset: 0 },
+        left_curve_match: { targetSpeed: 26.0, launchAngle: 18, spinMode: 'LEFT_CURVE', spinBias: 500, preload: 2.5, friction: 0.72, ramp: 5, headingDeg: -18, rpmAOffset: 150, rpmBOffset: 0, rpmCOffset: -150 },
+        right_curve_match: { targetSpeed: 26.0, launchAngle: 18, spinMode: 'RIGHT_CURVE', spinBias: 500, preload: 2.5, friction: 0.72, ramp: 5, headingDeg: 18, rpmAOffset: -150, rpmBOffset: 0, rpmCOffset: 150 },
+        topspin_drop_match: { targetSpeed: 27.0, launchAngle: 20, spinMode: 'TOPSPIN', spinBias: 550, preload: 2.6, friction: 0.74, ramp: 6, headingDeg: 0, rpmAOffset: 250, rpmBOffset: -100, rpmCOffset: -100 },
+        backspin_lift_match: { targetSpeed: 24.0, launchAngle: 23, spinMode: 'BACKSPIN', spinBias: 450, preload: 2.4, friction: 0.70, ramp: 6, headingDeg: 0, rpmAOffset: -250, rpmBOffset: 100, rpmCOffset: 100 },
+        diagonal_curve_match: { targetSpeed: 27.5, launchAngle: 19, spinMode: 'LEFT_CURVE', spinBias: 700, preload: 2.6, friction: 0.75, ramp: 6, headingDeg: -35, rpmAOffset: 250, rpmBOffset: -300, rpmCOffset: 50 },
+        long_pass_50m: { targetSpeed: 31.0, launchAngle: 24, spinMode: 'STRAIGHT', spinBias: 150, preload: 2.7, friction: 0.78, ramp: 7, headingDeg: 0, rpmAOffset: 0, rpmBOffset: 0, rpmCOffset: 0 },
       };
 
       const els = {
@@ -487,6 +507,12 @@
         spinModeLabel: document.getElementById('spinModeLabel'),
         headingDeg: document.getElementById('headingDeg'),
         headingValue: document.getElementById('headingValue'),
+        rpmAOffset: document.getElementById('rpmAOffset'),
+        rpmAOffsetValue: document.getElementById('rpmAOffsetValue'),
+        rpmBOffset: document.getElementById('rpmBOffset'),
+        rpmBOffsetValue: document.getElementById('rpmBOffsetValue'),
+        rpmCOffset: document.getElementById('rpmCOffset'),
+        rpmCOffsetValue: document.getElementById('rpmCOffsetValue'),
         measuredLaunch: document.getElementById('measuredLaunch'),
         measuredRange: document.getElementById('measuredRange'),
         measuredLateral: document.getElementById('measuredLateral'),
@@ -507,22 +533,23 @@
       function fmt(n, d = 2) { return Number(n).toFixed(d); }
       function numOrNull(v) { const n = parseFloat(v); return Number.isFinite(n) ? n : null; }
 
-      function rpmMixer120deg(targetSpeed, spinMode, spinBias) {
+      function rpmMixer120deg(targetSpeed, spinMode, spinBias, offsets = [0,0,0]) {
         const base = wheelSurfaceSpeedToRpm(targetSpeed);
         const d = spinBias;
         let w;
+        // A/B/C = 上方、左下、右下。差速是主功能，不是附加项。
         if (spinMode === 'STRAIGHT') w = [base, base, base];
         else if (spinMode === 'TOPSPIN') w = [base + d, base - d / 2, base - d / 2];
         else if (spinMode === 'BACKSPIN') w = [base - d, base + d / 2, base + d / 2];
-        else if (spinMode === 'LEFT_CURVE') w = [base, base + d, base - d];
-        else if (spinMode === 'RIGHT_CURVE') w = [base, base - d, base + d];
+        else if (spinMode === 'LEFT_CURVE') w = [base + d, base, base - d];
+        else if (spinMode === 'RIGHT_CURVE') w = [base - d, base, base + d];
         else w = [base, base, base];
-        return w.map(x => Math.round(clamp(x, RPM_MIN, RPM_MAX)));
+        return w.map((x, i) => Math.round(clamp(x + (offsets[i] || 0), RPM_MIN, RPM_MAX)));
       }
 
       function contactEfficiency(mu, preloadMm) {
-        const preloadGain = 0.82 + 0.018 * Math.min(preloadMm, 12);
-        const overloadLoss = Math.max(preloadMm - 12, 0) * 0.015;
+        const preloadGain = 0.82 + 0.075 * clamp(preloadMm - 2, 0, 1);
+        const overloadLoss = Math.max(preloadMm - 2.8, 0) * 0.06;
         const muGain = 0.72 + 0.32 * clamp((mu - 0.45) / (0.85 - 0.45), 0, 1);
         return clamp(preloadGain * muGain - overloadLoss, 0.55, 0.94);
       }
@@ -537,17 +564,25 @@
         return { launchSpeed, spinRateRps, eff };
       }
 
-      function spinAccel(spinMode, spinRateRps) {
+      function spinAccel(spinMode, spinRateRps, rpms = null) {
         const kLat = 0.42;
         const kVert = 0.30;
-        if (spinMode === 'LEFT_CURVE') return { ay: kLat * spinRateRps, az: 0 };
-        if (spinMode === 'RIGHT_CURVE') return { ay: -kLat * spinRateRps, az: 0 };
-        if (spinMode === 'TOPSPIN') return { ay: 0, az: -kVert * spinRateRps };
-        if (spinMode === 'BACKSPIN') return { ay: 0, az: kVert * spinRateRps };
-        return { ay: 0, az: 0 };
+        let ay = 0, az = 0;
+        if (spinMode === 'LEFT_CURVE') ay += kLat * spinRateRps;
+        if (spinMode === 'RIGHT_CURVE') ay -= kLat * spinRateRps;
+        if (spinMode === 'TOPSPIN') az -= kVert * spinRateRps;
+        if (spinMode === 'BACKSPIN') az += kVert * spinRateRps;
+        if (rpms) {
+          const [a,b,c] = rpms;
+          const base = (a+b+c)/3;
+          ay += ((a - c) / 1000) * 0.18;
+          az += ((a - (b+c)/2) / 1000) * 0.12;
+          if (Math.abs(a-base)+Math.abs(b-base)+Math.abs(c-base) > 1600) ay *= 1.08;
+        }
+        return { ay, az };
       }
 
-      function trajectory(speed, angleDeg, spinMode, spinRateRps) {
+      function trajectory(speed, angleDeg, spinMode, spinRateRps, rpms = null) {
         const angle = angleDeg * Math.PI / 180;
         let x = 0, y = 0, z = 0.35;
         let vx = speed * Math.cos(angle);
@@ -556,7 +591,7 @@
         const dt = 0.01;
         let t = 0;
         let peakZ = z;
-        const { ay: aySpin, az: azSpin } = spinAccel(spinMode, spinRateRps);
+        const { ay: aySpin, az: azSpin } = spinAccel(spinMode, spinRateRps, rpms);
         const points = [];
         while (z >= 0 && x <= 60 && t <= 8.0) {
           points.push({ x, y, z, t });
@@ -577,18 +612,21 @@
         return { points, range: x, lateral: y, peak: peakZ, time: t };
       }
 
-      function currentRisk(wheelRpms, rampS) {
+      function currentRisk(wheelRpms, rampS, preloadMm = 2.5, friction = 0.65) {
         const maxRpm = Math.max(...wheelRpms);
+        const spread = maxRpm - Math.min(...wheelRpms);
         if (rampS < 4) return { text: 'HIGH: ramp too aggressive', cls: 'risk-high' };
-        if (maxRpm >= 2800 && rampS <= 4) return { text: 'HIGH: high RPM with short ramp', cls: 'risk-high' };
-        if (maxRpm >= 2500 && rampS <= 5) return { text: 'MEDIUM: watch BMS / branch current', cls: 'risk-med' };
+        if (spread >= 700 && preloadMm < 2.5 && friction <= 0.55) return { text: 'HIGH: slip / side-spin unstable', cls: 'risk-high' };
+        if (maxRpm >= 6000 && rampS <= 5) return { text: 'HIGH: 50m RPM with short ramp', cls: 'risk-high' };
+        if (spread >= 700) return { text: 'MEDIUM: diff-spin slip watch', cls: 'risk-med' };
+        if (maxRpm >= 5200) return { text: 'MEDIUM: watch BMS / branch current', cls: 'risk-med' };
         return { text: 'LOW', cls: 'risk-low' };
       }
 
       function estimatedPeakCurrent(wheelRpms, rampS, preloadMm) {
         const avgRpm = wheelRpms.reduce((a, b) => a + b, 0) / wheelRpms.length;
         const rpmFactor = avgRpm / 3000;
-        const preloadFactor = 0.78 + preloadMm / 20;
+        const preloadFactor = 0.78 + preloadMm / 6;
         const rampFactor = 5 / rampS;
         return CURRENT_CAP_A * 0.56 * rpmFactor * preloadFactor * rampFactor;
       }
@@ -604,6 +642,9 @@
           ramp: parseFloat(els.ramp.value),
           spinMode: els.spinMode.value,
           headingDeg: parseFloat(els.headingDeg.value),
+          rpmAOffset: parseFloat(els.rpmAOffset.value),
+          rpmBOffset: parseFloat(els.rpmBOffset.value),
+          rpmCOffset: parseFloat(els.rpmCOffset.value),
           measuredLaunch: numOrNull(els.measuredLaunch.value),
           measuredRange: numOrNull(els.measuredRange.value),
           measuredLateral: numOrNull(els.measuredLateral.value),
@@ -622,6 +663,9 @@
         els.ramp.value = preset.ramp;
         els.spinMode.value = preset.spinMode;
         els.headingDeg.value = preset.headingDeg ?? 0;
+        els.rpmAOffset.value = preset.rpmAOffset ?? 0;
+        els.rpmBOffset.value = preset.rpmBOffset ?? 0;
+        els.rpmCOffset.value = preset.rpmCOffset ?? 0;
       }
 
       function syncLabels(state) {
@@ -634,6 +678,9 @@
         els.rampValue.textContent = fmt(state.ramp, 0);
         els.spinModeLabel.textContent = state.spinMode;
         els.headingValue.textContent = fmt(state.headingDeg, 0);
+        els.rpmAOffsetValue.textContent = fmt(state.rpmAOffset, 0);
+        els.rpmBOffsetValue.textContent = fmt(state.rpmBOffset, 0);
+        els.rpmCOffsetValue.textContent = fmt(state.rpmCOffset, 0);
       }
 
       function renderMetrics(result) {
@@ -641,7 +688,7 @@
         const cards = [
           ['launch speed', `${fmt(result.launch.launchSpeed, 2)} m/s`, '当前仿真估算出球速度'],
           ['range', `${fmt(result.traj.range, 1)} m`, '前向落点距离，目标向 50m 提升'],
-          ['heading', `${fmt(result.state.headingDeg, 0)}°`, '以圆管出口为基准的 180° 发射方位'],
+          ['side-spin', `${fmt(result.launch.spinRateRps, 2)} rps`, '三点差速生成的侧旋强度'],
           ['risk', risk.text, '电流/加速风险等级'],
         ];
         els.metrics.innerHTML = cards.map(([k, v, s], i) => `
@@ -650,6 +697,22 @@
             <div class="v ${i === 3 ? risk.cls : ''}">${v}</div>
             <div class="s">${s}</div>
           </div>`).join('');
+      }
+
+
+      function scenarioVariants(state) {
+        return [
+          ['直线', { ...state, spinMode: 'STRAIGHT', spinBias: 0, rpmAOffset: 0, rpmBOffset: 0, rpmCOffset: 0 }],
+          ['左弧', { ...state, spinMode: 'LEFT_CURVE', spinBias: Math.max(450, state.spinBias), rpmAOffset: 150, rpmBOffset: 0, rpmCOffset: -150 }],
+          ['右弧', { ...state, spinMode: 'RIGHT_CURVE', spinBias: Math.max(450, state.spinBias), rpmAOffset: -150, rpmBOffset: 0, rpmCOffset: 150 }],
+          ['下坠', { ...state, spinMode: 'TOPSPIN', spinBias: Math.max(500, state.spinBias), rpmAOffset: 250, rpmBOffset: -100, rpmCOffset: -100 }],
+          ['挑高', { ...state, spinMode: 'BACKSPIN', spinBias: Math.max(420, state.spinBias), rpmAOffset: -250, rpmBOffset: 100, rpmCOffset: 100 }],
+        ].map(([name, st]) => {
+          const rpms = rpmMixer120deg(st.targetSpeed, st.spinMode, st.spinBias, [st.rpmAOffset, st.rpmBOffset, st.rpmCOffset]);
+          const launch = estimateLaunch(rpms, st.friction, st.preload);
+          const traj = trajectory(launch.launchSpeed, st.launchAngle, st.spinMode, launch.spinRateRps, rpms);
+          return { name, state: st, rpms, launch, traj };
+        });
       }
 
       function renderTrajectory(result) {
@@ -670,11 +733,20 @@
         }).join(' ');
         const measuredMark = result.state.measuredRange !== null ? `<circle cx="${pad + (result.state.measuredRange / rangeMax) * (w - pad * 2)}" cy="${h - pad}" r="6" fill="#0e0807" opacity="0.85" />` : '';
         const measuredLateralMark = result.state.measuredLateral !== null ? `<circle cx="${insetX + insetW - 14}" cy="${insetY + insetH / 2 - (result.state.measuredLateral / latMax) * (insetH / 2 - 12)}" r="4" fill="#0e0807" opacity="0.85" />` : '';
+        const variants = scenarioVariants(result.state);
+        const palette = ['#0e0807', '#2556b6', '#f36440', '#6b7280', '#9a5a00'];
+        const familyPaths = variants.map((v, i) => {
+          const d = v.traj.points.map((p, idx) => { const q = project(p); return `${idx === 0 ? 'M' : 'L'} ${q.x.toFixed(2)} ${q.y.toFixed(2)}`; }).join(' ');
+          return `<path d="${d}" fill="none" stroke="${palette[i]}" stroke-width="${v.name === '直线' ? 2 : 3}" opacity="${v.name === result.state.spinMode ? 0.9 : 0.42}" stroke-linecap="round" />`;
+        }).join('');
+        const familyLegend = variants.map((v, i) => `<text x="${pad + i*72}" y="${pad - 8}" font-size="11" fill="${palette[i]}">${v.name}</text>`).join('');
         svg.innerHTML = `
           <rect x="0" y="0" width="${w}" height="${h}" fill="#fff" rx="14" />
           <line x1="${pad}" y1="${h - pad}" x2="${w - pad}" y2="${h - pad}" stroke="rgba(0,0,0,0.16)" />
           <line x1="${pad}" y1="${pad}" x2="${pad}" y2="${h - pad}" stroke="rgba(0,0,0,0.16)" />
-          <path d="${path}" fill="none" stroke="#2556b6" stroke-width="4" stroke-linecap="round" />
+          ${familyPaths}
+          <path d="${path}" fill="none" stroke="#2556b6" stroke-width="5" stroke-linecap="round" />
+          ${familyLegend}
           <circle cx="${launch.x}" cy="${launch.y}" r="5" fill="#0e0807" />
           <text x="${launch.x + 8}" y="${launch.y - 8}" font-size="11" fill="rgba(14,8,7,0.48)">圆管出口</text>
           <circle cx="${landing.x}" cy="${landing.y}" r="6" fill="#f36440" />
@@ -689,7 +761,7 @@
       function renderRpm(result) {
         const svg = els.rpmSvg;
         const w = 420, h = 360, cx = 210, cy = 165, r = 112;
-        const labels = ['wheel1', 'wheel2', 'wheel3'];
+        const labels = ['A 上方', 'B 左下', 'C 右下'];
         const angles = [-90, 30, 150];
         const bars = result.rpms.map(rpm => (rpm / RPM_MAX) * 120);
         const colors = ['#2556b6', '#0e0807', '#f36440'];
@@ -710,7 +782,8 @@
           <text x="${cx}" y="${cy - 4}" text-anchor="middle" font-size="12" fill="rgba(14,8,7,0.48)">spin mode</text>
           <text x="${cx}" y="${cy + 18}" text-anchor="middle" font-size="16" fill="#0e0807">${result.state.spinMode}</text>`;
         const peakCurrent = estimatedPeakCurrent(result.rpms, result.state.ramp, result.state.preload);
-        els.summaryPills.innerHTML = `<span class="pill">efficiency ${fmt(result.launch.eff, 2)}</span><span class="pill">spin ${fmt(result.launch.spinRateRps, 2)} rps</span><span class="pill">ramp ${result.state.ramp}s</span><span class="pill">peak current est. ${fmt(peakCurrent, 0)} A</span>`;
+        const spread = Math.max(...result.rpms) - Math.min(...result.rpms);
+        els.summaryPills.innerHTML = `<span class="pill">A/B/C ${result.rpms.join(' / ')}</span><span class="pill">ΔRPM ${spread}</span><span class="pill">spin ${fmt(result.launch.spinRateRps, 2)} rps</span><span class="pill">peak current est. ${fmt(peakCurrent, 0)} A</span>`;
       }
 
       function renderComparison(result) {
@@ -754,10 +827,14 @@
           if (s.measuredCurrent > peakCurrent + 10) hints.push('实测电流峰值高于估算：优先拉长 ramp 或降低 preload。');
           if (s.measuredCurrent > CURRENT_CAP_A) hints.push('电流峰值超过当前 120A 口径，先收缩测试窗口。');
         }
+        const spread = Math.max(...result.rpms) - Math.min(...result.rpms);
+        if (spread >= 700 && s.preload < 2.5 && s.friction <= 0.55) hints.push('当前进入侧旋不可控高风险区：ΔRPM 高、preload 偏低、friction 偏低，先不要实测。');
+        if (Math.abs(result.traj.lateral) > 8) hints.push('横向偏移过大：防护罩出口和短圆管出口后的避让空间要同步放大。');
+        if (result.state.preset === 'long_pass_50m' && result.traj.range < 45) hints.push('50m 长传预设未达标：先提高基准 RPM / 摩擦效率，再评估是否需要更长接触时间。');
         if (!hints.length) {
-          hints.push('先跑 straight，再跑 light_curve，再上 standard_curve，不要一上来高 preload + 高 spin bias。');
-          hints.push('如果准备进首轮实测，建议先把 friction 锁在 0.55~0.65、preload 锁在 8~10mm。');
-          hints.push('3D 仿真按“由简入繁”推进：当前已加 50m 射程刻度、推荐/极限扇区、嵌入接触窗口；后续再加护罩、维护空间、碰撞与控制窗口。');
+          hints.push('按实战顺序跑：直线基准 → 左右弧线 → 上旋/下旋 → 复合弧线 → 50m 长传。');
+          hints.push('首轮实测建议 friction 0.65~0.75、preload 2.4~2.7mm、ΔRPM 200~500。');
+          hints.push('3D 仿真当前锁 v1.2a：76mm 短圆管、+Z 出口轴线、A/B/C 三点差速侧旋。');
         }
         els.hintList.innerHTML = hints.map(t => `<div class="hint">${t}</div>`).join('');
       }
@@ -768,10 +845,10 @@
         const rows = [];
         for (const mu of frictionCandidates) {
           for (const pre of preloadCandidates) {
-            const rpms = rpmMixer120deg(result.state.targetSpeed, result.state.spinMode, result.state.spinBias);
+            const rpms = rpmMixer120deg(result.state.targetSpeed, result.state.spinMode, result.state.spinBias, [result.state.rpmAOffset, result.state.rpmBOffset, result.state.rpmCOffset]);
             const launch = estimateLaunch(rpms, mu, pre);
-            const traj = trajectory(launch.launchSpeed, result.state.launchAngle, result.state.spinMode, launch.spinRateRps);
-            const risk = currentRisk(rpms, result.state.ramp);
+            const traj = trajectory(launch.launchSpeed, result.state.launchAngle, result.state.spinMode, launch.spinRateRps, rpms);
+            const risk = currentRisk(rpms, result.state.ramp, pre, mu);
             rows.push({ mu, pre, launch: launch.launchSpeed, range: traj.range, risk: risk.text, cls: risk.cls });
           }
         }
@@ -917,21 +994,35 @@
         });
       }
       buildLaunchArc180();
+      let scenarioLines3D = [];
       let line3D = null;
       let landingMarker = null;
       let measuredMarker3D = null;
       let launchHeadingMarker = null;
       function render3DTrajectory(result) {
+        scenarioLines3D.forEach(obj => scene.remove(obj));
+        scenarioLines3D = [];
         if (line3D) scene.remove(line3D);
         if (landingMarker) scene.remove(landingMarker);
         if (measuredMarker3D) scene.remove(measuredMarker3D);
         if (launchHeadingMarker) scene.remove(launchHeadingMarker);
         const headingRad = (result.state.headingDeg || 0) * Math.PI / 180;
-        const pts = result.traj.points.map(p => new THREE.Vector3(
-          tubeExit.x + p.x * 0.08 * Math.cos(headingRad) - p.y * 0.35 * Math.sin(headingRad),
+        const to3D = (p, hdg = headingRad) => new THREE.Vector3(
+          tubeExit.x + p.x * 0.08 * Math.cos(hdg) - p.y * 0.35 * Math.sin(hdg),
           p.z,
-          tubeExit.z + p.x * 0.08 * Math.sin(headingRad) + p.y * 0.35 * Math.cos(headingRad)
-        ));
+          tubeExit.z + p.x * 0.08 * Math.sin(hdg) + p.y * 0.35 * Math.cos(hdg)
+        );
+        const familyColors = [0x0e0807, 0x2556b6, 0xf36440, 0x6b7280, 0x9a5a00];
+        scenarioVariants(result.state).forEach((v, i) => {
+          const familyPts = v.traj.points.map(p => to3D(p, headingRad));
+          const familyLine = new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints(familyPts),
+            new THREE.LineBasicMaterial({ color: familyColors[i], transparent: true, opacity: 0.28 })
+          );
+          scenarioLines3D.push(familyLine);
+          scene.add(familyLine);
+        });
+        const pts = result.traj.points.map(p => to3D(p, headingRad));
         const geo = new THREE.BufferGeometry().setFromPoints(pts);
         const mat = new THREE.LineBasicMaterial({ color: 0x2556b6, linewidth: 2 });
         line3D = new THREE.Line(geo, mat); scene.add(line3D);
@@ -972,10 +1063,10 @@
       function renderAll() {
         const state = getState();
         syncLabels(state);
-        const rpms = rpmMixer120deg(state.targetSpeed, state.spinMode, state.spinBias);
+        const rpms = rpmMixer120deg(state.targetSpeed, state.spinMode, state.spinBias, [state.rpmAOffset, state.rpmBOffset, state.rpmCOffset]);
         const launch = estimateLaunch(rpms, state.friction, state.preload);
-        const traj = trajectory(launch.launchSpeed, state.launchAngle, state.spinMode, launch.spinRateRps);
-        const risk = currentRisk(rpms, state.ramp);
+        const traj = trajectory(launch.launchSpeed, state.launchAngle, state.spinMode, launch.spinRateRps, rpms);
+        const risk = currentRisk(rpms, state.ramp, state.preload, state.friction);
         const result = { state, rpms, launch, traj, risk };
         renderMetrics(result);
         renderTrajectory(result);
@@ -988,9 +1079,9 @@
       }
 
       els.presetSelect.addEventListener('change', (e) => { if (e.target.value !== 'custom') setControls(e.target.value); renderAll(); });
-      [els.targetSpeed, els.launchAngle, els.preload, els.friction, els.spinBias, els.ramp, els.spinMode, els.headingDeg, els.measuredLaunch, els.measuredRange, els.measuredLateral, els.measuredCurrent].forEach(el => {
-        el.addEventListener('input', () => { if (['targetSpeed','launchAngle','preload','friction','spinBias','ramp','spinMode','headingDeg'].includes(el.id) && els.presetSelect.value !== 'custom') els.presetSelect.value = 'custom'; renderAll(); });
-        el.addEventListener('change', () => { if (['targetSpeed','launchAngle','preload','friction','spinBias','ramp','spinMode','headingDeg'].includes(el.id) && els.presetSelect.value !== 'custom') els.presetSelect.value = 'custom'; renderAll(); });
+      [els.targetSpeed, els.launchAngle, els.preload, els.friction, els.spinBias, els.ramp, els.spinMode, els.headingDeg, els.rpmAOffset, els.rpmBOffset, els.rpmCOffset, els.measuredLaunch, els.measuredRange, els.measuredLateral, els.measuredCurrent].forEach(el => {
+        el.addEventListener('input', () => { if (['targetSpeed','launchAngle','preload','friction','spinBias','ramp','spinMode','headingDeg','rpmAOffset','rpmBOffset','rpmCOffset'].includes(el.id) && els.presetSelect.value !== 'custom') els.presetSelect.value = 'custom'; renderAll(); });
+        el.addEventListener('change', () => { if (['targetSpeed','launchAngle','preload','friction','spinBias','ramp','spinMode','headingDeg','rpmAOffset','rpmBOffset','rpmCOffset'].includes(el.id) && els.presetSelect.value !== 'custom') els.presetSelect.value = 'custom'; renderAll(); });
       });
 
       setControls('straight_validation');
