@@ -317,8 +317,8 @@
         <div class="eyebrow">Simulation Mainline</div>
         <h1>三维 <span class="thin">仿真可视化</span></h1>
         <p>
-          v1.2c 口径：三电机倾斜布置，直接形成向上发射合力。
-          去除保护罩表达，突出 3 个 6354 外转子嵌入短发射管；出球方向由三电机倾斜夹持后的共同合力决定。
+          v1.2d 口径：三电机倾斜布置整体翻转 90°，直接形成向上发射合力。
+          去除保护罩表达，突出 3 个 6354 外转子嵌入短发射管；出球方向由翻转后的三电机倾斜夹持合力决定。
         </p>
       </section>
 
@@ -416,7 +416,7 @@
           <div class="top-grid">
             <section class="card">
               <h3>3D 发射场景</h3>
-              <p>三电机整体倾斜夹持，直接给球一个向上合力方向；可手势/鼠标拖动旋转。</p>
+              <p>三电机整体倾斜夹持并翻转 90°，直接给球一个向上合力方向；可手势/鼠标拖动旋转。</p>
               <div id="threeStage"></div>
               <div class="legend">
                 <div class="legend-item"><span class="swatch" style="background:#2556b6"></span>仿真轨迹</div>
@@ -464,7 +464,7 @@
             <div class="table" id="sensitivityTable"></div>
           </section>
 
-          <div class="foot">这是工程筛选级 3D 可视化，不是 CFD/FEA。当前重点：三电机倾斜嵌入、直接向上发射、合力方向出球。</div>
+          <div class="foot">这是工程筛选级 3D 可视化，不是 CFD/FEA。当前重点：三电机倾斜嵌入、整体翻转 90°、直接向上发射。</div>
         </section>
       </section>
     </main>
@@ -776,7 +776,7 @@
           <text x="${cx}" y="${cy + 4}" text-anchor="middle" font-size="12" fill="rgba(14,8,7,0.62)">球心</text>
           <text x="430" y="36" font-size="12" fill="rgba(14,8,7,0.48)">合力方向 / 向上倾角</text>
           <text x="430" y="60" font-size="28" fill="#f36440">${fmt(result.forceHeadingDeg,0)}°</text>
-          <text x="540" y="60" font-size="13" fill="rgba(14,8,7,0.62)">tilt ${fmt(result.state.launchAngle,0)}° · ΔRPM ${spread} · side-spin ${fmt(result.launch.spinRateRps,2)} rps</text>`;
+          <text x="540" y="60" font-size="13" fill="rgba(14,8,7,0.62)">roll 90° · tilt ${fmt(result.state.launchAngle,0)}° · ΔRPM ${spread} · side-spin ${fmt(result.launch.spinRateRps,2)} rps</text>`;
       }
 
       function renderTrajectory(result) {
@@ -898,7 +898,7 @@
         if (!hints.length) {
           hints.push('按实战顺序跑：直线基准 → 左右弧线 → 上旋/下旋 → 复合弧线 → 50m 长传。');
           hints.push('首轮实测建议 friction 0.65~0.75、preload 2.4~2.7mm、ΔRPM 200~500。');
-          hints.push('3D 仿真当前锁 v1.2c：三电机倾斜布置，直接形成向上发射合力。');
+          hints.push('3D 仿真当前锁 v1.2d：三电机倾斜布置整体翻转 90°，直接形成向上发射合力。');
         }
         els.hintList.innerHTML = hints.map(t => `<div class="hint">${t}</div>`).join('');
       }
@@ -1069,7 +1069,7 @@
         while (forceVectorGroup.children.length) forceVectorGroup.remove(forceVectorGroup.children[0]);
         const comps = forceComponents(result.rpms);
         const colors = [0x2556b6, 0x0e0807, 0xf36440];
-        const motorAngles = [-Math.PI/2, 5*Math.PI/6, Math.PI/6];
+        const motorAngles = [0, -2*Math.PI/3, 2*Math.PI/3]; // v1.2d: station clocking rolled 90°
         comps.forEach((c, i) => {
           const radial = new THREE.Vector3(Math.cos(motorAngles[i]), 0, Math.sin(motorAngles[i]));
           const origin = radial.clone().multiplyScalar(0.28).setY(BALL_RADIUS_M + 0.02);
@@ -1097,6 +1097,7 @@
         const tiltRad = (result.state.launchAngle || 0) * Math.PI / 180;
         const forceDir = new THREE.Vector3(Math.cos(tiltRad) * Math.cos(headingRad), Math.sin(tiltRad), Math.cos(tiltRad) * Math.sin(headingRad)).normalize();
         directionArrow.setDirection(forceDir);
+        launcherGroup.rotation.x = Math.PI / 2; // v1.2d: 三电机倾斜布置整体翻转 90°
         launcherGroup.rotation.z = tiltRad * 0.75;
         update3DForceVectors(result);
         const to3D = (p, hdg = headingRad) => new THREE.Vector3(
