@@ -39,3 +39,5 @@
 | 文档 | SHORT_TUBE_V1_2A_ENGINEERING_REVIEW.md | v1.2a | v1.2a 并线工程复核，覆盖短管导向/口袋干涉/旋转包络/45×45/出口轴线 |
 | 装配 CAD | outrunner_embedded_short_tube_v1_2b.scad | v1.2b | 去除保护罩表达，突出三电机嵌入短发射管，发射方向按三电机合力方向 |
 | 文档 | SIM_VISUALIZER_V10_RESULTANT_UPDATE.md | v10 | 仿真可视化改为三电机合力方向出球，无保护罩口径 |
+| 装配 CAD | outrunner_embedded_tilted_tube_v1_2c.scad | v1.2c | 三电机倾斜嵌入短发射管，合力方向直接向上发射，无保护罩 |
+| 文档 | SIM_VISUALIZER_V12_TILTED_DIRECT_LAUNCH_UPDATE.md | v12 | 仿真可视化改为三电机倾斜布置直接向上发射 |

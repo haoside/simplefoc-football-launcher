@@ -317,8 +317,8 @@
         <div class="eyebrow">Simulation Mainline</div>
         <h1>三维 <span class="thin">仿真可视化</span></h1>
         <p>
-          v1.2b 口径：去除保护罩表达，突出 3 个 6354 外转子嵌入 76mm 短发射管。
-          出球方向不再按圆管出口单独定义，而由 A/B/C 三电机共同作用的合力方向决定；圆管只提供短导向与结构基准。
+          v1.2c 口径：三电机倾斜布置，直接形成向上发射合力。
+          去除保护罩表达，突出 3 个 6354 外转子嵌入短发射管；出球方向由三电机倾斜夹持后的共同合力决定。
         </p>
       </section>
 
@@ -348,7 +348,7 @@
                 <input id="targetSpeed" type="range" min="12" max="32" step="0.1" value="24.0" />
               </div>
               <div class="field">
-                <label><span>发射角</span><span class="meta"><span id="angleValue">16</span>°</span></label>
+                <label><span>三电机倾斜发射角</span><span class="meta"><span id="angleValue">16</span>°</span></label>
                 <input id="launchAngle" type="range" min="6" max="28" step="1" value="16" />
               </div>
               <div class="field">
@@ -416,7 +416,7 @@
           <div class="top-grid">
             <section class="card">
               <h3>3D 发射场景</h3>
-              <p>去掉保护罩层，重点看三电机嵌入短发射管，以及 A/B/C 合力方向如何决定出球方向。</p>
+              <p>三电机整体倾斜夹持，直接给球一个向上合力方向；可手势/鼠标拖动旋转。</p>
               <div id="threeStage"></div>
               <div class="legend">
                 <div class="legend-item"><span class="swatch" style="background:#2556b6"></span>仿真轨迹</div>
@@ -435,7 +435,7 @@
 
           <section class="card">
             <h3>A/B/C 合力矢量分解</h3>
-            <p>把三电机接触作用拆成 A 上方、B 左下、C 右下三条力矢量，再合成为当前出球方向。</p>
+            <p>三条接触力矢量叠加后形成最终出球方向；合力同时包含左右偏转和向上发射角。</p>
             <svg id="forceSvg" viewBox="0 0 760 300" aria-label="force vector decomposition"></svg>
           </section>
 
@@ -464,7 +464,7 @@
             <div class="table" id="sensitivityTable"></div>
           </section>
 
-          <div class="foot">这是工程筛选级 3D 可视化，不是 CFD/FEA。当前重点：三电机嵌入发射管、合力方向出球、实战轨迹族。</div>
+          <div class="foot">这是工程筛选级 3D 可视化，不是 CFD/FEA。当前重点：三电机倾斜嵌入、直接向上发射、合力方向出球。</div>
         </section>
       </section>
     </main>
@@ -714,7 +714,7 @@
         const cards = [
           ['launch speed', `${fmt(result.launch.launchSpeed, 2)} m/s`, '当前仿真估算出球速度'],
           ['range', `${fmt(result.traj.range, 1)} m`, '合力方向上的落点距离，目标向 50m 提升'],
-          ['force dir', `${fmt(result.forceHeadingDeg, 0)}°`, 'A/B/C 三电机共同作用合力方向'],
+          ['force dir', `${fmt(result.forceHeadingDeg, 0)}° / ${fmt(result.state.launchAngle,0)}°`, '合力方位 / 向上倾角'],
           ['risk', risk.text, '电流/加速风险等级'],
         ];
         els.metrics.innerHTML = cards.map(([k, v, s], i) => `
@@ -774,9 +774,9 @@
           <line x1="${cx}" y1="${cy}" x2="${cx + hx}" y2="${cy + hy}" stroke="#f36440" stroke-width="5" stroke-linecap="round" marker-end="url(#arrow-force)" />
           ${arrows}
           <text x="${cx}" y="${cy + 4}" text-anchor="middle" font-size="12" fill="rgba(14,8,7,0.62)">球心</text>
-          <text x="430" y="36" font-size="12" fill="rgba(14,8,7,0.48)">合力方向</text>
+          <text x="430" y="36" font-size="12" fill="rgba(14,8,7,0.48)">合力方向 / 向上倾角</text>
           <text x="430" y="60" font-size="28" fill="#f36440">${fmt(result.forceHeadingDeg,0)}°</text>
-          <text x="540" y="60" font-size="13" fill="rgba(14,8,7,0.62)">ΔRPM ${spread} · side-spin ${fmt(result.launch.spinRateRps,2)} rps</text>`;
+          <text x="540" y="60" font-size="13" fill="rgba(14,8,7,0.62)">tilt ${fmt(result.state.launchAngle,0)}° · ΔRPM ${spread} · side-spin ${fmt(result.launch.spinRateRps,2)} rps</text>`;
       }
 
       function renderTrajectory(result) {
@@ -898,7 +898,7 @@
         if (!hints.length) {
           hints.push('按实战顺序跑：直线基准 → 左右弧线 → 上旋/下旋 → 复合弧线 → 50m 长传。');
           hints.push('首轮实测建议 friction 0.65~0.75、preload 2.4~2.7mm、ΔRPM 200~500。');
-          hints.push('3D 仿真当前锁 v1.2b：无保护罩、三电机嵌入短发射管、A/B/C 合力方向出球。');
+          hints.push('3D 仿真当前锁 v1.2c：三电机倾斜布置，直接形成向上发射合力。');
         }
         els.hintList.innerHTML = hints.map(t => `<div class="hint">${t}</div>`).join('');
       }
@@ -1073,13 +1073,16 @@
         comps.forEach((c, i) => {
           const radial = new THREE.Vector3(Math.cos(motorAngles[i]), 0, Math.sin(motorAngles[i]));
           const origin = radial.clone().multiplyScalar(0.28).setY(BALL_RADIUS_M + 0.02);
-          const towardBall = radial.clone().multiplyScalar(-1).normalize();
+          const tiltRad = (result.state.launchAngle || 0) * Math.PI / 180;
+          const towardBall = radial.clone().multiplyScalar(-1).add(new THREE.Vector3(0, Math.sin(tiltRad) * 0.75, 0)).normalize();
           const length = 0.18 + Math.abs(c.gain) * 0.18;
           const arrow = new THREE.ArrowHelper(towardBall, origin, length, colors[i], 0.045, 0.025);
           forceVectorGroup.add(arrow);
         });
         const headingRad = (result.forceHeadingDeg || 0) * Math.PI / 180;
-        const resultant = new THREE.ArrowHelper(new THREE.Vector3(Math.cos(headingRad), 0, Math.sin(headingRad)).normalize(), tubeExit.clone().add(new THREE.Vector3(0,0.035,0)), 0.72, 0xf36440, 0.09, 0.05);
+        const tiltRad = (result.state.launchAngle || 0) * Math.PI / 180;
+        const resultantDir = new THREE.Vector3(Math.cos(tiltRad) * Math.cos(headingRad), Math.sin(tiltRad), Math.cos(tiltRad) * Math.sin(headingRad)).normalize();
+        const resultant = new THREE.ArrowHelper(resultantDir, tubeExit.clone().add(new THREE.Vector3(0,0.035,0)), 0.78, 0xf36440, 0.09, 0.05);
         forceVectorGroup.add(resultant);
       }
 
@@ -1091,7 +1094,10 @@
         if (measuredMarker3D) scene.remove(measuredMarker3D);
         if (launchHeadingMarker) scene.remove(launchHeadingMarker);
         const headingRad = (result.forceHeadingDeg || 0) * Math.PI / 180;
-        directionArrow.setDirection(new THREE.Vector3(Math.cos(headingRad), 0, Math.sin(headingRad)).normalize());
+        const tiltRad = (result.state.launchAngle || 0) * Math.PI / 180;
+        const forceDir = new THREE.Vector3(Math.cos(tiltRad) * Math.cos(headingRad), Math.sin(tiltRad), Math.cos(tiltRad) * Math.sin(headingRad)).normalize();
+        directionArrow.setDirection(forceDir);
+        launcherGroup.rotation.z = tiltRad * 0.75;
         update3DForceVectors(result);
         const to3D = (p, hdg = headingRad) => new THREE.Vector3(
           tubeExit.x + p.x * 0.08 * Math.cos(hdg) - p.y * 0.35 * Math.sin(hdg),
