@@ -317,8 +317,8 @@
         <div class="eyebrow">Simulation Mainline</div>
         <h1>三维 <span class="thin">仿真可视化</span></h1>
         <p>
-          v1.2d 口径：三电机倾斜布置整体翻转 90°，直接形成向上发射合力。
-          去除保护罩表达，突出 3 个 6354 外转子嵌入短发射管；出球方向由翻转后的三电机倾斜夹持合力决定。
+          v1.2e 口径：参照实物图，中心是短发射管开口，3 个外转子沿管周向 120° 嵌入橙色夹持座。
+          电机不是外挂件，也不是保护罩包住；它们直接嵌在发射管外壁窗口内，共同夹持足球并形成向上合力出球。
         </p>
       </section>
 
@@ -416,7 +416,7 @@
           <div class="top-grid">
             <section class="card">
               <h3>3D 发射场景</h3>
-              <p>三电机整体倾斜夹持并翻转 90°，直接给球一个向上合力方向；可手势/鼠标拖动旋转。</p>
+              <p>按照片口径强化：中心短管开口清晰可见，三电机嵌入管壁周向窗口，整体倾斜 + roll 90° 后直接向上发射。</p>
               <div id="threeStage"></div>
               <div class="legend">
                 <div class="legend-item"><span class="swatch" style="background:#2556b6"></span>仿真轨迹</div>
@@ -437,6 +437,12 @@
             <h3>A/B/C 合力矢量分解</h3>
             <p>三条接触力矢量叠加后形成最终出球方向；合力同时包含左右偏转和向上发射角。</p>
             <svg id="forceSvg" viewBox="0 0 760 300" aria-label="force vector decomposition"></svg>
+          </section>
+
+          <section class="card">
+            <h3>照片口径结构理解</h3>
+            <p>按参考图抽象：中心短发射管开口，3 个外转子嵌入管壁周向夹持座，120° 围绕球道，取消保护罩。</p>
+            <svg id="photoRefSvg" viewBox="0 0 760 320" aria-label="photo reference layout"></svg>
           </section>
 
           <div class="viz-grid">
@@ -464,7 +470,7 @@
             <div class="table" id="sensitivityTable"></div>
           </section>
 
-          <div class="foot">这是工程筛选级 3D 可视化，不是 CFD/FEA。当前重点：三电机倾斜嵌入、整体翻转 90°、直接向上发射。</div>
+          <div class="foot">这是工程筛选级 3D 可视化，不是 CFD/FEA。当前重点：按图片口径表达三电机嵌入发射管、倾斜 roll 90°、合力方向直接发射。</div>
         </section>
       </section>
     </main>
@@ -526,6 +532,7 @@
         metrics: document.getElementById('metrics'),
         trajectorySvg: document.getElementById('trajectorySvg'),
         forceSvg: document.getElementById('forceSvg'),
+        photoRefSvg: document.getElementById('photoRefSvg'),
         rpmSvg: document.getElementById('rpmSvg'),
         summaryPills: document.getElementById('summaryPills'),
         compareGrid: document.getElementById('compareGrid'),
@@ -741,6 +748,52 @@
         });
       }
 
+      function renderPhotoReference(result) {
+        const svg = els.photoRefSvg;
+        const w = 760, h = 320, cx = 250, cy = 160;
+        const tubeR = 72, tubeInner = 50;
+        const motors = [
+          { label: 'A 上方', a: -90, rpm: result.rpms[0], color: '#2556b6' },
+          { label: 'B 左下', a: 150, rpm: result.rpms[1], color: '#0e0807' },
+          { label: 'C 右下', a: 30, rpm: result.rpms[2], color: '#f36440' },
+        ];
+        const motorNodes = motors.map(m => {
+          const r = m.a * Math.PI / 180;
+          const x = cx + Math.cos(r) * 118;
+          const y = cy + Math.sin(r) * 118;
+          const rot = m.a + 90;
+          return `<g transform="translate(${x} ${y}) rotate(${rot})">
+            <rect x="-54" y="-28" width="108" height="56" rx="14" fill="#f36440" opacity="0.18" stroke="#f36440" />
+            <rect x="-42" y="-21" width="84" height="42" rx="12" fill="#fff" stroke="${m.color}" stroke-width="3" />
+            <rect x="-35" y="-18" width="70" height="36" rx="10" fill="${m.color}" opacity="0.18" />
+            <line x1="0" y1="-36" x2="0" y2="36" stroke="${m.color}" stroke-width="4" opacity="0.75" />
+            <text x="0" y="5" text-anchor="middle" font-size="13" fill="#0e0807" transform="rotate(${-rot})">${m.label}</text>
+            <text x="0" y="23" text-anchor="middle" font-size="11" fill="rgba(14,8,7,0.58)" transform="rotate(${-rot})">${m.rpm} rpm</text>
+          </g>`;
+        }).join('');
+        const pocketCuts = motors.map(m => {
+          const r = m.a * Math.PI / 180;
+          const x = cx + Math.cos(r) * 79;
+          const y = cy + Math.sin(r) * 79;
+          return `<circle cx="${x}" cy="${y}" r="18" fill="#f8f6f3" stroke="#f36440" stroke-width="2" stroke-dasharray="4 3" />`;
+        }).join('');
+        svg.innerHTML = `<rect x="0" y="0" width="${w}" height="${h}" rx="14" fill="#fff" />
+          <circle cx="${cx}" cy="${cy}" r="${tubeR}" fill="#f36440" opacity="0.20" stroke="#f36440" stroke-width="5" />
+          ${pocketCuts}
+          <circle cx="${cx}" cy="${cy}" r="${tubeInner}" fill="#0e0807" opacity="0.90" />
+          <circle cx="${cx}" cy="${cy}" r="${tubeInner-13}" fill="#fff" opacity="0.12" />
+          ${motorNodes}
+          <line x1="${cx}" y1="${cy}" x2="${cx + 155}" y2="${cy - 78}" stroke="#f36440" stroke-width="5" marker-end="url(#photo-arrow)" />
+          <defs><marker id="photo-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#f36440" /></marker></defs>
+          <text x="440" y="64" font-size="13" fill="rgba(14,8,7,0.48)">结构抽象</text>
+          <text x="440" y="92" font-size="24" fill="#0e0807">三电机嵌入发射管</text>
+          <text x="440" y="126" font-size="13" fill="rgba(14,8,7,0.68)">1. 中心黑孔 = 短发射管 / 球道</text>
+          <text x="440" y="154" font-size="13" fill="rgba(14,8,7,0.68)">2. 橙色外圈 = 打印夹持座 / 管壁窗口</text>
+          <text x="440" y="182" font-size="13" fill="rgba(14,8,7,0.68)">3. 三电机 120° 嵌入，不是外挂</text>
+          <text x="440" y="210" font-size="13" fill="rgba(14,8,7,0.68)">4. 合力箭头 = 倾斜 roll 90° 后直接出球</text>
+          <text x="440" y="252" font-size="12" fill="#f36440">取消保护罩，只保留开放夹持/支撑结构</text>`;
+      }
+
       function renderForceVector(result) {
         const svg = els.forceSvg;
         const w = 760, h = 300, cx = 210, cy = 148;
@@ -898,7 +951,7 @@
         if (!hints.length) {
           hints.push('按实战顺序跑：直线基准 → 左右弧线 → 上旋/下旋 → 复合弧线 → 50m 长传。');
           hints.push('首轮实测建议 friction 0.65~0.75、preload 2.4~2.7mm、ΔRPM 200~500。');
-          hints.push('3D 仿真当前锁 v1.2d：三电机倾斜布置整体翻转 90°，直接形成向上发射合力。');
+          hints.push('3D 仿真当前锁 v1.2e：按图片口径，三电机嵌入发射管周向窗口，倾斜 roll 90° 后合力直接发射。');
         }
         els.hintList.innerHTML = hints.map(t => `<div class="hint">${t}</div>`).join('');
       }
@@ -943,7 +996,12 @@
       tubeOuter.rotation.z = Math.PI / 2;
       tubeOuter.position.set(0, BALL_RADIUS_M, 0);
       launcherGroup.add(tubeOuter);
-      const contactWindowMaterial = new THREE.MeshStandardMaterial({ color: 0xf36440, transparent: true, opacity: 0.22, roughness: 0.6 });
+      const orangeCradleMat = new THREE.MeshStandardMaterial({ color: 0xf36440, roughness: 0.75, metalness: 0.02, transparent: true, opacity: 0.74 });
+      const frontCradleRing = new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.018, 16, 72), orangeCradleMat);
+      frontCradleRing.rotation.y = Math.PI / 2;
+      frontCradleRing.position.set(0.018, BALL_RADIUS_M, 0);
+      launcherGroup.add(frontCradleRing);
+      const contactWindowMaterial = new THREE.MeshStandardMaterial({ color: 0xf36440, transparent: true, opacity: 0.32, roughness: 0.6 });
       [-Math.PI/2, Math.PI/6, 5*Math.PI/6].forEach(angle => {
         const radial = new THREE.Vector3(Math.cos(angle), 0, Math.sin(angle));
         const tangent = new THREE.Vector3(-Math.sin(angle), 0, Math.cos(angle));
@@ -1166,6 +1224,7 @@
         renderTrajectory(result);
         renderRpm(result);
         renderForceVector(result);
+        renderPhotoReference(result);
         renderComparison(result);
         renderHints(result);
         renderSensitivity(result);

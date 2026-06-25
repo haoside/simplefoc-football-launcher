@@ -43,3 +43,5 @@
 | 文档 | SIM_VISUALIZER_V12_TILTED_DIRECT_LAUNCH_UPDATE.md | v12 | 仿真可视化改为三电机倾斜布置直接向上发射 |
 | 装配 CAD | outrunner_embedded_tilted_roll90_tube_v1_2d.scad | v1.2d | 三电机倾斜布置整体翻转 90°，合力方向直接向上发射，无保护罩 |
 | 文档 | SIM_VISUALIZER_V13_ROLL90_UPDATE.md | v13 | 仿真可视化改为三电机倾斜布置 roll 90° |
+| 装配 CAD | outrunner_photo_ref_embedded_tube_v1_2e.scad | v1.2e | 参照实物图：中心短发射管开口，三电机嵌入发射管周向窗口，倾斜 roll 90° 后合力发射 |
+| 文档 | SIM_VISUALIZER_V14_PHOTO_REFERENCE_UPDATE.md | v14 | 仿真可视化加入照片口径结构理解面板，强化三电机嵌入发射管 |
