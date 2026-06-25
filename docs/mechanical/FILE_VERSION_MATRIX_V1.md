@@ -45,3 +45,5 @@
 | 文档 | SIM_VISUALIZER_V13_ROLL90_UPDATE.md | v13 | 仿真可视化改为三电机倾斜布置 roll 90° |
 | 装配 CAD | outrunner_photo_ref_embedded_tube_v1_2e.scad | v1.2e | 参照实物图：中心短发射管开口，三电机嵌入发射管周向窗口，倾斜 roll 90° 后合力发射 |
 | 文档 | SIM_VISUALIZER_V14_PHOTO_REFERENCE_UPDATE.md | v14 | 仿真可视化加入照片口径结构理解面板，强化三电机嵌入发射管 |
+| 装配 CAD | outrunner_target_resultant_tube_v1_2f.scad | v1.2f | 初始合力方向直接锁定目标方向，A/B/C 差速只用于侧旋弧线 |
+| 文档 | SIM_VISUALIZER_V15_TARGET_RESULTANT_UPDATE.md | v15 | 仿真可视化改为目标方向锁定初始合力，侧旋与瞄准解耦 |

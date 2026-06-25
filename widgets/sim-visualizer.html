@@ -317,8 +317,8 @@
         <div class="eyebrow">Simulation Mainline</div>
         <h1>三维 <span class="thin">仿真可视化</span></h1>
         <p>
-          v1.2e 口径：参照实物图，中心是短发射管开口，3 个外转子沿管周向 120° 嵌入橙色夹持座。
-          电机不是外挂件，也不是保护罩包住；它们直接嵌在发射管外壁窗口内，共同夹持足球并形成向上合力出球。
+          v1.2f 口径：合力方向直接指向目标方向。中心短发射管 + 三电机周向嵌入保持不变。
+          A/B/C 差速用于制造侧旋和弧线，不能把初始出球方向带偏；初始合力矢量必须对准目标方向。
         </p>
       </section>
 
@@ -378,7 +378,7 @@
                 </select>
               </div>
               <div class="field">
-                <label><span>合力方向微调</span><span class="meta"><span id="headingValue">0</span>°</span></label>
+                <label><span>目标方向</span><span class="meta"><span id="headingValue">0</span>°</span></label>
                 <input id="headingDeg" type="range" min="-90" max="90" step="1" value="0" />
               </div>
               <div class="field">
@@ -416,7 +416,7 @@
           <div class="top-grid">
             <section class="card">
               <h3>3D 发射场景</h3>
-              <p>按照片口径强化：中心短管开口清晰可见，三电机嵌入管壁周向窗口，整体倾斜 + roll 90° 后直接向上发射。</p>
+              <p>按照片口径强化：中心短管开口清晰可见，三电机嵌入管壁周向窗口；合力箭头直接对准目标方向，侧旋只改变飞行弧线。</p>
               <div id="threeStage"></div>
               <div class="legend">
                 <div class="legend-item"><span class="swatch" style="background:#2556b6"></span>仿真轨迹</div>
@@ -435,7 +435,7 @@
 
           <section class="card">
             <h3>A/B/C 合力矢量分解</h3>
-            <p>三条接触力矢量叠加后形成最终出球方向；合力同时包含左右偏转和向上发射角。</p>
+            <p>三条接触力矢量叠加后的初始合力必须对准目标方向；A/B/C 差速用于侧旋，不直接偏转瞄准方向。</p>
             <svg id="forceSvg" viewBox="0 0 760 300" aria-label="force vector decomposition"></svg>
           </section>
 
@@ -448,7 +448,7 @@
           <div class="viz-grid">
             <section class="card">
               <h3>2D 轨迹与落点</h3>
-              <p>主轨迹 + 实战轨迹族同屏；出球初始方向由 A/B/C 合力方向给出，飞行中继续受侧旋影响。</p>
+              <p>主轨迹 + 实战轨迹族同屏；初始合力方向对准目标，飞行中由 A/B/C 差速侧旋形成弧线。</p>
               <svg id="trajectorySvg" viewBox="0 0 760 360" aria-label="trajectory"></svg>
             </section>
             <section class="card">
@@ -470,7 +470,7 @@
             <div class="table" id="sensitivityTable"></div>
           </section>
 
-          <div class="foot">这是工程筛选级 3D 可视化，不是 CFD/FEA。当前重点：按图片口径表达三电机嵌入发射管、倾斜 roll 90°、合力方向直接发射。</div>
+          <div class="foot">这是工程筛选级 3D 可视化，不是 CFD/FEA。当前重点：合力方向直接对准目标，三电机差速只制造比赛弧线。</div>
         </section>
       </section>
     </main>
@@ -598,10 +598,8 @@
 
       function resultantHeadingDeg(state, rpms) {
         const [a, b, c] = rpms;
-        // 合力方向简化：A/C 差速给左右分量，B 参与稳定和复合侧旋；headingDeg 只作为总装微调。
-        const lateralFromMotors = clamp((a - c) / 55, -75, 75);
-        const bTrim = clamp((b - (a + c) / 2) / 120, -10, 10);
-        return clamp((state.headingDeg || 0) + lateralFromMotors + bTrim, -90, 90);
+        // v1.2f: 合力方向直接指向目标方向。A/B/C 差速只进入侧旋模型，不改写初始瞄准方向。
+        return clamp((state.headingDeg || 0), -90, 90);
       }
 
       function forceComponents(rpms) {
@@ -721,7 +719,7 @@
         const cards = [
           ['launch speed', `${fmt(result.launch.launchSpeed, 2)} m/s`, '当前仿真估算出球速度'],
           ['range', `${fmt(result.traj.range, 1)} m`, '合力方向上的落点距离，目标向 50m 提升'],
-          ['force dir', `${fmt(result.forceHeadingDeg, 0)}° / ${fmt(result.state.launchAngle,0)}°`, '合力方位 / 向上倾角'],
+          ['target dir', `${fmt(result.forceHeadingDeg, 0)}° / ${fmt(result.state.launchAngle,0)}°`, '目标方位 / 向上倾角'],
           ['risk', risk.text, '电流/加速风险等级'],
         ];
         els.metrics.innerHTML = cards.map(([k, v, s], i) => `
@@ -790,8 +788,8 @@
           <text x="440" y="126" font-size="13" fill="rgba(14,8,7,0.68)">1. 中心黑孔 = 短发射管 / 球道</text>
           <text x="440" y="154" font-size="13" fill="rgba(14,8,7,0.68)">2. 橙色外圈 = 打印夹持座 / 管壁窗口</text>
           <text x="440" y="182" font-size="13" fill="rgba(14,8,7,0.68)">3. 三电机 120° 嵌入，不是外挂</text>
-          <text x="440" y="210" font-size="13" fill="rgba(14,8,7,0.68)">4. 合力箭头 = 倾斜 roll 90° 后直接出球</text>
-          <text x="440" y="252" font-size="12" fill="#f36440">取消保护罩，只保留开放夹持/支撑结构</text>`;
+          <text x="440" y="210" font-size="13" fill="rgba(14,8,7,0.68)">4. 合力箭头 = 直接指向目标方向</text>
+          <text x="440" y="252" font-size="12" fill="#f36440">初始合力对准目标；弧线来自飞行中侧旋</text>`;
       }
 
       function renderForceVector(result) {
@@ -807,7 +805,7 @@
           const x2 = cx + c.x * scale;
           const y2 = cy + c.y * scale;
           const width = 2 + Math.abs(c.gain) * 5;
-          const status = c.gain >= 0 ? '加速/主导' : '减速/释放';
+          const status = c.gain >= 0 ? '侧旋加速' : '侧旋释放';
           return `<line x1="${cx}" y1="${cy}" x2="${x2}" y2="${y2}" stroke="${colors[i]}" stroke-width="${width}" stroke-linecap="round" marker-end="url(#arrow-${i})" />
             <circle cx="${x2}" cy="${y2}" r="26" fill="#fff" stroke="${colors[i]}" stroke-width="2" />
             <text x="${x2}" y="${y2-4}" text-anchor="middle" font-size="11" fill="rgba(14,8,7,0.48)">${c.label}</text>
@@ -827,9 +825,9 @@
           <line x1="${cx}" y1="${cy}" x2="${cx + hx}" y2="${cy + hy}" stroke="#f36440" stroke-width="5" stroke-linecap="round" marker-end="url(#arrow-force)" />
           ${arrows}
           <text x="${cx}" y="${cy + 4}" text-anchor="middle" font-size="12" fill="rgba(14,8,7,0.62)">球心</text>
-          <text x="430" y="36" font-size="12" fill="rgba(14,8,7,0.48)">合力方向 / 向上倾角</text>
+          <text x="430" y="36" font-size="12" fill="rgba(14,8,7,0.48)">目标方向 / 向上倾角</text>
           <text x="430" y="60" font-size="28" fill="#f36440">${fmt(result.forceHeadingDeg,0)}°</text>
-          <text x="540" y="60" font-size="13" fill="rgba(14,8,7,0.62)">roll 90° · tilt ${fmt(result.state.launchAngle,0)}° · ΔRPM ${spread} · side-spin ${fmt(result.launch.spinRateRps,2)} rps</text>`;
+          <text x="540" y="60" font-size="13" fill="rgba(14,8,7,0.62)">target locked · tilt ${fmt(result.state.launchAngle,0)}° · side-spin ${fmt(result.launch.spinRateRps,2)} rps</text>`;
       }
 
       function renderTrajectory(result) {
@@ -951,7 +949,7 @@
         if (!hints.length) {
           hints.push('按实战顺序跑：直线基准 → 左右弧线 → 上旋/下旋 → 复合弧线 → 50m 长传。');
           hints.push('首轮实测建议 friction 0.65~0.75、preload 2.4~2.7mm、ΔRPM 200~500。');
-          hints.push('3D 仿真当前锁 v1.2e：按图片口径，三电机嵌入发射管周向窗口，倾斜 roll 90° 后合力直接发射。');
+          hints.push('3D 仿真当前锁 v1.2f：合力方向直接瞄准目标，A/B/C 差速只负责侧旋弧线。');
         }
         els.hintList.innerHTML = hints.map(t => `<div class="hint">${t}</div>`).join('');
       }
