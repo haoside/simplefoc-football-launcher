@@ -47,3 +47,6 @@
 | 文档 | SIM_VISUALIZER_V14_PHOTO_REFERENCE_UPDATE.md | v14 | 仿真可视化加入照片口径结构理解面板，强化三电机嵌入发射管 |
 | 装配 CAD | outrunner_target_resultant_tube_v1_2f.scad | v1.2f | 初始合力方向直接锁定目标方向，A/B/C 差速只用于侧旋弧线 |
 | 文档 | SIM_VISUALIZER_V15_TARGET_RESULTANT_UPDATE.md | v15 | 仿真可视化改为目标方向锁定初始合力，侧旋与瞄准解耦 |
+| 装配 CAD | outrunner_integrated_tube_motor_mount_v1_2g.scad | v1.2g | 发射圆管兼三电机固定一体结构，贴近参考图橙色一体夹持件 |
+| 文档 | INTEGRATED_TUBE_MOTOR_MOUNT_V1_2G.md | v1.2g | 圆管 + 三电机口袋 + 端压板 + 加强筋一体结构说明 |
+| 文档 | SIM_VISUALIZER_V16_INTEGRATED_STRUCTURE_UPDATE.md | v16 | 仿真可视化加入一体固定结构截面和 3D 一体夹持件表达 |

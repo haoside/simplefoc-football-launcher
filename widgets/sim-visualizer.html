@@ -317,8 +317,8 @@
         <div class="eyebrow">Simulation Mainline</div>
         <h1>三维 <span class="thin">仿真可视化</span></h1>
         <p>
-          v1.2f 口径：合力方向直接指向目标方向。中心短发射管 + 三电机周向嵌入保持不变。
-          A/B/C 差速用于制造侧旋和弧线，不能把初始出球方向带偏；初始合力矢量必须对准目标方向。
+          v1.2g 口径：发射圆管兼三电机固定一体结构，必须贴近参考图。
+          中心短发射管、三电机嵌入口袋、端面压板、加强筋合成一个橙色一体夹持件；合力方向仍直接指向目标。
         </p>
       </section>
 
@@ -416,7 +416,7 @@
           <div class="top-grid">
             <section class="card">
               <h3>3D 发射场景</h3>
-              <p>按照片口径强化：中心短管开口清晰可见，三电机嵌入管壁周向窗口；合力箭头直接对准目标方向，侧旋只改变飞行弧线。</p>
+              <p>按照片口径强化：中心短管开口清晰可见，三电机固定座与发射管做成一体橙色结构；合力箭头直接对准目标方向。</p>
               <div id="threeStage"></div>
               <div class="legend">
                 <div class="legend-item"><span class="swatch" style="background:#2556b6"></span>仿真轨迹</div>
@@ -440,9 +440,15 @@
           </section>
 
           <section class="card">
-            <h3>照片口径结构理解</h3>
-            <p>按参考图抽象：中心短发射管开口，3 个外转子嵌入管壁周向夹持座，120° 围绕球道，取消保护罩。</p>
+            <h3>照片口径一体结构理解</h3>
+            <p>按参考图抽象：中心短发射管 + 三电机固定座一体打印，三个电机嵌入口袋与圆管外壁连续成型。</p>
             <svg id="photoRefSvg" viewBox="0 0 760 320" aria-label="photo reference layout"></svg>
+          </section>
+
+          <section class="card">
+            <h3>一体固定结构截面</h3>
+            <p>把发射圆管、三电机嵌入口袋、端面压板、加强筋作为一个连续打印/加工件评审。</p>
+            <svg id="integratedSvg" viewBox="0 0 760 340" aria-label="integrated tube and three motor mount structure"></svg>
           </section>
 
           <div class="viz-grid">
@@ -470,7 +476,7 @@
             <div class="table" id="sensitivityTable"></div>
           </section>
 
-          <div class="foot">这是工程筛选级 3D 可视化，不是 CFD/FEA。当前重点：合力方向直接对准目标，三电机差速只制造比赛弧线。</div>
+          <div class="foot">这是工程筛选级 3D 可视化，不是 CFD/FEA。当前重点：圆管 + 三电机固定座一体化，贴近参考图结构。</div>
         </section>
       </section>
     </main>
@@ -533,6 +539,7 @@
         trajectorySvg: document.getElementById('trajectorySvg'),
         forceSvg: document.getElementById('forceSvg'),
         photoRefSvg: document.getElementById('photoRefSvg'),
+        integratedSvg: document.getElementById('integratedSvg'),
         rpmSvg: document.getElementById('rpmSvg'),
         summaryPills: document.getElementById('summaryPills'),
         compareGrid: document.getElementById('compareGrid'),
@@ -784,12 +791,61 @@
           <line x1="${cx}" y1="${cy}" x2="${cx + 155}" y2="${cy - 78}" stroke="#f36440" stroke-width="5" marker-end="url(#photo-arrow)" />
           <defs><marker id="photo-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#f36440" /></marker></defs>
           <text x="440" y="64" font-size="13" fill="rgba(14,8,7,0.48)">结构抽象</text>
-          <text x="440" y="92" font-size="24" fill="#0e0807">三电机嵌入发射管</text>
+          <text x="440" y="92" font-size="24" fill="#0e0807">圆管 + 三电机固定一体</text>
           <text x="440" y="126" font-size="13" fill="rgba(14,8,7,0.68)">1. 中心黑孔 = 短发射管 / 球道</text>
-          <text x="440" y="154" font-size="13" fill="rgba(14,8,7,0.68)">2. 橙色外圈 = 打印夹持座 / 管壁窗口</text>
-          <text x="440" y="182" font-size="13" fill="rgba(14,8,7,0.68)">3. 三电机 120° 嵌入，不是外挂</text>
+          <text x="440" y="154" font-size="13" fill="rgba(14,8,7,0.68)">2. 橙色本体 = 圆管与三电机座一体件</text>
+          <text x="440" y="182" font-size="13" fill="rgba(14,8,7,0.68)">3. 三个电机口袋 120° 融入管壁加强筋</text>
           <text x="440" y="210" font-size="13" fill="rgba(14,8,7,0.68)">4. 合力箭头 = 直接指向目标方向</text>
-          <text x="440" y="252" font-size="12" fill="#f36440">初始合力对准目标；弧线来自飞行中侧旋</text>`;
+          <text x="440" y="252" font-size="12" fill="#f36440">一体固定优先：圆管、口袋、端压板、加强筋连续成型</text>`;
+      }
+
+      function renderIntegratedStructure(result) {
+        const svg = els.integratedSvg;
+        const cx = 240, cy = 170;
+        const motorAngles = [-90, 30, 150];
+        const orange = '#f36440';
+        const blue = '#2556b6';
+        const pocket = motorAngles.map((deg, i) => {
+          const r = deg * Math.PI / 180;
+          const x = cx + Math.cos(r) * 132;
+          const y = cy + Math.sin(r) * 132;
+          const rot = deg + 90;
+          const label = ['A 上方', 'C 右下', 'B 左下'][i];
+          return `<g transform="translate(${x} ${y}) rotate(${rot})">
+            <rect x="-68" y="-38" width="136" height="76" rx="22" fill="${orange}" opacity="0.22" stroke="${orange}" stroke-width="4" />
+            <rect x="-52" y="-27" width="104" height="54" rx="18" fill="#fff" stroke="rgba(14,8,7,0.22)" stroke-width="2" />
+            <rect x="-42" y="-20" width="84" height="40" rx="14" fill="#0e0807" opacity="0.16" />
+            <circle cx="-48" cy="-28" r="5" fill="#0e0807" opacity="0.75" />
+            <circle cx="48" cy="-28" r="5" fill="#0e0807" opacity="0.75" />
+            <circle cx="-48" cy="28" r="5" fill="#0e0807" opacity="0.75" />
+            <circle cx="48" cy="28" r="5" fill="#0e0807" opacity="0.75" />
+            <text x="0" y="5" text-anchor="middle" font-size="13" fill="#0e0807" transform="rotate(${-rot})">${label}</text>
+          </g>`;
+        }).join('');
+        const ribs = motorAngles.map(deg => {
+          const r = deg * Math.PI / 180;
+          const x1 = cx + Math.cos(r) * 70, y1 = cy + Math.sin(r) * 70;
+          const x2 = cx + Math.cos(r) * 102, y2 = cy + Math.sin(r) * 102;
+          const x3 = cx + Math.cos(r + 0.22) * 100, y3 = cy + Math.sin(r + 0.22) * 100;
+          const x4 = cx + Math.cos(r - 0.22) * 100, y4 = cy + Math.sin(r - 0.22) * 100;
+          return `<path d="M${x1},${y1} L${x3},${y3} L${x2},${y2} L${x4},${y4} Z" fill="${orange}" opacity="0.34" />`;
+        }).join('');
+        svg.innerHTML = `<rect x="0" y="0" width="760" height="340" rx="14" fill="#fff" />
+          <circle cx="${cx}" cy="${cy}" r="96" fill="${orange}" opacity="0.18" stroke="${orange}" stroke-width="8" />
+          ${ribs}
+          ${pocket}
+          <circle cx="${cx}" cy="${cy}" r="58" fill="#0e0807" opacity="0.9" />
+          <circle cx="${cx}" cy="${cy}" r="39" fill="#fff" opacity="0.12" />
+          <circle cx="${cx}" cy="${cy}" r="103" fill="none" stroke="${orange}" stroke-width="3" stroke-dasharray="10 7" opacity="0.55" />
+          <line x1="${cx}" y1="${cy}" x2="${cx+172}" y2="${cy-72}" stroke="${orange}" stroke-width="5" marker-end="url(#integrated-arrow)" />
+          <defs><marker id="integrated-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="${orange}" /></marker></defs>
+          <text x="455" y="56" font-size="13" fill="rgba(14,8,7,0.48)">一体件边界</text>
+          <text x="455" y="86" font-size="24" fill="#0e0807">圆管兼三电机固定</text>
+          <text x="455" y="124" font-size="13" fill="rgba(14,8,7,0.70)">• 中心圆管不再单独悬空，外壁直接长出电机座</text>
+          <text x="455" y="154" font-size="13" fill="rgba(14,8,7,0.70)">• 三个口袋包住电机外转子侧面，内侧留接触窗口</text>
+          <text x="455" y="184" font-size="13" fill="rgba(14,8,7,0.70)">• 端面压板与 4 螺丝孔并入同一橙色结构</text>
+          <text x="455" y="214" font-size="13" fill="rgba(14,8,7,0.70)">• 三角加强筋连接圆管和电机座，贴近照片结构</text>
+          <text x="455" y="258" font-size="12" fill="${blue}">检查重点：口袋间距、转子包络、内侧接触窗口、线束出口</text>`;
       }
 
       function renderForceVector(result) {
@@ -949,7 +1005,7 @@
         if (!hints.length) {
           hints.push('按实战顺序跑：直线基准 → 左右弧线 → 上旋/下旋 → 复合弧线 → 50m 长传。');
           hints.push('首轮实测建议 friction 0.65~0.75、preload 2.4~2.7mm、ΔRPM 200~500。');
-          hints.push('3D 仿真当前锁 v1.2f：合力方向直接瞄准目标，A/B/C 差速只负责侧旋弧线。');
+          hints.push('3D 仿真当前锁 v1.2g：发射圆管兼三电机固定一体结构，贴近参考图的一体橙色夹持件。');
         }
         els.hintList.innerHTML = hints.map(t => `<div class="hint">${t}</div>`).join('');
       }
@@ -999,6 +1055,26 @@
       frontCradleRing.rotation.y = Math.PI / 2;
       frontCradleRing.position.set(0.018, BALL_RADIUS_M, 0);
       launcherGroup.add(frontCradleRing);
+      const rearCradleRing = new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.014, 16, 72), orangeCradleMat);
+      rearCradleRing.rotation.y = Math.PI / 2;
+      rearCradleRing.position.set(-0.115, BALL_RADIUS_M, 0);
+      launcherGroup.add(rearCradleRing);
+      [-Math.PI/2, Math.PI/6, 5*Math.PI/6].forEach((angle) => {
+        const radial = new THREE.Vector3(Math.cos(angle), 0, Math.sin(angle));
+        const tangent = new THREE.Vector3(-Math.sin(angle), 0, Math.cos(angle));
+        const pocketShell = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.055, 0.09), orangeCradleMat);
+        pocketShell.position.copy(radial.clone().multiplyScalar(0.19).setY(BALL_RADIUS_M));
+        pocketShell.lookAt(pocketShell.position.clone().add(tangent));
+        launcherGroup.add(pocketShell);
+        const rib = new THREE.Mesh(new THREE.BoxGeometry(0.125, 0.026, 0.032), orangeCradleMat);
+        rib.position.copy(radial.clone().multiplyScalar(0.128).setY(BALL_RADIUS_M - 0.032));
+        rib.lookAt(rib.position.clone().add(radial));
+        launcherGroup.add(rib);
+        const endPlate = new THREE.Mesh(new THREE.BoxGeometry(0.105, 0.018, 0.105), orangeCradleMat);
+        endPlate.position.copy(radial.clone().multiplyScalar(0.235).add(tangent.clone().multiplyScalar(-0.045)).setY(BALL_RADIUS_M + 0.006));
+        endPlate.lookAt(endPlate.position.clone().add(radial));
+        launcherGroup.add(endPlate);
+      });
       const contactWindowMaterial = new THREE.MeshStandardMaterial({ color: 0xf36440, transparent: true, opacity: 0.32, roughness: 0.6 });
       [-Math.PI/2, Math.PI/6, 5*Math.PI/6].forEach(angle => {
         const radial = new THREE.Vector3(Math.cos(angle), 0, Math.sin(angle));
@@ -1223,6 +1299,7 @@
         renderRpm(result);
         renderForceVector(result);
         renderPhotoReference(result);
+        renderIntegratedStructure(result);
         renderComparison(result);
         renderHints(result);
         renderSensitivity(result);
