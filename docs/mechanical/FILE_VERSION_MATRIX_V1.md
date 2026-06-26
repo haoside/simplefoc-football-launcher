@@ -50,3 +50,5 @@
 | 装配 CAD | outrunner_integrated_tube_motor_mount_v1_2g.scad | v1.2g | 发射圆管兼三电机固定一体结构，贴近参考图橙色一体夹持件 |
 | 文档 | INTEGRATED_TUBE_MOTOR_MOUNT_V1_2G.md | v1.2g | 圆管 + 三电机口袋 + 端压板 + 加强筋一体结构说明 |
 | 文档 | SIM_VISUALIZER_V16_INTEGRATED_STRUCTURE_UPDATE.md | v16 | 仿真可视化加入一体固定结构截面和 3D 一体夹持件表达 |
+| 装配 CAD | outrunner_integrated_tube_motor_mount_v1_2h.scad | v1.2h | 停止仿真扩展，专注圆管兼三电机固定一体结构：线束出口、工具空间、转子包络、分型线 |
+| 文档 | INTEGRATED_TUBE_MOTOR_MOUNT_V1_2H_ENGINEERING.md | v1.2h | 一体结构工程细化说明，明确暂停 widget/仿真更新 |
