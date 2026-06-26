@@ -52,3 +52,5 @@
 | 文档 | SIM_VISUALIZER_V16_INTEGRATED_STRUCTURE_UPDATE.md | v16 | 仿真可视化加入一体固定结构截面和 3D 一体夹持件表达 |
 | 装配 CAD | outrunner_integrated_tube_motor_mount_v1_2h.scad | v1.2h | 停止仿真扩展，专注圆管兼三电机固定一体结构：线束出口、工具空间、转子包络、分型线 |
 | 文档 | INTEGRATED_TUBE_MOTOR_MOUNT_V1_2H_ENGINEERING.md | v1.2h | 一体结构工程细化说明，明确暂停 widget/仿真更新 |
+| 装配 CAD | outrunner_photo_integrated_mount_v1_2i.scad | v1.2i | 参照图片细化一体结构：侧板圆孔、顶部压条、底部托架、线束/工具避让 |
+| 文档 | PHOTO_REFERENCE_INTEGRATED_STRUCTURE_V1_2I.md | v1.2i | 从参考图提取圆管兼三电机固定一体结构要点 |
