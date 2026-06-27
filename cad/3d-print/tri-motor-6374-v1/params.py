@@ -1,8 +1,11 @@
 """
-Football Launcher — 3-Motor 120° Monocoque Design
-参考图中橙色一体式壳体方案，放大适配 6374 + 标准5号足球
+Football Launcher — 3-Motor 120° Monocoque v2
+关键修正：管壁开孔让电机穿过接触球面
 
-核心：三电机外转子直接接触球面，一体式打印壳体
+参考图特征：
+- 白色管体上有圆孔，电机轴/外壳穿过管壁进入内部
+- 橙色一体壳体包裹管体 + 电机卡座
+- 桥接筋连接卡座
 """
 
 import numpy as np
@@ -15,34 +18,34 @@ import math
 # 参数
 # ============================================================
 BALL_D = 220
-BALL_R = BALL_D / 2                 # 110mm
+BALL_R = BALL_D / 2              # 110mm
 
-# 6374 外转子电机（外壳旋转，直接接触球面）
-MOTOR_OD = 63                        # 电机外壳外径 = 滚轮直径
-MOTOR_OR = MOTOR_OD / 2              # 31.5mm
-MOTOR_LEN = 74                       # 电机长度
+# 6374 外转子电机
+MOTOR_OD = 63
+MOTOR_OR = MOTOR_OD / 2          # 31.5mm
+MOTOR_LEN = 74
 MOTOR_SHAFT_D = 8
 MOTOR_BOLT_D = 4
-MOTOR_BOLT_SPACING = 31              # mm，安装孔间距
-MOTOR_BOLT_PATTERN = 4               # 4孔 90°
+MOTOR_BOLT_SPACING = 31
 
-# 滚轮接触几何
-# 电机外壳直接接触球面 → 电机中心到球心距离 = BALL_R + MOTOR_OR
-MOTOR_CENTER_R = BALL_R + MOTOR_OR   # 141.5mm
+# 接触几何
+MOTOR_CENTER_R = BALL_R + MOTOR_OR  # 141.5mm
 
 # 发射管
-TUBE_OR = MOTOR_CENTER_R + MOTOR_LEN / 2 + 5  # 183mm（留间隙）
-TUBE_IR = BALL_R + 3                        # 113mm（球通过）
-TUBE_LEN = 120                              # 发射管长度
+TUBE_OR = MOTOR_CENTER_R + MOTOR_LEN / 2 + 5  # ~183mm
+TUBE_IR = BALL_R + 3                          # 113mm
+TUBE_LEN = 120
 
-# 一体壳体
-SHELL_WALL = 4                      # mm，壳体壁厚
-SHELL_GAP = 0.3                     # mm，FDM 装配间隙
+# 管壁开孔
+# 电机外壳穿过管壁 → 开孔直径 = MOTOR_OD + 间隙
+PORT_D = MOTOR_OD + 6           # 69mm（每侧 3mm 间隙）
+PORT_R = PORT_D / 2             # 34.5mm
 
-# M5 连接螺栓
+# 壳体
+SHELL_WALL = 4
+SHELL_GAP = 0.3
+
 BOLT_D = 5
-BOLT_HEAD_D = 9
-
 SEGMENTS = 64
 OUTPUT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "stls")
 
@@ -82,97 +85,89 @@ def save(body, name):
 
 
 # ============================================================
-# Part 1: Monocoque Shell（一体式三电机壳体）
+# Part 1: Monocoque Shell（一体式壳体 — 含管壁开孔）
 # ============================================================
 def make_monocoque_shell():
     """
-    一体式壳体（参考图中橙色件）：
-    - 中心管夹箍
-    - 3 个电机圆弧卡座 120° 均布
-    - 桥接筋连接各卡座
-    - 线槽出口
-    - 对开设计（两半合体）
+    一体式壳体：
+    - 中心管体（带 3 个电机穿过孔）
+    - 3 个电机卡座凸台 120° 均布
+    - 桥接筋
+    - 对开法兰
     """
-    # ---- 中心管夹箍 ----
     clamp_or = TUBE_OR + 10
-    clamp_ir = TUBE_IR
     clamp_h = TUBE_LEN
 
-    # 主体管
-    shell = R(clamp_h, clamp_or, clamp_ir)
+    # ---- 主管体 ----
+    shell = R(clamp_h, TUBE_OR, TUBE_IR)
 
-    # ---- 3 个电机卡座 ----
+    # ---- 管壁开孔（3 个，120°，电机穿过） ----
     for i in range(3):
         angle_deg = i * 120
         rad = math.radians(angle_deg)
 
-        # 电机卡座圆弧槽（半圆形，包裹电机外壳）
-        cradle_r = MOTOR_OR + SHELL_GAP       # 卡槽内径
-        cradle_wall = SHELL_WALL
-        cradle_depth = MOTOR_LEN + 5          # 卡槽深度（比电机长）
+        # 开孔中心在管壁上
+        port_cx = TUBE_OR * math.cos(rad)
+        port_cy = TUBE_OR * math.sin(rad)
 
-        # 卡座凸台（从管壁向外延伸）
-        boss_ext = cradle_depth + cradle_wall  # 向外延伸量
-        boss_w = MOTOR_OD + cradle_wall * 2    # 卡座宽度
+        # 圆柱开孔（径向穿过管壁）
+        # 圆柱轴线沿径向（从管外到管内）
+        port = C(TUBE_OR * 2, PORT_R)
+        # 旋转使轴线沿径向
+        port = port.rotate([math.pi / 2, 0, 0])
+        port = port.rotate([0, 0, rad])
+        port = port.translate([port_cx, port_cy, clamp_h / 2])
+        shell = shell - port
 
-        # 圆弧卡座：圆柱减去内部电机空间
-        boss_outer = C(boss_ext, MOTOR_OR + cradle_wall)
-        boss_inner = C(boss_ext + 0.4, cradle_r)
-        cradle = boss_outer - boss_inner
-
-        # 定位到管壁外侧
-        cradle = cradle.rotate([math.pi / 2, 0, 0])  # 轴沿 Y
-        cradle = cradle.rotate([0, 0, rad])           # 绕 Z 旋转到 120° 位
-        cradle = cradle.translate([
-            (TUBE_OR + 2) * math.cos(rad),
-            (TUBE_OR + 2) * math.sin(rad),
+        # ---- 电机卡座凸台（开孔周围加厚） ----
+        boss_r = PORT_R + SHELL_WALL + 3
+        boss_len = MOTOR_LEN + 5
+        boss = C(boss_len, boss_r) - C(boss_len + 0.4, PORT_R - 1)
+        boss = boss.rotate([math.pi / 2, 0, 0])
+        boss = boss.rotate([0, 0, rad])
+        boss = boss.translate([
+            (TUBE_OR + boss_len / 2 - 2) * math.cos(rad),
+            (TUBE_OR + boss_len / 2 - 2) * math.sin(rad),
             clamp_h / 2
         ])
-        shell = shell + cradle
+        shell = shell + boss
 
-        # ---- 电机固定螺丝孔（4 个，M4，从侧面拧入） ----
-        bolt_r = MOTOR_BOLT_SPACING / 2
-        for bi in range(MOTOR_BOLT_PATTERN):
-            bolt_angle = math.radians(bi * 90)
-            # 螺丝方向：从卡座外侧径向拧入
-            bx = (TUBE_OR + cradle_depth + cradle_wall + 2) * math.cos(rad)
-            by = (TUBE_OR + cradle_depth + cradle_wall + 2) * math.sin(rad)
-            # 螺丝孔位置（在卡座面上）
-            screw_hole = C(cradle_wall + 4, MOTOR_BOLT_D / 2 + 0.1)
-            # 旋转到正确的角度位置
-            screw_hole = screw_hole.rotate([0, 0, bolt_angle])
-            screw_hole = screw_hole.translate([
-                bolt_r * math.cos(rad + bolt_angle),
-                bolt_r * math.sin(rad + bolt_angle),
-                clamp_h / 2
-            ])
-            shell = shell - screw_hole
-
-        # ---- 桥接筋（连接卡座到管体） ----
-        # 两个三角形加强筋，卡座两侧
+        # ---- 桥接筋（卡座两侧到管体） ----
         for side in [-1, 1]:
-            bridge_angle = rad + side * math.radians(30)
-            bridge_len = TUBE_OR + 5
-            bridge = B(8, bridge_len, clamp_h - 40)
+            bridge_angle = rad + side * math.radians(35)
+            bridge = B(6, TUBE_OR * 0.6, clamp_h - 40)
             bridge = bridge.rotate([0, 0, bridge_angle])
             bridge = bridge.translate([
-                (TUBE_OR / 2) * math.cos(bridge_angle),
-                (TUBE_OR / 2) * math.sin(bridge_angle),
+                (TUBE_OR * 0.4) * math.cos(bridge_angle),
+                (TUBE_OR * 0.4) * math.sin(bridge_angle),
                 clamp_h / 2
             ])
             shell = shell + bridge
 
-        # ---- 线槽出口（卡座底部，走线用） ----
-        wire_slot = B(MOTOR_OD, 10, 15)
-        wire_slot = wire_slot.rotate([0, 0, rad])
-        wire_slot = wire_slot.translate([
-            (TUBE_OR + cradle_depth / 2) * math.cos(rad),
-            (TUBE_OR + cradle_depth / 2) * math.sin(rad),
-            10  # 靠近底部
+        # ---- 线槽出口（卡座底部） ----
+        wire = B(MOTOR_OD, 8, 12)
+        wire = wire.rotate([0, 0, rad])
+        wire = wire.translate([
+            (TUBE_OR + MOTOR_LEN / 2) * math.cos(rad),
+            (TUBE_OR + MOTOR_LEN / 2) * math.sin(rad),
+            8
         ])
-        shell = shell - wire_slot
+        shell = shell - wire
 
-    # ---- 合体法兰面（对开螺栓孔） ----
+        # ---- M4 电机固定螺丝孔（卡座侧面） ----
+        bolt_r = MOTOR_BOLT_SPACING / 2
+        for bi in range(4):
+            bolt_angle = math.radians(bi * 90)
+            screw = C(SHELL_WALL + 6, MOTOR_BOLT_D / 2 + 0.1)
+            screw = screw.rotate([0, 0, bolt_angle])
+            screw = screw.translate([
+                (TUBE_OR + MOTOR_LEN + 2) * math.cos(rad) + bolt_r * math.cos(rad + bolt_angle),
+                (TUBE_OR + MOTOR_LEN + 2) * math.sin(rad) + bolt_r * math.sin(rad + bolt_angle),
+                clamp_h / 2
+            ])
+            shell = shell - screw
+
+    # ---- 合体法兰孔 ----
     for z in [10, clamp_h - 10]:
         for i in range(8):
             a = math.radians(i * 45)
@@ -184,7 +179,7 @@ def make_monocoque_shell():
 
     # ---- 两端法兰环 ----
     for z in [0, clamp_h]:
-        flange = C(3, clamp_or + 8) - C(4, clamp_ir)
+        flange = C(3, clamp_or + 8) - C(4, TUBE_IR)
         flange = flange.translate([0, 0, z - 1.5])
         shell = shell + flange
 
@@ -196,31 +191,28 @@ def make_monocoque_shell():
 # ============================================================
 def make_motor_clamp_cap():
     """
-    电机卡座盖板：扣在电机上方，锁紧电机
-    - 弧形，匹配电机外壳曲率
-    - 2 个 M4 螺丝孔固定到壳体
+    电机盖板：扣在电机上方，弧形匹配电机外壳
+    - 2 个 M4 螺丝孔
     """
-    cap_r = MOTOR_OR + SHELL_GAP + SHELL_WALL  # 盖板内径
-    cap_or = cap_r + 3                          # 外径
-    cap_w = MOTOR_OD + 10                       # 宽度
-    cap_h = 10                                  # 厚度
+    cap_r = MOTOR_OR + SHELL_GAP + SHELL_WALL
+    cap_or = cap_r + 3
+    cap_h = 10
 
-    # 盖板主体（弧形，120° 扇区）
+    # 弧形盖板（120° 扇区）
     cap = C(cap_h, cap_or) - C(cap_h + 0.4, cap_r)
 
-    # 切成 120° 扇区
-    cut1 = B(cap_or * 3, cap_or * 2, cap_h + 2)
-    cut1 = cut1.rotate([0, 0, 30])
-    cut1 = cut1.translate([0, -cap_or, 0])
-    cap = cap - cut1
-
+    # 切扇区
+    cut = B(cap_or * 3, cap_or * 2, cap_h + 2)
+    cut = cut.rotate([0, 0, 30])
+    cut = cut.translate([0, -cap_or, 0])
+    cap = cap - cut
     cut2 = B(cap_or * 3, cap_or * 2, cap_h + 2)
     cut2 = cut2.rotate([0, 0, -30])
     cut2 = cut2.translate([0, cap_or, 0])
     cap = cap - cut2
 
-    # M4 安装孔（2 个，对称）
-    for y_off in [-cap_w / 2 + 5, cap_w / 2 - 5]:
+    # M4 孔
+    for y_off in [-8, 8]:
         hole = C(cap_h + 2, MOTOR_BOLT_D / 2 + 0.1)
         hole = hole.translate([0, y_off, 0])
         cap = cap - hole
@@ -232,29 +224,22 @@ def make_motor_clamp_cap():
 # Part 3: Side Plate（侧板）
 # ============================================================
 def make_side_plate():
-    """
-    侧板：端面结构加强
-    - 环形板 + 球通道孔
-    - 3 组电机通过缺口
-    - 螺栓孔
-    """
     plate_r = TUBE_OR + 10
     h = 5
 
-    plate = C(h, plate_r)
-    plate = plate - C(h + 2, TUBE_IR)  # 球通道
+    plate = C(h, plate_r) - C(h + 2, TUBE_IR)
 
-    # 3 组电机卡座缺口
+    # 3 组电机穿过缺口
     for i in range(3):
         angle = math.radians(i * 120)
         cx = MOTOR_CENTER_R * math.cos(angle)
         cy = MOTOR_CENTER_R * math.sin(angle)
-        notch = B(MOTOR_OD + 12, MOTOR_OD + 12, h + 2)
+        notch = B(PORT_D + 8, PORT_D + 8, h + 2)
         notch = notch.rotate([0, 0, angle])
         notch = notch.translate([cx, cy, 0])
         plate = plate - notch
 
-    # 螺栓孔（8 个）
+    # 螺栓孔
     for i in range(8):
         a = math.radians(i * 45)
         bx = (plate_r - 5) * math.cos(a)
@@ -263,7 +248,7 @@ def make_side_plate():
         hole = hole.translate([bx, by, 0])
         plate = plate - hole
 
-    # 减重孔（3 个，臂之间）
+    # 减重孔
     for i in range(3):
         angle = math.radians(i * 120 + 60)
         px = (plate_r / 2 + 5) * math.cos(angle)
@@ -276,7 +261,7 @@ def make_side_plate():
 
 
 # ============================================================
-# Part 4: Flange Ring（法兰连接环）
+# Part 4: Flange Ring（法兰环）
 # ============================================================
 def make_flange_ring():
     h = 10
@@ -293,7 +278,6 @@ def make_flange_ring():
         hole = hole.translate([bx, by, 0])
         ring = ring - hole
 
-    # 定位销
     for a_deg in [0, 180]:
         a = math.radians(a_deg)
         px = (TUBE_OR + 5) * math.cos(a)
@@ -312,12 +296,13 @@ def export_all():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     print("=" * 50)
-    print("Football Launcher — 3-Motor 120° Monocoque")
+    print("Football Launcher — Monocoque v2 (with tube ports)")
     print("=" * 50)
-    print(f"Ball:      {BALL_D}mm")
-    print(f"Tube:      {TUBE_IR*2}mm ID / {TUBE_OR*2}mm OD")
-    print(f"Motor:     6374 × 3 @ 120° (外转子直触球面)")
-    print(f"Motor R:   {MOTOR_CENTER_R}mm from axis")
+    print(f"Ball:       {BALL_D}mm")
+    print(f"Tube:       {TUBE_IR*2}mm ID / {TUBE_OR*2}mm OD")
+    print(f"Port:       {PORT_D}mm (motor passes through)")
+    print(f"Motor:      6374 × 3 @ 120°")
+    print(f"Motor R:    {MOTOR_CENTER_R}mm from axis")
     print()
 
     make_monocoque_shell()
