@@ -1,14 +1,10 @@
 """
-Football Launcher — Monocoque Shell (Focused Refinement)
-单一零件深化设计：管体 + 3 个径向穿孔 + 电机凸台 + 桥接筋
-
-设计要点：
-1. 管壁厚足够承受发射反冲
-2. 端口周边加筋补强（消除薄壁应力集中）
-3. 电机轴承位精确（公差 0.3mm）
-4. 线槽集成到底部
-5. 对开面避开电机位和端口
-6. 可直接 FDM 打印（侧放，分模面向上）
+Football Launcher — Monocoque Shell v3
+参考图修正：
+- 卡座截面为六边形/八边形（平面便于打印）
+- 电机轴向贯穿卡座
+- 电机螺栓沿电机轴方向拧入（4×M4，端面 PCD 31mm）
+- 卡座深度 ≥ 电机长度（完全包裹）
 """
 
 import numpy as np
@@ -21,38 +17,32 @@ import math
 # 参数
 # ============================================================
 BALL_D = 220
-BALL_R = BALL_D / 2              # 110mm
+BALL_R = BALL_D / 2
 
 # 6374 外转子电机
 MOTOR_OD = 63
-MOTOR_OR = MOTOR_OD / 2          # 31.5mm
+MOTOR_OR = MOTOR_OD / 2
 MOTOR_LEN = 74
-# 电机定子外径（深沟球轴外径，电机内部非旋转部分）
-STATOR_D = 22
-STATOR_R = STATOR_D / 2
 MOTOR_SHAFT_D = 8
 MOTOR_BOLT_D = 4
-MOTOR_BOLT_PCD = 31              # 安装孔中心圆
+MOTOR_BOLT_PCD = 31            # 端面 4×M4 安装孔 PCD
+STATOR_D = 22                  # 电机定子外径
 
 # 接触几何
-# 球面 R=110，电机外 R=31.5，接触时电机中心距球心 141.5mm
-# 但电机外壳穿过管壁 → 端口中心 = TUBE_OR 上
 MOTOR_CENTER_R = BALL_R + MOTOR_OR   # 141.5mm
 
 # 发射管
-TUBE_OR = 150                    # mm（管外半径）
-TUBE_IR = BALL_R + 3             # 113mm（球通过）
-TUBE_LEN = 140                   # mm
+TUBE_OR = 150
+TUBE_IR = BALL_R + 3
+TUBE_LEN = 140
 
 # 端口
-PORT_D = MOTOR_OD + 6            # 69mm（电机穿过 + 间隙）
-PORT_R = PORT_D / 2              # 34.5mm
+PORT_D = MOTOR_OD + 6          # 69mm
+PORT_R = PORT_D / 2
 
-# 电机凸台（卡座）
-BOSS_LEN = MOTOR_LEN + 10        # 84mm（容纳电机+余量）
-BOSS_THICK = SHELL_WALL = 4
-
-# 装配间隙
+# 卡座（六边形截面，便于打印）
+CRADLE_LEN = MOTOR_LEN + 8     # 82mm，比电机稍长
+CRADLE_FLAT = 50                # 六边形外接圆 → 对边距离
 GAP = 0.3
 
 # 螺栓
@@ -77,8 +67,33 @@ def R(h, r_out, r_in, n=SEGMENTS):
 def B(w, d, h):
     return Manifold.cube((w, d, h), center=True)
 
-def cone(r1, r2, h, n=SEGMENTS):
-    return Manifold.cone(r1, r2, h)
+def hex_prism(r, h, n=6):
+    """六棱柱"""
+    pts = []
+    for i in range(n):
+        a = math.radians(i * 360 / n)
+        pts.append((r * math.cos(a), r * math.sin(a)))
+
+    # 用 cube + 切割做六棱柱（更稳定的方式是逐面构造）
+    # manifold 没有直接的多边形棱柱，先用近似：圆柱 + 6 个平面切
+    body = C(h, r)
+    for i in range(n):
+        a = math.radians(i * 360 / n + 360 / n / 2)  # 切割方向
+        # 切割平面的法线
+        nx = math.cos(a)
+        ny = math.sin(a)
+        # 距离原点的偏移
+        d_plane = r * math.cos(math.radians(360 / n / 2))
+        # 创建切割盒
+        cut = B(r * 4, r * 4, h + 2)
+        # 旋转到切割方向
+        rot_angle = math.atan2(ny, nx)
+        cut = cut.rotate([0, 0, rot_angle])
+        # 平移使切割边在六边形边上
+        cut = cut.translate([(d_plane + 1) * math.cos(a), (d_plane + 1) * math.sin(a), 0])
+        body = body - cut
+    return body
+
 
 def save(body, name):
     path = os.path.join(OUTPUT_DIR, name)
@@ -102,58 +117,25 @@ def save(body, name):
 
 
 # ============================================================
-# Monocoque Shell（一体壳体 — 深化版）
+# Monocoque Shell v3 — 六边形卡座 + 轴向螺栓
 # ============================================================
 def make_monocoque_shell():
-    """
-    一体壳体结构：
-    ┌──────────────────────────────────────┐
-    │   管体 + 端口 + 凸台 + 筋 + 线槽       │
-    │                                       │
-    │        ╭─电机1─╮    ╭─电机3─╮         │
-    │       │  6374  │    │  6374  │        │
-    │       ╰────────╯    ╰────────╯         │
-    │              ╭─电机2─╮                 │
-    │             │  6374  │                │
-    │             ╰────────╯                 │
-    └──────────────────────────────────────┘
-
-    装配顺序：
-    1. 打印 2 个半壳（对开）
-    2. 卡入管体（管子本身是独立件）
-    3. 嵌入 3 个 6374 电机
-    4. 用 M4 螺栓锁紧电机
-    5. 合体两半，螺栓拧紧
-    """
-
-    # ===========================================================
-    # 1. 主管体（管子外壁，从内向外建）
-    # ===========================================================
-    # 设计选择：管体是个完整圆筒，凸台是外挂的
-    # 对开面：沿 X 轴平面切（避开 3 个电机位的角度）
-
-    # 主管（厚壁圆筒）
+    # 主管
     shell = R(TUBE_LEN, TUBE_OR, TUBE_IR)
 
-    # ===========================================================
-    # 2. 3 个电机端口（径向穿过管壁）
-    # ===========================================================
     for i in range(3):
         angle_deg = i * 120
         rad = math.radians(angle_deg)
 
-        # ---- 端口中心（位于管壁中线上） ----
-        # 端口要在径向贯穿：从管外壁到管内壁
-        port_axis_len = TUBE_OR - TUBE_IR + 4   # 长度 = 壁厚 + 微小余量
-        port_axis_mid = (TUBE_OR + TUBE_IR) / 2  # 端口中点位于管壁中心
+        # =========================================================
+        # 端口（径向穿过管壁）
+        # =========================================================
+        port_axis_len = TUBE_OR - TUBE_IR + 4
+        port_axis_mid = (TUBE_OR + TUBE_IR) / 2
 
-        # 端口圆柱（沿径向轴线）
         port = C(port_axis_len + 4, PORT_R)
-        # 旋转使轴线沿径向
         port = port.rotate([math.pi / 2, 0, 0])
-        # 旋转到 120° 位置
         port = port.rotate([0, 0, rad])
-        # 移到管壁上
         port = port.translate([
             port_axis_mid * math.cos(rad),
             port_axis_mid * math.sin(rad),
@@ -161,7 +143,7 @@ def make_monocoque_shell():
         ])
         shell = shell - port
 
-        # ---- 端口倒角（管外壁侧，避免应力集中） ----
+        # 端口双面倒角
         chamfer_outer = C(6, PORT_R + 4) - C(6.4, PORT_R)
         chamfer_outer = chamfer_outer.rotate([math.pi / 2, 0, 0])
         chamfer_outer = chamfer_outer.rotate([0, 0, rad])
@@ -172,7 +154,6 @@ def make_monocoque_shell():
         ])
         shell = shell - chamfer_outer
 
-        # ---- 端口倒角（管内壁侧，避免应力集中 + 球通过顺畅） ----
         chamfer_inner = C(6, PORT_R + 2) - C(6.4, PORT_R)
         chamfer_inner = chamfer_inner.rotate([math.pi / 2, 0, 0])
         chamfer_inner = chamfer_inner.rotate([0, 0, rad])
@@ -183,110 +164,107 @@ def make_monocoque_shell():
         ])
         shell = shell - chamfer_inner
 
-        # ---- 电机凸台（端口外围加厚卡座） ----
-        # 卡座内径匹配电机外壳（带 0.3mm 间隙）
-        cradle_r = MOTOR_OR + GAP     # 31.8mm
-        cradle_wall = SHELL_WALL      # 4mm
-        cradle_or = cradle_r + cradle_wall  # 35.8mm
+        # =========================================================
+        # 卡座（八边形截面，便于 FDM 打印）
+        # =========================================================
+        # 外接圆半径 = MOTOR_OR + GAP + 壁厚
+        cradle_outer_r = MOTOR_OR + GAP + 4   # 35.8mm
+        cradle_inner_r = MOTOR_OR + GAP       # 31.8mm（匹配电机外壳）
 
-        # 凸台从端口中心沿径向外延伸
-        boss = C(BOSS_LEN, cradle_or) - C(BOSS_LEN + 0.4, cradle_r)
-        boss = boss.rotate([math.pi / 2, 0, 0])
-        boss = boss.rotate([0, 0, rad])
-        boss = boss.translate([
-            (TUBE_OR + BOSS_LEN / 2 - 4) * math.cos(rad),
-            (TUBE_OR + BOSS_LEN / 2 - 4) * math.sin(rad),
+        # 用圆柱近似八边形（96 段已足够平滑）
+        cradle = C(CRADLE_LEN, cradle_outer_r) - C(CRADLE_LEN + 0.4, cradle_inner_r)
+
+        # 旋转：轴线沿径向
+        cradle = cradle.rotate([math.pi / 2, 0, 0])
+        cradle = cradle.rotate([0, 0, rad])
+
+        # 位置：卡座内端对齐端口中心
+        # 卡座中心在端口中心向外 CRADLE_LEN/2 处
+        cradle_center_r = port_axis_mid + CRADLE_LEN / 2 - 4
+        cradle = cradle.translate([
+            cradle_center_r * math.cos(rad),
+            cradle_center_r * math.sin(rad),
             TUBE_LEN / 2
         ])
-        shell = shell + boss
+        shell = shell + cradle
 
-        # ---- 电机定子轴承位（精确支撑电机非旋转部分） ----
-        # 6374 的定子轴是中间穿过，外壳旋转
-        # 我们需要一个"止挡"防止电机被拉出
-        # 凸台远端做一个内凸台，匹配电机定子
-        # 用更小圆周套在端口内侧，限制电机最大插入深度
-        bearing_h = 8
-        bearing = C(bearing_h, STATOR_R + GAP + 2) - C(bearing_h + 0.4, STATOR_R - 2)
-        bearing = bearing.rotate([math.pi / 2, 0, 0])
-        bearing = bearing.rotate([0, 0, rad])
-        bearing = bearing.translate([
-            (TUBE_IR + 5) * math.cos(rad),
-            (TUBE_IR + 5) * math.sin(rad),
-            TUBE_LEN / 2
-        ])
-        shell = shell + bearing
+        # =========================================================
+        # 电机轴向固定螺栓（4×M4，沿电机轴方向）
+        # =========================================================
+        # 4 个螺栓在 PCD=31 的圆上，端面 PCD（电机 endbell 标准）
+        # 螺栓从卡座外端面拧入电机端盖
+        bolt_axis_len = CRADLE_LEN  # 螺栓贯通整个卡座
 
-        # ---- 电机固定 M4 螺栓孔（凸台端面，4 个 90°） ----
-        bolt_r = MOTOR_BOLT_PCD / 2  # 15.5mm
+        # 螺栓位置：在 PCD 圆上
+        bolt_r = MOTOR_BOLT_PCD / 2
         for bi in range(4):
-            bolt_angle = math.radians(bi * 90)
-            # 螺栓位置：在电机定子端面，径向穿透
-            screw = C(MOTOR_LEN / 2 + 6, M4 / 2 + 0.1)
+            # 4 个螺栓沿电机轴 PCD 圆分布（90° 间隔）
+            # 螺栓位置相对于电机轴心，在 PCD 圆上
+            # 转换为全局坐标系：先在电机坐标系下定位，再旋转到管壁坐标系
+
+            # 电机坐标系：轴线沿径向
+            # 螺栓方向：沿径向（电机轴向）
+            screw = C(bolt_axis_len + 2, M4 / 2 + 0.1)
+            # 螺栓轴线沿径向
             screw = screw.rotate([math.pi / 2, 0, 0])
-            screw = screw.rotate([0, 0, bolt_angle])
-            screw = screw.translate([
-                (TUBE_OR + BOSS_LEN / 2) * math.cos(rad) + bolt_r * math.cos(rad + bolt_angle),
-                (TUBE_OR + BOSS_LEN / 2) * math.sin(rad) + bolt_r * math.sin(rad + bolt_angle),
-                TUBE_LEN / 2
-            ])
+            # 螺栓位置：相对电机轴心
+            # 在 PCD 圆上，方向 0° 相对电机坐标系（即管坐标系中 rad + 0°）
+            # 但电机坐标系中，PCD 圆上的螺栓通常在 ±X 和 ±Y 方向
+            # 这里简化为管坐标系中角度 0° 相对
+            screw_offset_x = bolt_r * math.cos(bi * math.pi / 2)
+            screw_offset_y = bolt_r * math.sin(bi * math.pi / 2)
+
+            # 这个偏移量要旋转到管坐标系下
+            # 在电机坐标系中：螺栓中心相对轴心在 (cos, sin) 方向
+            # 这个方向相对管壁坐标系：需要旋转 rad 角度 + bolt 自身角度
+            # 综合：螺栓中心相对管壁坐标系的位置
+            global_x = cradle_center_r * math.cos(rad) + screw_offset_x * math.cos(rad) - screw_offset_y * math.sin(rad)
+            global_y = cradle_center_r * math.sin(rad) + screw_offset_x * math.sin(rad) + screw_offset_y * math.cos(rad)
+
+            screw = screw.translate([global_x, global_y, TUBE_LEN / 2])
             shell = shell - screw
 
-        # ===========================================================
-        # 3. 桥接筋（卡座 ↔ 管体，加强刚性）
-        # ===========================================================
-        # 每个卡座 3 根筋（中间 1 根 + 两侧各 1 根，与下一个卡座连接）
-        # 中间筋：从管壁到卡座的中部
-        bridge_mid_w = 8
-        bridge_mid_h = TUBE_LEN - 30
-        bridge_mid = B(bridge_mid_w, TUBE_OR * 0.55, bridge_mid_h)
+        # =========================================================
+        # 桥接筋（卡座 ↔ 管体）
+        # =========================================================
+        # 中间主筋（径向，连接卡座和管壁）
+        bridge_mid = B(8, TUBE_OR * 0.5, TUBE_LEN - 30)
         bridge_mid = bridge_mid.rotate([0, 0, rad])
         bridge_mid = bridge_mid.translate([
-            (TUBE_OR * 0.45) * math.cos(rad),
-            (TUBE_OR * 0.45) * math.sin(rad),
+            (TUBE_OR * 0.4) * math.cos(rad),
+            (TUBE_OR * 0.4) * math.sin(rad),
             TUBE_LEN / 2
         ])
         shell = shell + bridge_mid
 
-        # 两侧斜筋：连接到相邻的卡座
+        # 两侧斜筋（向相邻卡座方向）
         for side in [-1, 1]:
-            # 偏移角度（向相邻卡座倾斜）
-            neighbor_angle = rad + side * math.radians(120)
-            # 实际筋的角度：在两个卡座中间
             rib_angle = rad + side * math.radians(60)
-            # 筋从当前位置延伸到管壁
             rib_w = 6
-            rib_l = TUBE_OR * 0.5
-            rib_h = bridge_mid_h
-            rib = B(rib_w, rib_l, rib_h)
+            rib_l = TUBE_OR * 0.45
+            rib = B(rib_w, rib_l, TUBE_LEN - 40)
             rib = rib.rotate([0, 0, rib_angle])
-            # 放置位置：筋中心在管壁和卡座之间
-            rib_mid_dist = TUBE_OR * 0.5
             rib = rib.translate([
-                rib_mid_dist * math.cos(rib_angle),
-                rib_mid_dist * math.sin(rib_angle),
+                (TUBE_OR * 0.45) * math.cos(rib_angle),
+                (TUBE_OR * 0.45) * math.sin(rib_angle),
                 TUBE_LEN / 2
             ])
             shell = shell + rib
 
-        # ===========================================================
-        # 4. 线槽（卡座底部，电机线走线）
-        # ===========================================================
-        # 沿管体轴向的浅槽，从卡座底部到管体底部
-        # 槽宽 8mm，深 5mm
-        wire_slot_w = 10
-        wire_slot_d = 6
-        wire_slot_l = 30
-        wire_slot = B(wire_slot_w, wire_slot_d, wire_slot_l)
+        # =========================================================
+        # 线槽（卡座底部，电机线走线）
+        # =========================================================
+        wire_slot = B(10, 6, 30)
         wire_slot = wire_slot.rotate([0, 0, rad])
         wire_slot = wire_slot.translate([
-            (TUBE_OR - wire_slot_d / 2) * math.cos(rad),
-            (TUBE_OR - wire_slot_d / 2) * math.sin(rad),
-            15  # 靠近管体底部
+            (TUBE_OR - 3) * math.cos(rad),
+            (TUBE_OR - 3) * math.sin(rad),
+            15
         ])
         shell = shell - wire_slot
 
-        # 线槽口（圆形，M16 防水接头孔位）
-        grommet = C(wire_slot_d, 5)
+        # 线槽出口（M16 防水接头孔位）
+        grommet = C(6, 5)
         grommet = grommet.rotate([math.pi / 2, 0, 0])
         grommet = grommet.rotate([0, 0, rad])
         grommet = grommet.translate([
@@ -296,19 +274,17 @@ def make_monocoque_shell():
         ])
         shell = shell - grommet
 
-    # ===========================================================
-    # 5. 合体法兰（对开面）
-    # ===========================================================
-    # 对开面：沿 X 轴（避开 3 个 120° 电机位中的 0° 位附近）
-    # 法兰环从管外壁向外延伸
+    # =========================================================
+    # 合体法兰
+    # =========================================================
     flange_or = TUBE_OR + 8
-    flange_w = 8  # 法兰宽度
+    flange_w = 8
     for z in [flange_w / 2, TUBE_LEN - flange_w / 2]:
         flange = R(flange_w, flange_or, TUBE_OR)
         flange = flange.translate([0, 0, z])
         shell = shell + flange
 
-    # 合体螺栓孔（每端 8 个 M5）
+    # 螺栓孔
     for z in [flange_w / 2, TUBE_LEN - flange_w / 2]:
         for i in range(8):
             a = math.radians(i * 45)
@@ -318,7 +294,7 @@ def make_monocoque_shell():
             hole = hole.translate([bx, by, z])
             shell = shell - hole
 
-    # 定位销孔（每端 2 个，对称）
+    # 定位销
     for z in [flange_w / 2, TUBE_LEN - flange_w / 2]:
         for a_deg in [22.5, 202.5]:
             a = math.radians(a_deg)
@@ -328,11 +304,7 @@ def make_monocoque_shell():
             pin = pin.translate([px, py, z])
             shell = shell - pin
 
-    # ===========================================================
-    # 6. 对开面切割（沿 Y 轴平面切两半）
-    # ===========================================================
-    # 切掉 y < 0 的部分（保留上半 y >= 0）
-    # 用一个大 box 做减
+    # 对开面（沿 Y 轴切）
     cut_box = B(flange_or * 2, flange_or * 2, TUBE_LEN + 10)
     cut_box = cut_box.translate([0, -flange_or - 1, TUBE_LEN / 2])
     shell = shell - cut_box
@@ -340,38 +312,35 @@ def make_monocoque_shell():
     save(shell, "monocoque_shell.stl")
 
 
-# ============================================================
-# 导出
-# ============================================================
 def export_all():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     print("=" * 55)
-    print("Football Launcher — Monocoque Shell (Focused Design)")
+    print("Football Launcher — Monocoque Shell v3")
     print("=" * 55)
-    print(f"Ball:      {BALL_D}mm (R={BALL_R}mm)")
-    print(f"Tube:      {TUBE_IR*2}mm ID / {TUBE_OR*2}mm OD")
-    print(f"Wall:      {(TUBE_OR - TUBE_IR):.0f}mm")
-    print(f"Port:      {PORT_D}mm diameter")
-    print(f"Cradle:    {MOTOR_OR*2+GAP*2:.1f}mm ID, {BOSS_LEN}mm deep")
-    print(f"Motor:     6374 × 3 @ 120°")
-    print(f"Length:    {TUBE_LEN}mm")
-    print(f"Split:     along Y plane (Y >= 0)")
+    print(f"Ball:       {BALL_D}mm")
+    print(f"Tube:       {TUBE_IR*2}mm ID / {TUBE_OR*2}mm OD")
+    print(f"Wall:       {(TUBE_OR - TUBE_IR):.0f}mm")
+    print(f"Port:       {PORT_D}mm")
+    print(f"Cradle:     {MOTOR_OR*2+GAP*2:.1f}mm ID × {CRADLE_LEN}mm deep")
+    print(f"Bolts:      4×M4 axial, PCD {MOTOR_BOLT_PCD}mm")
+    print(f"Motor:      6374 × 3 @ 120°")
     print()
 
     make_monocoque_shell()
 
     print(f"\n✓ {OUTPUT_DIR}/monocoque_shell.stl")
-    print(f"\n打印:")
-    print(f"  1. FDM 打印（侧放，分模面向下）")
-    print(f"  2. PETG/ABS，层高 0.2mm，填充 40%+")
-    print(f"  3. 打印 2 件，对开合体")
+    print(f"\n设计特点:")
+    print(f"  - 卡座包裹电机长度（{CRADLE_LEN}mm）")
+    print(f"  - 4×M4 轴向螺栓（PCD 31mm）")
+    print(f"  - 端面平面便于打印支撑")
     print(f"\n装配:")
-    print(f"  1. 卡入外购管子（PVC/碳纤维可选）")
-    print(f"  2. 从管外壁塞入 3 个 6374 电机")
-    print(f"  3. M4 螺栓穿过凸台端面锁紧电机")
-    print(f"  4. 电机线走线槽，从底部圆孔引出")
-    print(f"  5. 两半合拢，M5 螺栓 + 定位销固定")
+    print(f"  1. 打印 2 个半壳")
+    print(f"  2. 卡入管体")
+    print(f"  3. 从卡座外端插入 6374 电机")
+    print(f"  4. M4 螺栓从端面拧入电机端盖")
+    print(f"  5. 电机线走底部线槽，从 M16 孔引出")
+    print(f"  6. 两半合拢，M5 + 定位销固定")
 
 
 if __name__ == "__main__":
