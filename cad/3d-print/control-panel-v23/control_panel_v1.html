@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Football Launcher Control Panel V1</title>
+<style>
+:root {
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #141926;
+  --bg-tertiary: #1f2638;
+  --text-primary: #ffffff;
+  --text-secondary: #b0b8c8;
+  --text-muted: #6b7384;
+  --color-ok: #00d96b;
+  --color-warn: #ffb800;
+  --color-err: #ff3344;
+  --color-info: #0088ff;
+  --color-predict: #0088ff;
+  --color-actual: #ff8800;
+  --border: #2a3145;
+  --shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: -apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 14px;
+  user-select: none;
+}
+
+/* ===== Layout ===== */
+#app {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100vh;
+  max-width: 1024px;
+  margin: 0 auto;
+}
+
+header {
+  background: var(--bg-secondary);
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+header .title { font-size: 18px; font-weight: 600; }
+header .header-info { display: flex; gap: 16px; font-size: 14px; color: var(--text-secondary); }
+header .info-item .value { color: var(--text-primary); font-weight: 600; margin-left: 4px; }
+
+main {
+  overflow-y: auto;
+  padding: 12px;
+  background: var(--bg-primary);
+}
+
+footer {
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  padding: 8px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+/* ===== Tabs ===== */
+.tabs {
+  display: flex;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+}
+.tab {
+  flex: 1;
+  padding: 14px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.15s;
+}
+.tab:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+.tab.active {
+  color: var(--color-info);
+  border-bottom-color: var(--color-info);
+  background: var(--bg-primary);
+}
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ===== Common Components ===== */
+.card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+.card-title {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.row { display: flex; gap: 12px; }
+.row > * { flex: 1; }
+
+.status-block {
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  border: 2px solid var(--border);
+}
+.status-block.ok { border-color: var(--color-ok); background: rgba(0, 217, 107, 0.08); }
+.status-block.warn { border-color: var(--color-warn); background: rgba(255, 184, 0, 0.08); }
+.status-block.err { border-color: var(--color-err); background: rgba(255, 51, 68, 0.08); }
+
+.status-label { font-size: 13px; color: var(--text-secondary); }
+.status-value { font-size: 28px; font-weight: 700; margin-top: 4px; }
+.status-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+/* ===== Buttons ===== */
+.btn {
+  padding: 12px 18px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.1s;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+.btn:hover { background: #2a3145; }
+.btn:active { transform: translateY(1px); }
+.btn.primary { background: var(--color-info); color: white; border-color: var(--color-info); }
+.btn.primary:hover { background: #0099ff; }
+.btn.success { background: var(--color-ok); color: white; border-color: var(--color-ok); }
+.btn.danger { background: var(--color-err); color: white; border-color: var(--color-err); }
+.btn.warn { background: var(--color-warn); color: #1a1a1a; border-color: var(--color-warn); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn.large { padding: 16px 24px; font-size: 20px; }
+
+.btn-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+/* ===== Slider ===== */
+.slider-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.slider-row:last-child { border-bottom: none; }
+.slider-label { font-size: 14px; color: var(--text-secondary); }
+.slider-row input[type=range] {
+  grid-column: 1 / 3;
+  width: 100%;
+  height: 8px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  outline: none;
+}
+.slider-row input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  background: var(--color-info);
+  border-radius: 50%;
+  cursor: pointer;
+}
+.slider-value {
+  font-family: 'Consolas', monospace;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-info);
+  text-align: right;
+  min-width: 80px;
+}
+
+/* ===== Mode Buttons ===== */
+.mode-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.mode-btn {
+  padding: 18px 12px;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: all 0.1s;
+}
+.mode-btn:hover { border-color: var(--color-info); color: var(--text-primary); }
+.mode-btn.active {
+  background: rgba(0, 136, 255, 0.15);
+  border-color: var(--color-info);
+  color: var(--color-info);
+}
+.mode-btn .symbol { font-size: 22px; display: block; margin-bottom: 4px; }
+
+/* ===== Trajectory ===== */
+.trajectory-container {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  position: relative;
+}
+.legend {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.legend-line { width: 24px; height: 3px; }
+.legend-line.predict { background: var(--color-predict); border-top: 2px dashed var(--color-predict); height: 0; }
+.legend-line.actual { background: var(--color-actual); }
+
+/* ===== Diagnostics ===== */
+.diag-row {
+  display: grid;
+  grid-template-columns: 120px 80px 1fr 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.diag-row:last-child { border-bottom: none; }
+.diag-name { font-weight: 600; }
+.diag-status { font-size: 13px; padding: 4px 8px; border-radius: 4px; text-align: center; }
+.diag-status.ok { background: rgba(0, 217, 107, 0.2); color: var(--color-ok); }
+.diag-status.warn { background: rgba(255, 184, 0, 0.2); color: var(--color-warn); }
+.diag-status.err { background: rgba(255, 51, 68, 0.2); color: var(--color-err); }
+.diag-value { font-family: 'Consolas', monospace; color: var(--text-secondary); font-size: 13px; }
+
+/* ===== Errors ===== */
+.error-list {
+  background: rgba(255, 51, 68, 0.08);
+  border: 1px solid var(--color-err);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.error-item {
+  font-family: 'Consolas', monospace;
+  font-size: 13px;
+  color: var(--color-err);
+  padding: 4px 0;
+}
+
+/* ===== Banner ===== */
+.banner {
+  padding: 10px 14px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.banner.warn { background: rgba(255, 184, 0, 0.15); border: 1px solid var(--color-warn); color: var(--color-warn); }
+.banner.err { background: rgba(255, 51, 68, 0.15); border: 1px solid var(--color-err); color: var(--color-err); }
+.banner.info { background: rgba(0, 136, 255, 0.15); border: 1px solid var(--color-info); color: var(--color-info); }
+.banner.ok { background: rgba(0, 217, 107, 0.15); border: 1px solid var(--color-ok); color: var(--color-ok); }
+
+/* ===== Footer Status ===== */
+.footer-status {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+.footer-status .label { color: var(--text-muted); font-size: 12px; }
+.footer-status .value { font-weight: 600; }
+
+.lock-status { padding: 4px 10px; border-radius: 4px; font-size: 13px; font-weight: 600; }
+.lock-status.locked { background: var(--color-err); color: white; }
+.lock-status.unlocked { background: var(--color-ok); color: #1a1a1a; }
+
+.emergency-btn {
+  background: var(--color-err);
+  color: white;
+  font-weight: 700;
+  font-size: 16px;
+  padding: 8px 16px;
+  border: 2px solid var(--color-err);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.1s;
+  box-shadow: 0 0 8px rgba(255, 51, 68, 0.4);
+}
+.emergency-btn:hover { background: #ff5566; }
+.emergency-btn.pressed { animation: pulse-red 0.5s; }
+
+@keyframes pulse-red {
+  0%, 100% { background: var(--color-err); }
+  50% { background: #ff8899; }
+}
+
+/* ===== Pending Confirm ===== */
+.confirm-banner {
+  background: rgba(255, 184, 0, 0.2);
+  border: 2px dashed var(--color-warn);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+  text-align: center;
+  color: var(--color-warn);
+  font-weight: 600;
+}
+
+/* ===== Modal Confirm ===== */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--bg-secondary);
+  border: 2px solid var(--color-err);
+  border-radius: 12px;
+  padding: 24px;
+  min-width: 400px;
+  max-width: 600px;
+  text-align: center;
+}
+.modal h2 { font-size: 20px; color: var(--color-err); margin-bottom: 12px; }
+.modal p { margin-bottom: 16px; color: var(--text-secondary); }
+.modal-buttons { display: flex; gap: 12px; justify-content: center; }
+
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header>
+    <div class="title">⚽ Football Launcher Control Panel V1</div>
+    <div class="header-info">
+      <div class="info-item">🔋 <span class="value" id="hdr-batt">82%</span></div>
+      <div class="info-item">🌡️ <span class="value" id="hdr-temp">36℃</span></div>
+      <div class="info-item">📡 <span class="value" id="hdr-mode">直线</span></div>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="home">首页</div>
+    <div class="tab" data-tab="arc">弧线</div>
+    <div class="tab" data-tab="param">参数</div>
+    <div class="tab" data-tab="diag">诊断</div>
+  </div>
+
+  <main>
+
+    <!-- ========== 首页 ========== -->
+    <div class="tab-content active" id="tab-home">
+
+      <div id="banner-home"></div>
+
+      <div class="card">
+        <div class="card-title">当前模式</div>
+        <div class="status-block ok" id="home-mode">
+          <div class="status-label">MODE</div>
+          <div class="status-value" id="mode-display">直线球</div>
+        </div>
+
+        <div style="margin-top: 12px;" class="mode-grid">
+          <div class="mode-btn" data-mode="STRAIGHT"><span class="symbol">→</span>直线</div>
+          <div class="mode-btn" data-mode="LEFT_CURVE"><span class="symbol">↙</span>左弧</div>
+          <div class="mode-btn" data-mode="RIGHT_CURVE"><span class="symbol">↘</span>右弧</div>
+          <div class="mode-btn" data-mode="TOPSPIN"><span class="symbol">↓</span>上旋</div>
+          <div class="mode-btn" data-mode="BACKSPIN"><span class="symbol">↑</span>下旋</div>
+          <div class="mode-btn" data-mode="CUSTOM"><span class="symbol">⚙</span>自定义</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">发射准备</div>
+        <div class="row">
+          <div class="status-block ok" id="check-pressure">
+            <div class="status-label">气压</div>
+            <div class="status-value" id="pressure-display">0.62</div>
+            <div class="status-sub">MPa</div>
+          </div>
+          <div class="status-block warn" id="check-motors">
+            <div class="status-label">电机同步</div>
+            <div class="status-value" id="motor-sync-display">同步中</div>
+          </div>
+          <div class="status-block ok" id="check-camera">
+            <div class="status-label">摄像头</div>
+            <div class="status-value" id="camera-display">正常</div>
+            <div class="status-sub" id="camera-fps">60 FPS</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">发射控制</div>
+        <div class="btn-row">
+          <button class="btn primary large" id="btn-launch" disabled>🚀 发 射</button>
+          <button class="btn warn" id="btn-pending" disabled>⏳ 待确认</button>
+          <button class="btn" id="btn-test">试射一次</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn" id="btn-lock">系统锁定</button>
+          <button class="btn success" id="btn-unlock">解除锁定</button>
+          <button class="btn danger" id="btn-estop">⛔ 急停</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== 弧线 ========== -->
+    <div class="tab-content" id="tab-arc">
+      <div id="banner-arc"></div>
+
+      <div class="card">
+        <div class="card-title">轨迹视图</div>
+        <div class="trajectory-container">
+          <div class="legend">
+            <div class="legend-item"><div class="legend-line predict"></div>预测弧线</div>
+            <div class="legend-item"><div class="legend-line actual"></div>实测弧线</div>
+            <div class="legend-item">● 目标落点</div>
+            <div class="legend-item">● 实测落点</div>
+          </div>
+          <svg id="trajectory-svg" viewBox="0 0 800 280" style="width:100%; height:280px; background:#0a0e1a; border-radius:6px;"></svg>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">落点数据</div>
+        <div class="row">
+          <div class="status-block">
+            <div class="status-label">预测落点</div>
+            <div class="status-value" style="font-size:18px;" id="pred-x">23.4 m</div>
+            <div class="status-sub" id="pred-y">横向: -2.1 m</div>
+          </div>
+          <div class="status-block">
+            <div class="status-label">实测落点</div>
+            <div class="status-value" style="font-size:18px;" id="actual-x">21.9 m</div>
+            <div class="status-sub" id="actual-y">横向: -3.0 m</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">偏差分析</div>
+        <div class="row">
+          <div class="status-block" id="err-distance">
+            <div class="status-label">距离偏差</div>
+            <div class="status-value" style="font-size:24px;" id="err-dist">-1.5 m</div>
+          </div>
+          <div class="status-block" id="err-lateral">
+            <div class="status-label">横向偏差</div>
+            <div class="status-value" style="font-size:24px;" id="err-lat">-0.9 m</div>
+          </div>
+        </div>
+        <div style="margin-top: 12px;">
+          <button class="btn primary" id="btn-refill">🔄 回填参数</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== 参数 ========== -->
+    <div class="tab-content" id="tab-param">
+      <div id="confirm-banner" class="confirm-banner" style="display:none;">
+        ⚠ 参数已修改，需要确认才能发射
+      </div>
+
+      <div class="card">
+        <div class="card-title">三电机 RPM</div>
+        <div class="slider-row">
+          <div class="slider-label">电机 A (0°)</div>
+          <div class="slider-value" id="rpm-a-val">2500</div>
+          <input type="range" id="rpm-a" min="0" max="5000" step="100" value="2500">
+        </div>
+        <div class="slider-row">
+          <div class="slider-label">电机 B (120°)</div>
+          <div class="slider-value" id="rpm-b-val">2500</div>
+          <input type="range" id="rpm-b" min="0" max="5000" step="100" value="2500">
+        </div>
+        <div class="slider-row">
+          <div class="slider-label">电机 C (240°)</div>
+          <div class="slider-value" id="rpm-c-val">2500</div>
+          <input type="range" id="rpm-c" min="0" max="5000" step="100" value="2500">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">推进参数</div>
+        <div class="slider-row">
+          <div class="slider-label">气压</div>
+          <div class="slider-value" id="pressure-val">0.62 MPa</div>
+          <input type="range" id="pressure" min="0" max="1.0" step="0.05" value="0.62">
+        </div>
+        <div class="slider-row">
+          <div class="slider-label">阀门延迟</div>
+          <div class="slider-value" id="valve-val">12 ms</div>
+          <input type="range" id="valve" min="0" max="100" step="1" value="12">
+        </div>
+        <div class="slider-row">
+          <div class="slider-label">活塞力度</div>
+          <div class="slider-value" id="piston-val">75%</div>
+          <input type="range" id="piston" min="0" max="100" step="5" value="75">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">弧线控制</div>
+        <div class="slider-row">
+          <div class="slider-label">左右弧线强度</div>
+          <div class="slider-value" id="curve-val">0%</div>
+          <input type="range" id="curve" min="-50" max="50" step="5" value="0">
+        </div>
+        <div class="slider-row">
+          <div class="slider-label">上/下旋强度</div>
+          <div class="slider-value" id="spin-val">0%</div>
+          <input type="range" id="spin" min="-50" max="50" step="5" value="0">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="btn-row">
+          <button class="btn success" id="btn-confirm">✓ 确认修改</button>
+          <button class="btn" id="btn-save">💾 保存预设</button>
+          <button class="btn warn" id="btn-reset">↻ 恢复默认</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== 诊断 ========== -->
+    <div class="tab-content" id="tab-diag">
+      <div class="card">
+        <div class="card-title">系统状态总览</div>
+        <div class="status-block ok" id="diag-overall">
+          <div class="status-label">总体</div>
+          <div class="status-value" id="diag-overall-status">正常</div>
+        </div>
+      </div>
+
+      <div id="error-list" class="error-list" style="display:none;">
+        <div class="card-title" style="color:var(--color-err);">⚠ 当前错误</div>
+        <div id="error-items"></div>
+        <div style="margin-top:10px;">
+          <button class="btn warn" id="btn-recheck">🔄 重新检测</button>
+          <button class="btn danger" id="btn-clear-err">⛔ 解除故障</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">子系统诊断</div>
+        <div class="diag-row">
+          <div class="diag-name">摄像头</div>
+          <div class="diag-status ok" id="diag-cam-status">正常</div>
+          <div class="diag-value" id="diag-cam-fps">60 FPS</div>
+          <div class="diag-value" id="diag-cam-conf">置信度 92%</div>
+        </div>
+        <div class="diag-row">
+          <div class="diag-name">电机 A</div>
+          <div class="diag-status ok" id="diag-ma-status">正常</div>
+          <div class="diag-value" id="diag-ma-rpm">4180 rpm</div>
+          <div class="diag-value" id="diag-ma-temp">42 ℃</div>
+        </div>
+        <div class="diag-row">
+          <div class="diag-name">电机 B</div>
+          <div class="diag-status ok" id="diag-mb-status">正常</div>
+          <div class="diag-value" id="diag-mb-rpm">3910 rpm</div>
+          <div class="diag-value" id="diag-mb-temp">44 ℃</div>
+        </div>
+        <div class="diag-row">
+          <div class="diag-name">电机 C</div>
+          <div class="diag-status warn" id="diag-mc-status">警告</div>
+          <div class="diag-value" id="diag-mc-rpm">4020 rpm</div>
+          <div class="diag-value" id="diag-mc-temp">48 ℃</div>
+        </div>
+        <div class="diag-row">
+          <div class="diag-name">气压系统</div>
+          <div class="diag-status ok" id="diag-pres-status">正常</div>
+          <div class="diag-value" id="diag-pres-val">0.62 MPa</div>
+          <div class="diag-value" id="diag-pres-leak">漏率 0.02 bar/s</div>
+        </div>
+        <div class="diag-row">
+          <div class="diag-name">电磁阀</div>
+          <div class="diag-status ok" id="diag-valve-status">正常</div>
+          <div class="diag-value" id="diag-valve-delay">延迟 12 ms</div>
+          <div class="diag-value" id="diag-valve-count">发射次数 47</div>
+        </div>
+        <div class="diag-row">
+          <div class="diag-name">电池</div>
+          <div class="diag-status ok" id="diag-batt-status">正常</div>
+          <div class="diag-value" id="diag-batt-pct">82%</div>
+          <div class="diag-value" id="diag-batt-volt">24.1 V</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    <div class="footer-status">
+      <div>
+        <div class="label">发射状态</div>
+        <div class="value" id="ftr-launch">未就绪</div>
+      </div>
+      <div>
+        <div class="label">锁定</div>
+        <div class="lock-status locked" id="ftr-lock">LOCKED</div>
+      </div>
+      <div>
+        <div class="label">急停</div>
+        <div class="value" style="color:var(--color-ok);" id="ftr-estop">正常</div>
+      </div>
+      <div>
+        <div class="label">电量</div>
+        <div class="value" id="ftr-batt">82%</div>
+      </div>
+    </div>
+    <button class="emergency-btn" id="ftr-estop-btn">⛔ EMERGENCY STOP</button>
+  </footer>
+
+</div>
+
+<!-- Emergency Confirm Modal -->
+<div class="modal-overlay" id="modal-estop">
+  <div class="modal">
+    <h2>⛔ 确认急停？</h2>
+    <p>急停会立即切断所有电源，<br>需要人工复位才能恢复。</p>
+    <div class="modal-buttons">
+      <button class="btn success" id="modal-estop-cancel">取消</button>
+      <button class="btn danger" id="modal-estop-confirm">确认急停</button>
+    </div>
+  </div>
+</div>
+
+<!-- High Pressure Confirm Modal -->
+<div class="modal-overlay" id="modal-highp">
+  <div class="modal">
+    <h2>⚠ 高压确认</h2>
+    <p>当前气压设定值已超过安全阈值。<br>请确认发射环境已清场。</p>
+    <div class="modal-buttons">
+      <button class="btn" id="modal-highp-cancel">取消</button>
+      <button class="btn danger" id="modal-highp-confirm">我已确认</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// State
+// ============================================================
+const state = {
+  mode: 'STRAIGHT',
+  pending_mode: null,
+  safety_locked: true,
+  emergency_stop: false,
+  launch_ready: false,
+  param_pending: false,
+
+  rpm_a: 2500, rpm_b: 2500, rpm_c: 2500,
+  pressure: 0.62,
+  valve_delay: 12,
+  piston: 75,
+  curve: 0,
+  spin: 0,
+
+  camera_status: 'OK',
+  camera_fps: 60,
+  vision_conf: 0.92,
+
+  predicted: { x: 23.4, y: -2.1 },
+  actual:    { x: 21.9, y: -3.0 },
+
+  motors: { a: { rpm: 4180, temp: 42, status: 'ok' },
+            b: { rpm: 3910, temp: 44, status: 'ok' },
+            c: { rpm: 4020, temp: 48, status: 'warn' } },
+
+  pressure_val: 0.62,
+  pressure_leak: 0.02,
+  valve_count: 47,
+
+  battery: 0.82,
+  battery_volt: 24.1,
+  errors: [],
+};
+
+const MODE_NAMES = {
+  STRAIGHT: '直线球',
+  LEFT_CURVE: '左弧球',
+  RIGHT_CURVE: '右弧球',
+  TOPSPIN: '上旋球',
+  BACKSPIN: '下旋球',
+  CUSTOM: '自定义'
+};
+
+const MODE_SYMBOLS = {
+  STRAIGHT: '→', LEFT_CURVE: '↙', RIGHT_CURVE: '↘',
+  TOPSPIN: '↓', BACKSPIN: '↑', CUSTOM: '⚙'
+};
+
+// ============================================================
+// Trajectory simulation
+// ============================================================
+function simulateTrajectory(state) {
+  // Simple parabolic + Magnus
+  const avg_rpm = (state.rpm_a + state.rpm_b + state.rpm_c) / 3;
+  const v0 = Math.max(8, avg_rpm / 60 * 2 * Math.PI * 0.0315 * 0.42);
+
+  const angle = 12 * Math.PI / 180;
+  let x = 0, y = 0, z = 0.3;
+  let vx = v0 * Math.cos(angle);
+  let vy = 0;
+  let vz = v0 * Math.sin(angle);
+
+  // Magnus from differential
+  const da = state.rpm_a - avg_rpm;
+  const db = state.rpm_b - avg_rpm;
+  const dc = state.rpm_c - avg_rpm;
+  const spin_lr = db > 100 ? -1 : dc > 100 ? 1 : 0;
+  const spin_ud = da > 100 ? 1 : da < -100 ? -1 : 0;
+
+  const dt = 0.015;
+  const ays = spin_lr * 0.42 * 3;
+  const azs = -spin_ud * 0.30 * 3;
+
+  let peak = z;
+  for (let i = 0; i < 200; i++) {
+    const v = Math.sqrt(vx*vx + vy*vy + vz*vz);
+    if (v < 0.5) break;
+    const drag = 0.5 * 1.225 * 0.25 * Math.PI * 0.11*0.11 * v*v / 0.43;
+    vx -= drag * vx/v * dt;
+    vy -= drag * vy/v * dt;
+    vz -= drag * vz/v * dt;
+    vy += ays * dt;
+    vz += (azs - 9.81) * dt;
+    x += vx * dt; y += vy * dt; z += vz * dt;
+    peak = Math.max(peak, z);
+    if (z < 0 && i > 5) break;
+  }
+  return { x, y, peak };
+}
+
+// ============================================================
+// Render
+// ============================================================
+function $(id) { return document.getElementById(id); }
+
+function render() {
+  // Header
+  $('hdr-batt').textContent = Math.round(state.battery * 100) + '%';
+  $('hdr-temp').textContent = '36℃';
+  $('hdr-mode').textContent = MODE_NAMES[state.mode];
+
+  // Home - mode buttons
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === state.mode);
+  });
+  $('mode-display').textContent = MODE_NAMES[state.mode];
+
+  // Home - status blocks
+  $('pressure-display').textContent = state.pressure.toFixed(2);
+
+  // Sync status (compare all RPM)
+  const rpm_spread = Math.max(...[state.rpm_a, state.rpm_b, state.rpm_c])
+                   - Math.min(...[state.rpm_a, state.rpm_b, state.rpm_c]);
+  if (rpm_spread < 200) {
+    $('motor-sync-display').textContent = '已同步';
+    $('check-motors').className = 'status-block ok';
+  } else {
+    $('motor-sync-display').textContent = '不同步';
+    $('check-motors').className = 'status-block warn';
+  }
+
+  // Camera
+  if (state.camera_status === 'OK') {
+    $('camera-display').textContent = '正常';
+    $('check-camera').className = 'status-block ok';
+  } else {
+    $('camera-display').textContent = '异常';
+    $('check-camera').className = 'status-block err';
+  }
+  $('camera-fps').textContent = state.camera_fps + ' FPS';
+
+  // Launch readiness logic
+  const checks = {
+    pressure: state.pressure >= 0.5 && state.pressure <= 0.85,
+    synced: rpm_spread < 200,
+    camera: state.camera_status === 'OK',
+    unlocked: !state.safety_locked && !state.emergency_stop,
+    no_errors: state.errors.length === 0,
+    not_pending: !state.param_pending
+  };
+  const all_pass = Object.values(checks).every(v => v);
+  state.launch_ready = all_pass;
+  $('btn-launch').disabled = !all_pass;
+  $('ftr-launch').textContent = all_pass ? '就绪' : '未就绪';
+  $('ftr-launch').style.color = all_pass ? 'var(--color-ok)' : 'var(--color-warn)';
+
+  // Pressure status
+  if (state.pressure < 0.4) {
+    $('check-pressure').className = 'status-block err';
+  } else if (state.pressure > 0.85) {
+    $('check-pressure').className = 'status-block warn';
+  } else {
+    $('check-pressure').className = 'status-block ok';
+  }
+
+  // Banners
+  if (state.emergency_stop) {
+    $('banner-home').innerHTML = '<div class="banner err">⛔ 急停已触发 — 所有系统锁定，需人工复位</div>';
+    $('home-mode').className = 'status-block err';
+    $('btn-launch').disabled = true;
+    $('ftr-estop').textContent = '触发';
+    $('ftr-estop').style.color = 'var(--color-err)';
+  } else if (state.safety_locked) {
+    $('banner-home').innerHTML = '<div class="banner warn">🔒 系统已锁定 — 按"解除锁定"后才能发射</div>';
+    $('home-mode').className = 'status-block warn';
+    $('ftr-lock').textContent = 'LOCKED';
+    $('ftr-lock').className = 'lock-status locked';
+  } else {
+    $('banner-home').innerHTML = '<div class="banner ok">✓ 系统就绪</div>';
+    $('home-mode').className = 'status-block ok';
+    $('ftr-lock').textContent = 'UNLOCKED';
+    $('ftr-lock').className = 'lock-status unlocked';
+  }
+
+  if (state.param_pending && !state.emergency_stop) {
+    $('confirm-banner').style.display = 'block';
+    $('btn-pending').disabled = false;
+  } else {
+    $('confirm-banner').style.display = 'none';
+    $('btn-pending').disabled = true;
+  }
+
+  // Param values
+  $('rpm-a-val').textContent = state.rpm_a;
+  $('rpm-b-val').textContent = state.rpm_b;
+  $('rpm-c-val').textContent = state.rpm_c;
+  $('pressure-val').textContent = state.pressure.toFixed(2) + ' MPa';
+  $('valve-val').textContent = state.valve_delay + ' ms';
+  $('piston-val').textContent = state.piston + '%';
+  $('curve-val').textContent = (state.curve > 0 ? '+' : '') + state.curve + '%';
+  $('spin-val').textContent = (state.spin > 0 ? '+' : '') + state.spin + '%';
+
+  // Arc page - trajectory data
+  $('pred-x').textContent = state.predicted.x.toFixed(1) + ' m';
+  $('pred-y').textContent = '横向: ' + state.predicted.y.toFixed(1) + ' m';
+  $('actual-x').textContent = state.actual.x.toFixed(1) + ' m';
+  $('actual-y').textContent = '横向: ' + state.actual.y.toFixed(1) + ' m';
+
+  const dist_err = state.actual.x - state.predicted.x;
+  const lat_err = state.actual.y - state.predicted.y;
+  $('err-dist').textContent = (dist_err > 0 ? '+' : '') + dist_err.toFixed(1) + ' m';
+  $('err-lat').textContent = (lat_err > 0 ? '+' : '') + lat_err.toFixed(1) + ' m';
+  $('err-distance').className = 'status-block ' + (Math.abs(dist_err) > 2 ? 'err' : Math.abs(dist_err) > 1 ? 'warn' : 'ok');
+  $('err-lateral').className = 'status-block ' + (Math.abs(lat_err) > 2 ? 'err' : Math.abs(lat_err) > 1 ? 'warn' : 'ok');
+
+  // Diag
+  if (state.errors.length === 0) {
+    $('error-list').style.display = 'none';
+    $('diag-overall').className = 'status-block ok';
+    $('diag-overall-status').textContent = '正常';
+  } else {
+    $('error-list').style.display = 'block';
+    $('diag-overall').className = 'status-block err';
+    $('diag-overall-status').textContent = state.errors.length + ' 错误';
+    $('error-items').innerHTML = state.errors.map(e => `<div class="error-item">▸ ${e}</div>`).join('');
+    $('btn-launch').disabled = true;
+  }
+  $('diag-cam-status').textContent = state.camera_status === 'OK' ? '正常' : '异常';
+  $('diag-cam-status').className = 'diag-status ' + (state.camera_status === 'OK' ? 'ok' : 'err');
+  $('diag-cam-fps').textContent = state.camera_fps + ' FPS';
+  $('diag-cam-conf').textContent = '置信度 ' + Math.round(state.vision_conf * 100) + '%';
+
+  ['a','b','c'].forEach(m => {
+    const motor = state.motors[m];
+    $('diag-m'+m+'-status').textContent = motor.status === 'ok' ? '正常' : motor.status === 'warn' ? '警告' : '故障';
+    $('diag-m'+m+'-status').className = 'diag-status ' + motor.status;
+    $('diag-m'+m+'-rpm').textContent = motor.rpm + ' rpm';
+    $('diag-m'+m+'-temp').textContent = motor.temp + ' ℃';
+  });
+
+  $('diag-pres-status').textContent = '正常';
+  $('diag-pres-status').className = 'diag-status ok';
+  $('diag-pres-val').textContent = state.pressure.toFixed(2) + ' MPa';
+  $('diag-pres-leak').textContent = '漏率 ' + state.pressure_leak.toFixed(2) + ' bar/s';
+  $('diag-valve-status').textContent = '正常';
+  $('diag-valve-status').className = 'diag-status ok';
+  $('diag-valve-delay').textContent = '延迟 ' + state.valve_delay + ' ms';
+  $('diag-valve-count').textContent = '发射次数 ' + state.valve_count;
+  $('diag-batt-status').textContent = state.battery > 0.3 ? '正常' : '警告';
+  $('diag-batt-status').className = 'diag-status ' + (state.battery > 0.3 ? 'ok' : 'warn');
+  $('diag-batt-pct').textContent = Math.round(state.battery * 100) + '%';
+  $('diag-batt-volt').textContent = state.battery_volt.toFixed(1) + ' V';
+
+  // Footer
+  $('ftr-batt').textContent = Math.round(state.battery * 100) + '%';
+  if (state.emergency_stop) {
+    $('ftr-estop').textContent = '触发';
+    $('ftr-estop').style.color = 'var(--color-err)';
+  } else {
+    $('ftr-estop').textContent = '正常';
+    $('ftr-estop').style.color = 'var(--color-ok)';
+  }
+}
+
+function renderTrajectory() {
+  const svg = $('trajectory-svg');
+  svg.innerHTML = '';
+
+  // Calculate predicted and actual
+  const traj = simulateTrajectory(state);
+  state.predicted = { x: traj.x, y: traj.y };
+  // Actual is offset by motor C RPM error (mock deviation)
+
+  // Draw ground line
+  svg.innerHTML += `<line x1="0" y1="240" x2="800" y2="240" stroke="#444" stroke-dasharray="4 4" stroke-width="1"/>`;
+
+  // 180° sector
+  svg.innerHTML += `<path d="M 400 240 L 750 100 A 350 350 0 0 0 750 -100 Z" fill="rgba(100,100,255,0.06)" stroke="#3a4258" stroke-dasharray="2 4" stroke-width="1"/>`;
+
+  // Predicted trajectory (blue dashed)
+  const max_x = Math.max(traj.x, state.actual.x, 25);
+  const scale_x = 700 / Math.max(max_x, 1);
+  const scale_y = 180 / Math.max(traj.peak, 30);
+  const scale = Math.min(scale_x, scale_y);
+
+  // Predicted path
+  const avg_rpm = (state.rpm_a + state.rpm_b + state.rpm_c) / 3;
+  const v0 = Math.max(8, avg_rpm / 60 * 2 * Math.PI * 0.0315 * 0.42);
+  const angle = 12 * Math.PI / 180;
+  let px = 400, py = 240, pvx = v0 * Math.cos(angle), pvy = -v0 * Math.sin(angle);
+  let path = `M ${px} ${py}`;
+  for (let i = 0; i < 200; i++) {
+    pvx *= 0.9985; pvy += 9.81 * 0.015;
+    px += pvx * 0.015 * scale; py += pvy * 0.015 * scale;
+    if (py > 240 || px > 790) break;
+    path += ` L ${px} ${py}`;
+  }
+  svg.innerHTML += `<path d="${path}" stroke="#0088ff" stroke-dasharray="6 4" stroke-width="2.5" fill="none"/>`;
+
+  // Predicted landing
+  const pred_lx = 400 + traj.x * scale;
+  const pred_ly = 240 - 0; // ground
+  svg.innerHTML += `<circle cx="${pred_lx}" cy="${pred_ly}" r="6" fill="#00d96b" stroke="white" stroke-width="2"/>`;
+
+  // Actual trajectory (orange)
+  let ax = 400, ay = 240, avx = v0 * Math.cos(angle) * 0.95, avy = -v0 * Math.sin(angle) * 0.95;
+  let apath = `M ${ax} ${ay}`;
+  for (let i = 0; i < 200; i++) {
+    avx *= 0.997; avy += 9.81 * 0.015;
+    ax += avx * 0.015 * scale; ay += avy * 0.015 * scale;
+    if (ay > 240 || ax > 790) break;
+    apath += ` L ${ax} ${ay}`;
+  }
+  svg.innerHTML += `<path d="${apath}" stroke="#ff8800" stroke-width="2.5" fill="none"/>`;
+
+  // Actual landing
+  const actual_lx = 400 + state.actual.x * scale;
+  const actual_ly = 240;
+  svg.innerHTML += `<circle cx="${actual_lx}" cy="${actual_ly}" r="6" fill="#ff8800" stroke="white" stroke-width="2"/>`;
+
+  // Distance markers
+  svg.innerHTML += `<text x="780" y="260" fill="#888" font-size="11" text-anchor="end">${Math.round(max_x)}m</text>`;
+}
+
+// ============================================================
+// Event Handlers
+// ============================================================
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    tab.classList.add('active');
+    $('tab-' + tab.dataset.tab).classList.add('active');
+    if (tab.dataset.tab === 'arc') renderTrajectory();
+  });
+});
+
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (state.emergency_stop) return;
+    state.mode = btn.dataset.mode;
+    state.param_pending = true;
+    // Refresh trajectory
+    if ($('tab-arc').classList.contains('active')) renderTrajectory();
+    render();
+  });
+});
+
+['rpm_a', 'rpm_b', 'rpm_c', 'pressure', 'valve_delay', 'piston', 'curve', 'spin'].forEach(key => {
+  const inputMap = { rpm_a: 'rpm-a', rpm_b: 'rpm-b', rpm_c: 'rpm-c',
+                     pressure: 'pressure', valve_delay: 'valve',
+                     piston: 'piston', curve: 'curve', spin: 'spin' };
+  const inputId = inputMap[key];
+  const el = $(inputId);
+  if (!el) return;
+  el.addEventListener('input', (e) => {
+    if (state.emergency_stop) return;
+    let val = parseFloat(e.target.value);
+    state[key] = val;
+    state.param_pending = true;
+    if ($('tab-arc').classList.contains('active')) renderTrajectory();
+    render();
+  });
+});
+
+$('btn-lock').addEventListener('click', () => {
+  if (state.emergency_stop) return;
+  state.safety_locked = true;
+  render();
+});
+
+$('btn-unlock').addEventListener('click', () => {
+  if (state.emergency_stop) return;
+  state.safety_locked = false;
+  render();
+});
+
+$('btn-estop').addEventListener('click', () => {
+  $('modal-estop').classList.add('active');
+});
+
+$('modal-estop-cancel').addEventListener('click', () => {
+  $('modal-estop').classList.remove('active');
+});
+
+$('modal-estop-confirm').addEventListener('click', () => {
+  state.emergency_stop = true;
+  state.safety_locked = true;
+  $('modal-estop').classList.remove('active');
+  render();
+});
+
+$('ftr-estop-btn').addEventListener('click', () => {
+  $('modal-estop').classList.add('active');
+});
+
+$('btn-pending').addEventListener('click', () => {
+  // Switch to param tab
+  document.querySelector('.tab[data-tab=param]').click();
+});
+
+$('btn-confirm').addEventListener('click', () => {
+  state.param_pending = false;
+  render();
+});
+
+$('btn-reset').addEventListener('click', () => {
+  if (state.emergency_stop) return;
+  state.rpm_a = 2500; state.rpm_b = 2500; state.rpm_c = 2500;
+  state.pressure = 0.62; state.valve_delay = 12; state.piston = 75;
+  state.curve = 0; state.spin = 0;
+  $('rpm-a').value = 2500; $('rpm-b').value = 2500; $('rpm-c').value = 2500;
+  $('pressure').value = 0.62; $('valve').value = 12; $('piston').value = 75;
+  $('curve').value = 0; $('spin').value = 0;
+  state.param_pending = true;
+  if ($('tab-arc').classList.contains('active')) renderTrajectory();
+  render();
+});
+
+$('btn-save').addEventListener('click', () => {
+  alert('预设已保存：' + MODE_NAMES[state.mode]);
+});
+
+$('btn-launch').addEventListener('click', () => {
+  if (!state.launch_ready || state.emergency_stop) return;
+  alert('🚀 发射！\n\n模式: ' + MODE_NAMES[state.mode] +
+        '\n气压: ' + state.pressure.toFixed(2) + ' MPa' +
+        '\n预测落点: ' + state.predicted.x.toFixed(1) + ' m');
+  state.valve_count += 1;
+  state.battery -= 0.005;
+  state.param_pending = true;
+  render();
+});
+
+$('btn-test').addEventListener('click', () => {
+  if (state.emergency_stop) return;
+  alert('试射已触发（无球）');
+});
+
+$('btn-refill').addEventListener('click', () => {
+  // Mock: refine parameters
+  state.rpm_a += Math.round((state.predicted.x - state.actual.x) * 5);
+  state.rpm_c += Math.round((state.actual.y - state.predicted.y) * 5);
+  $('rpm-a').value = state.rpm_a;
+  $('rpm-c').value = state.rpm_c;
+  state.param_pending = true;
+  if ($('tab-arc').classList.contains('active')) renderTrajectory();
+  render();
+  alert('已回填参数：调整电机 A 和 C');
+});
+
+$('btn-recheck').addEventListener('click', () => {
+  state.errors = [];
+  state.motors.c.status = 'ok';
+  state.camera_status = 'OK';
+  state.pressure_leak = 0.02;
+  render();
+});
+
+$('btn-clear-err').addEventListener('click', () => {
+  $('btn-recheck').click();
+});
+
+// Simulate random errors for demo
+setTimeout(() => {
+  if (state.errors.length === 0 && Math.random() > 0.5) {
+    state.errors.push('MOTOR_C_RPM_DRIFT');
+    state.motors.c.status = 'warn';
+    render();
+  }
+}, 8000);
+
+// Initial render
+render();
+renderTrajectory();
+setInterval(() => {
+  // Mock sensor updates
+  if (!state.emergency_stop) {
+    state.motors.a.rpm = state.rpm_a + Math.round((Math.random() - 0.5) * 30);
+    state.motors.b.rpm = state.rpm_b + Math.round((Math.random() - 0.5) * 30);
+    state.motors.c.rpm = state.rpm_c + Math.round((Math.random() - 0.5) * 30);
+    state.motors.a.temp = 42 + Math.round((Math.random() - 0.5) * 4);
+    state.motors.b.temp = 44 + Math.round((Math.random() - 0.5) * 4);
+    state.motors.c.temp = 48 + Math.round((Math.random() - 0.5) * 4);
+    state.camera_fps = 58 + Math.round(Math.random() * 5);
+    state.battery -= 0.0001;
+    state.pressure -= 0.0001;
+  }
+  render();
+}, 1000);
+
+</script>
+</body>
+</html>
