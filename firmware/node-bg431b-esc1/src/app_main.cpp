@@ -29,7 +29,6 @@ int main(void) {
     bg_node_comm_send_fault_if_needed();
     bg_node_debug_status();
     bg_node_debug_fault();
-    break; // placeholder loop for integration
   }
   return 0;
 }

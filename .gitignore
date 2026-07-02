@@ -3,3 +3,12 @@
 __pycache__/
 *.pyc
 *.pyo
+
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# Build symlinks (created by setup, not committed)
+firmware/host-esp32s3/common
+firmware/node-bg431b-esc1/common

@@ -45,6 +45,11 @@ int host_hal_can_recv(HostCanFrame* frame) {
   return -1;
 }
 
+int host_hal_sensor_ball_loaded(void) {
+  // return gpio_get_level(GPIO_BALL_SENSOR);
+  return 0;
+}
+
 int host_hal_sensor_tube_ball_present(void) {
   // return gpio_get_level(GPIO_TUBE_SENSOR);
   return 0;
@@ -63,6 +68,10 @@ int host_hal_sensor_exit_detected(void) {
 int host_hal_estop_active(void) {
   // return gpio_get_level(GPIO_ESTOP_IN);
   return 0;
+}
+
+void host_hal_trigger_launch(void) {
+  // trigger launch actuator
 }
 
 void host_hal_feed_request(void) {

@@ -9,7 +9,7 @@ extern void host_can_poll_rx(void);
 extern void launch_state_machine_step(void);
 extern void telemetry_publish(void);
 
-int main() {
+extern "C" void app_entry() {
   HostState* s = host_state_get();
   printf("%s boot\n", HOST_FIRMWARE_NAME);
 
@@ -30,7 +30,5 @@ int main() {
     launch_state_machine_step();
     host_can_control_tick();
     telemetry_publish();
-    break; // placeholder for task loop
   }
-  return 0;
 }

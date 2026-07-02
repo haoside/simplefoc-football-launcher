@@ -30,6 +30,9 @@ struct HostCommand {
 
 struct HostSensors {
   uint8_t ballLoaded;
+  uint8_t tubeBallPresent;
+  uint8_t chamberReady;
+  uint8_t exitDetected;
 };
 
 struct WheelTelemetry {
@@ -52,6 +55,8 @@ struct HostTelemetry {
   uint8_t envHumidityPct;
   uint8_t envWindSpeedDmps;
   uint8_t envWindDir;
+  uint8_t feedState;
+  uint8_t feedFaultReason;
 };
 
 struct HostState {

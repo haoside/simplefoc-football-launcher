@@ -21,8 +21,12 @@ int host_hal_can_send(const HostCanFrame* frame);
 int host_hal_can_recv(HostCanFrame* frame);
 
 int host_hal_sensor_ball_loaded(void);
+int host_hal_sensor_tube_ball_present(void);
+int host_hal_sensor_chamber_ready(void);
+int host_hal_sensor_exit_detected(void);
 int host_hal_estop_active(void);
 void host_hal_trigger_launch(void);
+void host_hal_feed_request(void);
 void host_hal_set_status_led(int on);
 void host_hal_set_buzzer(int on);
 
