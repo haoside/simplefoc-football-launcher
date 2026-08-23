@@ -40,10 +40,10 @@
 <canvas id="c"></canvas>
 
 <div class="panel">
-  <h1>⚙️ ODrive 三轮发射器 · 3D 仿真</h1>
+  <h1>⚙️ V2 直驱笼体 · 3D 仿真</h1>
 
   <div class="row"><label>轮转速 <b id="v-rpm">3200 rpm</b></label>
-    <input type="range" id="rpm" min="800" max="3600" step="50" value="3200"></div>
+    <input type="range" id="rpm" min="1000" max="6200" step="100" value="5200"></div>
   <div class="row"><label>预紧压紧量 <b id="v-pl">12 mm</b></label>
     <input type="range" id="pl" min="4" max="16" step="1" value="12"></div>
   <div class="row"><label>摩擦系数 μ(PU) <b id="v-mu">0.85</b></label>
@@ -75,9 +75,9 @@
   </div>
 
   <ul class="findings" style="list-style:none;padding:0">
-    <li><span class="tag" style="background:var(--warn)"></span>φ130 轮组：仿真显示 φ110 无法达成 20m 长传</li>
-    <li><span class="tag" style="background:var(--ok)"></span>飞轮架构：电池仅需 ~2A 补能电流</li>
-    <li><span class="tag" style="background:var(--acc)"></span>节奏约束：单发轮速跌 25~35%，冷却约 3s</li>
+    <li><span class="tag" style="background:var(--warn)"></span>V2 直驱：电机壳+PU套 φ79 直接作摩擦面，无独立摩擦轮</li>
+    <li><span class="tag" style="background:var(--ok)"></span>12S 44.4V @6000rpm → 壳面线速 ~24.8 m/s，射程可达 25m+</li>
+    <li><span class="tag" style="background:var(--acc)"></span>飞轮储能：单发跌落仅 ~15%，补能 ~2A@44V</li>
   </ul>
 </div>
 
@@ -87,11 +87,12 @@
 /* ===== 物理常量 (与 sim/odrive_launch_sim_v1.py 同源) ===== */
 const G=9.81, RHO=1.225, CD=0.25;
 const BALL_M=0.43, BALL_R=0.11, AREA=Math.PI*BALL_R*BALL_R;
-const WHEEL_R=0.065;                 // φ130 轮组
-const CONTACT_LEN=0.18;              // 三轮包角有效弧长
+const WHEEL_R=0.0395;                // V2: 电机壳φ63+PU套 → φ79 滚动面
+const VBUS=44.4;                     // 12S 锂电
+const CONTACT_LEN=0.14;              // 三摇篮包角有效弧长
 
 const $=id=>document.getElementById(id);
-const cfg={rpm:3200,pl:12,mu:.85,ang:14,side:0,top:0,yaw:0};
+const cfg={rpm:5200,pl:12,mu:.85,ang:14,side:0,top:0,yaw:0};
 
 /* ===== 场景 ===== */
 const scene=new THREE.Scene();
@@ -127,56 +128,61 @@ const grid=new THREE.GridHelper(60,60,0x2a3342,0x1d242f); scene.add(grid);
   sp.scale.set(.7,.35,1);sp.position.set(0,.02,d+.55);scene.add(sp);
 });
 
-/* ===== 发射器 (Candidate A: 外置三轮铰接) ===== */
+/* ===== 发射器 (V2 直驱笼体: 参考视频结构) ===== */
 const launcher=new THREE.Group(); scene.add(launcher);
-const matBody=new THREE.MeshStandardMaterial({color:0x273043,roughness:.6,metalness:.35});
-const matWheel=new THREE.MeshStandardMaterial({color:0x1a1f29,roughness:.9});
-const matPU=new THREE.MeshStandardMaterial({color:0xd08a3c,roughness:.85});
+const matBody=new THREE.MeshStandardMaterial({color:0xe07818,roughness:.55}); // 橙色打印笼体
+const matRotor=new THREE.MeshStandardMaterial({color:0x9aa2ad,roughness:.28,metalness:.85}); // 银色电机壳
+const matPU=new THREE.MeshStandardMaterial({color:0x1c1f24,roughness:.9});   // PU套(黑)
 const matAcc=new THREE.MeshStandardMaterial({color:0x4da3ff,roughness:.4,metalness:.5});
 
-// 底座立柱
-const post=new THREE.Mesh(new THREE.CylinderGeometry(.09,.13,.86,20),matBody);
+// 底座立柱 + 俯仰转台
+const post=new THREE.Mesh(new THREE.CylinderGeometry(.09,.13,.86,20),
+  new THREE.MeshStandardMaterial({color:0x273043,roughness:.6,metalness:.35}));
 post.position.y=.43; launcher.add(post);
-// 俯仰转台
 const turret=new THREE.Group(); turret.position.y=.9; launcher.add(turret);
-turret.add(new THREE.Mesh(new THREE.BoxGeometry(.34,.16,.30),matBody));
+turret.add(new THREE.Mesh(new THREE.BoxGeometry(.34,.14,.30),matBody));
 
-// 发射筒组(随俯仰)
-const barrel=new THREE.Group(); barrel.position.set(0,.10,0); turret.add(barrel);
-const tube=new THREE.Mesh(new THREE.CylinderGeometry(.145,.145,.34,28,1,true),
-  new THREE.MeshStandardMaterial({color:0x2e3950,roughness:.5,metalness:.4,
-    side:THREE.DoubleSide,transparent:true,opacity:.42}));
-tube.rotation.x=Math.PI/2; tube.position.z=.05; barrel.add(tube);
-// 导球锥
-const cone=new THREE.Mesh(new THREE.ConeGeometry(.15,.16,24),matAcc);
-cone.rotation.x=-Math.PI/2; cone.position.z=-.22; barrel.add(cone);
+/* 笼体组(随俯仰): 中心球道圆环 + 三瓣摇篮 + 后导锥 */
+const cage=new THREE.Group(); cage.position.set(0,.10,0); turret.add(cage);
 
-/* 三个轮组模块: 方位角 90/210/330 (12点/4点/8点) */
-function wheelModule(angleDeg){
-  const g=new THREE.Group();
+// 中心球道 = 短圆筒环 (φ230 内孔, 对应球 φ220)
+const bore=new THREE.Mesh(new THREE.CylinderGeometry(.125,.125,.16,36,1,true),
+  new THREE.MeshStandardMaterial({color:0xd8dde4,roughness:.5,
+    side:THREE.DoubleSide,transparent:true,opacity:.22}));
+bore.rotation.x=Math.PI/2; cage.add(bore);
+
+/* 三瓣摇篮 + 嵌入式直驱电机 (120°: 12点/4点/8点) */
+function cradle(angleDeg){
   const a=angleDeg*Math.PI/180;
-  // 臂
-  const arm=new THREE.Mesh(new THREE.BoxGeometry(.07,.30,.05),matBody);
-  arm.position.set(Math.cos(a)*.19,-Math.sin(a)*.19+.11,0.02);
-  arm.rotation.z=a+Math.PI; g.add(arm);
-  // 电机(外置圆柱)
-  const motor=new THREE.Mesh(new THREE.CylinderGeometry(.045,.045,.07,20),
-    new THREE.MeshStandardMaterial({color:0x141922,roughness:.35,metalness:.7}));
-  motor.position.set(Math.cos(a)*.26,-Math.sin(a)*.26+.11,.02);
-  motor.rotation.z=a-Math.PI/2; motor.rotation.x=Math.PI/2;
-  g.add(motor);
-  // 摩擦轮(PU橙色轮缘)
-  const wheel=new THREE.Group();
-  wheel.add(new THREE.Mesh(new THREE.CylinderGeometry(WHEEL_R,WHEEL_R,.04,30),matPU));
-  wheel.add(new THREE.Mesh(new THREE.CylinderGeometry(WHEEL_R-.018,WHEEL_R-.018,.042,30),matWheel));
-  wheel.children.forEach(m=>{m.rotation.z=Math.PI/2; m.rotation.order='ZYX';});
-  wheel.position.set(Math.cos(a)*.175,-Math.sin(a)*.175+.11,.05);
-  wheel.rotation.z=Math.PI/2;
-  g.add(wheel);
-  barrel.add(g);
-  return wheel;
+  const g=new THREE.Group();
+  // 摇篮弧座(橙色, 内凹弧面包住电机壳)
+  const cradleMesh=new THREE.Mesh(
+    new THREE.TorusGeometry(WHEEL_R+.006,.024,12,20,Math.PI*1.25),matBody);
+  cradleMesh.position.set(Math.cos(a)*.152,-Math.sin(a)*.152,0);
+  cradleMesh.rotation.z=a-Math.PI/4;
+  g.add(cradleMesh);
+  // 直驱转子: 银色电机壳 + 黑色PU套(滚动面)
+  const rotor=new THREE.Group();
+  const shell=new THREE.Mesh(new THREE.CylinderGeometry(WHEEL_R-.008,WHEEL_R-.008,.052,26),matRotor);
+  const pu=new THREE.Mesh(new THREE.CylinderGeometry(WHEEL_R,WHEEL_R,.048,26),matPU);
+  shell.rotation.z=Math.PI/2; pu.rotation.z=Math.PI/2;
+  shell.rotation.order='ZYX'; pu.rotation.order='ZYX';
+  rotor.add(shell); rotor.add(pu);
+  rotor.position.set(Math.cos(a)*.152,-Math.sin(a)*.152,0);
+  g.add(rotor);
+  // 电机后端盖(深色) + 轴
+  const bell=new THREE.Mesh(new THREE.CylinderGeometry(.034,.034,.03,18),
+    new THREE.MeshStandardMaterial({color:0x14181f,roughness:.5}));
+  bell.position.set(Math.cos(a)*.205,-Math.sin(a)*.205,0);
+  bell.rotation.z=Math.PI/2; g.add(bell);
+  cage.add(g);
+  return rotor;
 }
-const wheels=[wheelModule(90),wheelModule(210),wheelModule(330)];
+const rotors=[cradle(90),cradle(210),cradle(330)];
+
+// 后导球锥(蓝色)
+const cone=new THREE.Mesh(new THREE.ConeGeometry(.135,.15,24),matAcc);
+cone.rotation.x=-Math.PI/2; cone.position.z=-.17; cage.add(cone);
 
 /* 球 */
 const ball=new THREE.Mesh(new THREE.SphereGeometry(BALL_R,36,28),
@@ -268,7 +274,7 @@ function fire(){
   $('o-r').textContent=x===0&&z===0?'–':Math.hypot(x,z).toFixed(1)+' m';
   $('o-lat').textContent=(x>=0?'+':'')+x.toFixed(2)+' m';
   $('o-sag').textContent=sag.toFixed(0)+' %';
-  $('o-i').textContent='~2 A';
+  $('o-i').textContent='~2 A @12S';
   // 按钮冷却
   const btn=$('fire');btn.disabled=true;
   setTimeout(()=>{btn.disabled=false;anim&&(anim.done=true)},3000);
@@ -277,10 +283,10 @@ $('fire').onclick=fire;
 
 /* 预设 */
 const PRESETS={
-  straight:{rpm:2600,pl:12,mu:.85,ang:10,side:0,top:0,yaw:0},
-  long:   {rpm:3400,pl:12,mu:.85,ang:14,side:0,top:0,yaw:0},
-  curve:  {rpm:3000,pl:12,mu:.85,ang:13,side:350,top:0,yaw:-4},
-  top:    {rpm:3200,pl:12,mu:.85,ang:8, side:0,top:300,yaw:0},
+  straight:{rpm:4600,pl:12,mu:.85,ang:10,side:0,top:0,yaw:0},
+  long:   {rpm:6000,pl:12,mu:.85,ang:14,side:0,top:0,yaw:0},
+  curve:  {rpm:5500,pl:12,mu:.85,ang:13,side:400,top:0,yaw:-4},
+  top:    {rpm:5800,pl:12,mu:.85,ang:8, side:0,top:350,yaw:0},
 };
 document.querySelectorAll('.presets button').forEach(b=>{
   b.onclick=()=>{Object.assign(cfg,PRESETS[b.dataset.p]);
@@ -304,11 +310,10 @@ function sync(k){
 (function loop(now){
   requestAnimationFrame(loop);
   controls.update();
-  // 轮组持续预转可视化
-  const spinDir=cfg.side!==0||cfg.top!==0?1:1;
-  wheels[0].rotation.y+= cfg.top*0.0004 + 0.25;
-  wheels[1].rotation.y+=(cfg.side*0.0004)+0.25;
-  wheels[2].rotation.y+=(-cfg.side*0.0004)+0.25;
+  // 转子直驱预转可视化: 三转子差速对应侧旋/上下旋
+  rotors[0].rotation.y+= cfg.top*0.0004 + 0.35;
+  rotors[1].rotation.y+=(cfg.side*0.0004)+0.35;
+  rotors[2].rotation.y+=(-cfg.side*0.0004)+0.35;
   // 球动画
   if(anim&&!anim.done){
     const el=now-anim.t0, f=Math.min(el/anim.dur,1);
