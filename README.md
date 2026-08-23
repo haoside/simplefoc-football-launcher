@@ -1,5 +1,10 @@
 # SimpleFOC Football Launcher
 
+> **⚠️ 架构演进 (2026-08)**：P0-B 功率链路已决策切换为 **ODrive S1 ×3** 方案，机械结构重建为“外置三轮铰接预紧式”。
+> 见 [docs/ODRIVE_MIGRATION_PLAN_V1.md](docs/ODRIVE_MIGRATION_PLAN_V1.md) · [docs/MECH_REDESIGN_ODRIVE_V1.md](docs/MECH_REDESIGN_ODRIVE_V1.md)
+> 三维仿真已先行验证：`widgets/odrive_sim_3d.html`（交互 3D）+ `sim/odrive_launch_sim_v1.py`（弹道复算）
+> 关键仿真结论：φ130 轮组可行 / φ110 无法达成 20m 长传；飞轮架构电池补能仅 ~2A；单发轮速跌落 25~35%。
+
 基于 SimpleFOC 的三无刷电机足球发射控制系统。
 
 P0 目标：完成三路电机速度闭环、三轮同步预转、单次稳定射出标准 5 号足球，并具备基础安全保护。P0 明确为单球手动上球，不做多球管道/球仓/闸门。
