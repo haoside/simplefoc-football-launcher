@@ -24,13 +24,13 @@ BALL_MASS = 0.43     # kg (FIFA 5号)
 BALL_R = 0.11        # m
 BALL_AREA = math.pi * BALL_R ** 2
 
-# ---- 新结构轮组 (Candidate A: 外置三轮铰接预紧) ----
-WHEEL_R = 0.055      # 摩擦轮半径 φ110mm
-WHEEL_MASS = 0.35    # kg (PU包胶铝芯)
+# ---- 新结构轮组 (v26/v27: 切向裸壳直驱, 无PU套 — Owner 指定) ----
+WHEEL_R = 0.0315      # 6374 转子壳半径 φ63, 壳面即摩擦面
+WHEEL_MASS = 0.30     # 裸壳(含转子铁芯)
 MOTOR_KV = 170.0     # 6374 170KV
 VBUS = 24.0
-RPM_MIN, RPM_MAX = 500.0, 3600.0   # ODrive S1 + 6374@24V: 空载4080, 负载3600可稳
-CONTACT_LEN = 0.10                 # 加速段有效接触弧长 m (三轮包角, 可调)
+RPM_MIN, RPM_MAX = 500.0, 6000.0    # XDRIVE/ODrive 下负载转速上限(视供电)
+CONTACT_LEN = 0.10                 # 三壳面包角有效接触弧长 m
 
 
 @dataclass
@@ -192,6 +192,10 @@ def simulate(cfg: MechConfig, h0=0.9) -> LaunchResult:
         timeline=timeline)
 
 
+# 裸壳 φ63 可行域结论 (bare_shell_sweep_v2 / bare_shell_optimum_v2):
+#   24V: 最优射程仅 ~9.6m ❌ 不达 20m 目标
+#   44.4V(12S): 射程 ~20.9m ✅ 压线达标, 需 6000rpm + μ0.95 高摩擦壳面
+#   -> 裸壳方案必须配 12S 供电; 6374@24V 裸壳只够 ~10m 训练距离
 PRESETS = {
     "straight_15m": MechConfig(wheel_rpm=2400, launch_angle_deg=10),
     "long_pass_20m": MechConfig(wheel_rpm=3200, launch_angle_deg=14),
