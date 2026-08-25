@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>ODrive 三轮发射器 · 三维仿真 v1</title>
+<style>
+  :root{
+    --bg:#11151c; --panel:#1a2029; --line:#2a3342; --fg:#e8edf4;
+    --dim:#8b96a8; --acc:#4da3ff; --ok:#3ecf8e; --warn:#ffb454;
+  }
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--fg);
+    font:13px/1.45 -apple-system,"PingFang SC",sans-serif}
+  #c{position:absolute;inset:0}
+  .panel{position:absolute;top:14px;left:14px;width:250px;background:var(--panel);
+    border:1px solid var(--line);border-radius:12px;padding:14px 16px;z-index:5;
+    max-height:calc(100% - 28px);overflow-y:auto}
+  .panel h1{font-size:14px;margin:0 0 10px;color:var(--acc)}
+  .row{margin-bottom:9px}
+  .row label{display:flex;justify-content:space-between;font-size:12px;color:var(--dim)}
+  .row label b{color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums}
+  input[type=range]{width:100%;accent-color:var(--acc);height:18px;margin:2px 0 0}
+  button{cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:#232b38;color:var(--fg);padding:5px 10px;font-size:12px}
+  button:hover{border-color:var(--acc)}
+  .presets{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
+  #fire{width:100%;padding:11px;font-size:15px;font-weight:700;margin-top:6px;
+    background:var(--acc);border:none;color:#fff}
+  #fire:disabled{background:#39424f;color:#8b96a8}
+  .read{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+  .read div{background:#141a23;border-radius:8px;padding:6px 9px}
+  .read span{display:block;font-size:10.5px;color:var(--dim)}
+  .read b{font-size:15px;font-variant-numeric:tabular-nums}
+  .findings{margin-top:10px;border-top:1px solid var(--line);padding-top:8px;
+    font-size:11px;color:var(--dim)}
+  .findings li{margin-bottom:3px}
+  .tag{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div class="panel">
+  <h1>⚙️ V2 直驱笼体 · 3D 仿真</h1>
+
+  <div class="row"><label>轮转速 <b id="v-rpm">3200 rpm</b></label>
+    <input type="range" id="rpm" min="1000" max="6200" step="100" value="5200"></div>
+  <div class="row"><label>预紧压紧量 <b id="v-pl">12 mm</b></label>
+    <input type="range" id="pl" min="4" max="16" step="1" value="12"></div>
+  <div class="row"><label>摩擦系数 μ(PU) <b id="v-mu">0.85</b></label>
+    <input type="range" id="mu" min="0.4" max="1.0" step="0.05" value="0.85"></div>
+  <div class="row"><label>俯仰角 <b id="v-ang">14°</b></label>
+    <input type="range" id="ang" min="2" max="35" step="1" value="14"></div>
+  <div class="row"><label>侧旋差速± <b id="v-side">0 rpm</b></label>
+    <input type="range" id="side" min="-450" max="450" step="25" value="0"></div>
+  <div class="row"><label>上/下旋差速± <b id="v-top">0 rpm</b></label>
+    <input type="range" id="top" min="-400" max="400" step="25" value="0"></div>
+  <div class="row"><label>偏航 <b id="v-yaw">0°</b></label>
+    <input type="range" id="yaw" min="-25" max="25" step="1" value="0"></div>
+
+  <div class="presets">
+    <button data-p="straight">平传</button>
+    <button data-p="long">长传20m</button>
+    <button data-p="curve">左弧线</button>
+    <button data-p="top">上旋抽击</button>
+  </div>
+  <button id="fire">▶ 发 射</button>
+
+  <div class="read">
+    <div><span>出球速度</span><b id="o-v">–</b></div>
+    <div><span>旋转 rps</span><b id="o-s">–</b></div>
+    <div><span>射程</span><b id="o-r">–</b></div>
+    <div><span>侧偏</span><b id="o-lat">–</b></div>
+    <div><span>轮速跌落</span><b id="o-sag">–</b></div>
+    <div><span>补能电流</span><b id="o-i">–</b></div>
+  </div>
+
+  <ul class="findings" style="list-style:none;padding:0">
+    <li><span class="tag" style="background:var(--warn)"></span>V2 直驱：电机壳+PU套 φ79 直接作摩擦面，无独立摩擦轮</li>
+    <li><span class="tag" style="background:var(--ok)"></span>12S 44.4V @6000rpm → 壳面线速 ~24.8 m/s，射程可达 25m+</li>
+    <li><span class="tag" style="background:var(--acc)"></span>飞轮储能：单发跌落仅 ~15%，补能 ~2A@44V</li>
+  </ul>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+/* ===== 物理常量 (与 sim/odrive_launch_sim_v1.py 同源) ===== */
+const G=9.81, RHO=1.225, CD=0.25;
+const BALL_M=0.43, BALL_R=0.11, AREA=Math.PI*BALL_R*BALL_R;
+const WHEEL_R=0.0395;                // V2: 电机壳φ63+PU套 → φ79 滚动面
+const VBUS=44.4;                     // 12S 锂电
+const CONTACT_LEN=0.14;              // 三摇篮包角有效弧长
+
+const $=id=>document.getElementById(id);
+const cfg={rpm:5200,pl:12,mu:.85,ang:14,side:0,top:0,yaw:0};
+
+/* ===== 场景 ===== */
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x11151c);
+scene.fog=new THREE.Fog(0x11151c,14,40);
+const cam=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,.1,100);
+cam.position.set(-4.5,2.6,4.2);
+const renderer=new THREE.WebGLRenderer({canvas:$('c'),antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(devicePixelRatio);
+const controls=new THREE.OrbitControls(cam,renderer.domElement);
+controls.target.set(0,.9,3);
+controls.enableDamping=true;
+
+scene.add(new THREE.AmbientLight(0xffffff,.55));
+const dl=new THREE.DirectionalLight(0xffffff,.85); dl.position.set(4,7,3); scene.add(dl);
+const dl2=new THREE.DirectionalLight(0x88aaff,.25); dl2.position.set(-4,3,-4); scene.add(dl2);
+
+/* 地面 + 网格 + 距离环 */
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(60,60),
+  new THREE.MeshStandardMaterial({color:0x161b24,roughness:1}));
+ground.rotation.x=-Math.PI/2; scene.add(ground);
+const grid=new THREE.GridHelper(60,60,0x2a3342,0x1d242f); scene.add(grid);
+[10,15,20].forEach(d=>{
+  const ring=new THREE.Mesh(new THREE.RingGeometry(d-.03,d+.03,96),
+    new THREE.MeshBasicMaterial({color:0x39445a,side:THREE.DoubleSide}));
+  ring.rotation.x=-Math.PI/2; ring.position.y=.002; scene.add(ring);
+  const cv=document.createElement('canvas');cv.width=64;cv.height=32;
+  const cx=cv.getContext('2d');cx.fillStyle='#8b96a8';cx.font='22px sans-serif';
+  cx.fillText(d+'m',4,24);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial(
+    {map:new THREE.CanvasTexture(cv),transparent:true}));
+  sp.scale.set(.7,.35,1);sp.position.set(0,.02,d+.55);scene.add(sp);
+});
+
+/* ===== 发射器 (V2 直驱笼体: 参考视频结构) ===== */
+const launcher=new THREE.Group(); scene.add(launcher);
+const matBody=new THREE.MeshStandardMaterial({color:0xe07818,roughness:.55}); // 橙色打印笼体
+const matRotor=new THREE.MeshStandardMaterial({color:0x9aa2ad,roughness:.28,metalness:.85}); // 银色电机壳
+const matPU=new THREE.MeshStandardMaterial({color:0x1c1f24,roughness:.9});   // PU套(黑)
+const matAcc=new THREE.MeshStandardMaterial({color:0x4da3ff,roughness:.4,metalness:.5});
+
+// 底座立柱 + 俯仰转台
+const post=new THREE.Mesh(new THREE.CylinderGeometry(.09,.13,.86,20),
+  new THREE.MeshStandardMaterial({color:0x273043,roughness:.6,metalness:.35}));
+post.position.y=.43; launcher.add(post);
+const turret=new THREE.Group(); turret.position.y=.9; launcher.add(turret);
+turret.add(new THREE.Mesh(new THREE.BoxGeometry(.34,.14,.30),matBody));
+
+/* 笼体组(随俯仰): 中心球道圆环 + 三瓣摇篮 + 后导锥 */
+const cage=new THREE.Group(); cage.position.set(0,.10,0); turret.add(cage);
+
+// 中心球道 = 短圆筒环 (φ230 内孔, 对应球 φ220)
+const bore=new THREE.Mesh(new THREE.CylinderGeometry(.125,.125,.16,36,1,true),
+  new THREE.MeshStandardMaterial({color:0xd8dde4,roughness:.5,
+    side:THREE.DoubleSide,transparent:true,opacity:.22}));
+bore.rotation.x=Math.PI/2; cage.add(bore);
+
+/* 三瓣摇篮 + 嵌入式直驱电机 (120°: 12点/4点/8点) */
+function cradle(angleDeg){
+  const a=angleDeg*Math.PI/180;
+  const g=new THREE.Group();
+  // 摇篮弧座(橙色, 内凹弧面包住电机壳)
+  const cradleMesh=new THREE.Mesh(
+    new THREE.TorusGeometry(WHEEL_R+.006,.024,12,20,Math.PI*1.25),matBody);
+  cradleMesh.position.set(Math.cos(a)*.152,-Math.sin(a)*.152,0);
+  cradleMesh.rotation.z=a-Math.PI/4;
+  g.add(cradleMesh);
+  // 直驱转子: 银色电机壳 + 黑色PU套(滚动面)
+  const rotor=new THREE.Group();
+  const shell=new THREE.Mesh(new THREE.CylinderGeometry(WHEEL_R-.008,WHEEL_R-.008,.052,26),matRotor);
+  const pu=new THREE.Mesh(new THREE.CylinderGeometry(WHEEL_R,WHEEL_R,.048,26),matPU);
+  shell.rotation.z=Math.PI/2; pu.rotation.z=Math.PI/2;
+  shell.rotation.order='ZYX'; pu.rotation.order='ZYX';
+  rotor.add(shell); rotor.add(pu);
+  rotor.position.set(Math.cos(a)*.152,-Math.sin(a)*.152,0);
+  g.add(rotor);
+  // 电机后端盖(深色) + 轴
+  const bell=new THREE.Mesh(new THREE.CylinderGeometry(.034,.034,.03,18),
+    new THREE.MeshStandardMaterial({color:0x14181f,roughness:.5}));
+  bell.position.set(Math.cos(a)*.205,-Math.sin(a)*.205,0);
+  bell.rotation.z=Math.PI/2; g.add(bell);
+  cage.add(g);
+  return rotor;
+}
+const rotors=[cradle(90),cradle(210),cradle(330)];
+
+// 后导球锥(蓝色)
+const cone=new THREE.Mesh(new THREE.ConeGeometry(.135,.15,24),matAcc);
+cone.rotation.x=-Math.PI/2; cone.position.z=-.17; cage.add(cone);
+
+/* 球 */
+const ball=new THREE.Mesh(new THREE.SphereGeometry(BALL_R,36,28),
+  new THREE.MeshStandardMaterial({color:0xf2f4f7,roughness:.5}));
+ball.castShadow=false; scene.add(ball);
+/* 球面花纹(旋转可视化) */
+for(let i=0;i<5;i++){
+  const spot=new THREE.Mesh(new THREE.SphereGeometry(.021,10,8),
+    new THREE.MeshBasicMaterial({color:0x22262e}));
+  const th=i*2.51, ph=.9+i*.7;
+  spot.position.set(BALL_R*Math.sin(ph)*Math.cos(th),
+                    BALL_R*Math.cos(ph), BALL_R*Math.sin(ph)*Math.sin(th));
+  ball.add(spot);
+}
+ball.position.set(0,BALL_R+.92,0);
+
+/* 弹道线 */
+let trajLine=null;
+function drawTrajectory(pts,color){
+  if(trajLine) scene.remove(trajLine);
+  const geo=new THREE.BufferGeometry().setFromPoints(
+    pts.map(p=>new THREE.Vector3(p[0],p[2],p[1])));
+  trajLine=new THREE.Line(geo,new THREE.LineBasicMaterial({color}));
+  scene.add(trajLine);
+}
+/* 落点标记 */
+let marker=null;
+function dropMarker(x,z,lat){
+  if(marker) scene.remove(marker);
+  marker=new THREE.Mesh(new THREE.RingGeometry(.16,.22,32),
+    new THREE.MeshBasicMaterial({color:lat!==undefined?0xffb454:0x3ecf8e,
+      side:THREE.DoubleSide}));
+  marker.rotation.x=-Math.PI/2; marker.position.set(x,.01,z); scene.add(marker);
+}
+
+/* ===== 物理: 与 Python 模型同公式 ===== */
+function solveExit(){
+  const dSide=cfg.side, dTop=cfg.top;
+  const rpmA=cfg.rpm+dTop, rpmB=cfg.rpm+dSide, rpmC=cfg.rpm-dSide;
+  const v=rpm=>rpm/60*2*Math.PI*WHEEL_R;
+  const vw=Math.min(v(rpmA),v(rpmB),v(rpmC))*.98;
+  const aFric=3*cfg.mu*(cfg.pl*30)/BALL_M;
+  const vFric=Math.sqrt(2*aFric*CONTACT_LEN);
+  const vb=Math.min(vw,vFric);
+  const kSpin=1.05;
+  const wSide=kSpin*(v(rpmB)-v(rpmC))/BALL_R/2;
+  const wTop=-kSpin*v(dTop)/BALL_R/2;
+  return {vb,wSide,wTop,vw,aFric};
+}
+function fly(vb,wSide,wTop){
+  const a=cfg.ang*Math.PI/180,y=cfg.yaw*Math.PI/180;
+  const px=vb*Math.cos(a)*Math.sin(y),
+        py=vb*Math.cos(a)*Math.cos(y),
+        pz=vb*Math.sin(a);
+  let x=0,z=0,h=.95,pts=[[0,0,h]];
+  const dt=.004;let t=0;
+  while(t<7){
+    const s=Math.hypot(px,py,pz);
+    const fd=-.5*RHO*CD*AREA/BALL_M*s;
+    const sm=.5*RHO*AREA*BALL_R/BALL_M*.6;
+    const wx=wTop,wy=0,wz=wSide;
+    const mx=(wy*pz-wz*py),my=(wz*px-wx*pz),mz=(wx*py-wy*px);
+    px+=(fd*px+sm*mx)*dt; py+=(fd*py+sm*my)*dt; pz+=(sm*mz-G)*dt;
+    x+=px*dt; z+=py*dt; h+=pz*dt; t+=dt;
+    pts.push([x,z,h]);
+    if(h<=0&&t>.15)break;
+  }
+  return{pts,x,z,t};
+}
+
+/* ===== 发射动画状态 ===== */
+let anim=null;
+function fire(){
+  if(anim)return;
+  const {vb,wSide,wTop,vw,aFric}=solveExit();
+  const {pts,x,z,t}=fly(vb,wSide,wTop);
+  drawTrajectory(pts,vb>=19.5?0x3ecf8e:0xffb454);
+  dropMarker(x,z,Math.abs(x));
+  anim={pts,i:0,t0:performance.now(),dur:Math.max(t*1000,.6),
+        x,z,spin:wSide+wTop};
+  // 读数
+  const sag=(1-Math.sqrt(Math.max(1-Math.min(
+    (.5*BALL_M*vb*vb+.5*(2/3)*BALL_M*BALL_R*BALL_R*Math.pow((wSide+wTop),2))/
+    (3*.5*(.5*WHEEL_MASS()*WHEEL_R*WHEEL_R+1.8e-4)*Math.pow(cfg.rpm/60*2*Math.PI*WHEEL_R,2)),1),.02)))*100;
+  function WHEEL_MASS(){return .35}
+  $('o-v').textContent=vb.toFixed(1)+' m/s';
+  $('o-s').textContent=Math.abs(wSide+wTop)/(2*Math.PI)*1.0>999?'–':
+    (Math.hypot(wSide,wTop)/(2*Math.PI)).toFixed(1);
+  $('o-r').textContent=x===0&&z===0?'–':Math.hypot(x,z).toFixed(1)+' m';
+  $('o-lat').textContent=(x>=0?'+':'')+x.toFixed(2)+' m';
+  $('o-sag').textContent=sag.toFixed(0)+' %';
+  $('o-i').textContent='~2 A @12S';
+  // 按钮冷却
+  const btn=$('fire');btn.disabled=true;
+  setTimeout(()=>{btn.disabled=false;anim&&(anim.done=true)},3000);
+}
+$('fire').onclick=fire;
+
+/* 预设 */
+const PRESETS={
+  straight:{rpm:4600,pl:12,mu:.85,ang:10,side:0,top:0,yaw:0},
+  long:   {rpm:6000,pl:12,mu:.85,ang:14,side:0,top:0,yaw:0},
+  curve:  {rpm:5500,pl:12,mu:.85,ang:13,side:400,top:0,yaw:-4},
+  top:    {rpm:5800,pl:12,mu:.85,ang:8, side:0,top:350,yaw:0},
+};
+document.querySelectorAll('.presets button').forEach(b=>{
+  b.onclick=()=>{Object.assign(cfg,PRESETS[b.dataset.p]);
+    ['rpm','pl','mu','ang','side','top','yaw'].forEach(k=>{
+      $(k).value=cfg[k];sync(k);});
+    fire();};
+});
+
+/* 滑条绑定 */
+function sync(k){
+  const map={rpm:v=>v+' rpm',pl:v=>v+' mm',mu:v=>(+v).toFixed(2),
+             ang:v=>v+'°',side:v=>v+' rpm',top:v=>v+' rpm',yaw:v=>v+'°'};
+  $('v-'+k).textContent=map[k]($(k).value);
+}
+['rpm','pl','mu','ang','side','top','yaw'].forEach(k=>{
+  $(k).addEventListener('input',e=>{cfg[k]=+e.target.value;sync(k);});
+  sync(k);
+});
+
+/* 渲染循环 */
+(function loop(now){
+  requestAnimationFrame(loop);
+  controls.update();
+  // 转子直驱预转可视化: 三转子差速对应侧旋/上下旋
+  rotors[0].rotation.y+= cfg.top*0.0004 + 0.35;
+  rotors[1].rotation.y+=(cfg.side*0.0004)+0.35;
+  rotors[2].rotation.y+=(-cfg.side*0.0004)+0.35;
+  // 球动画
+  if(anim&&!anim.done){
+    const el=now-anim.t0, f=Math.min(el/anim.dur,1);
+    const idx=Math.floor(f*(anim.pts.length-1));
+    const p=anim.pts[idx];
+    ball.position.set(p[0],p[2]+ (p[2]<=0?0:0),p[1]);
+    ball.rotation.z-=anim.spin*.0012;
+    ball.visible=f<1||true;
+  } else {
+    // 待发态: 球停在筒内
+    ball.position.set(0,.92,0);ball.visible=!anim||anim.done?true:true;
+    ball.visible=true;
+  }
+  renderer.render(scene,cam);
+})(0);
+
+addEventListener('resize',()=>{
+  cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+});
+</script>
+</body>
+</html>

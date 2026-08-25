@@ -1,5 +1,10 @@
 # SimpleFOC Football Launcher
 
+> **⚠️ 架构演进 (2026-08)**：P0-B 功率链路已决策切换为 **ODrive S1 ×3** 方案。
+> 结构 V2 已采纳参考视频的**直驱转子式**设计：电机外转子壳+PU套直接作为摩擦面，取消独立摩擦轮，供电升 12S(44.4V)。
+> 见 [docs/MECH_REDESIGN_ODRIVE_V2_DIRECT_DRIVE.md](docs/MECH_REDESIGN_ODRIVE_V2_DIRECT_DRIVE.md)（当前方案）· [docs/ODRIVE_MIGRATION_PLAN_V1.md](docs/ODRIVE_MIGRATION_PLAN_V1.md)
+> 仿真结论：V2 直驱出球 24.3m/s / 射程 25.3m（V1 独立轮方案仅 17.9m 不达标）；轮速跌落降至 15%。
+
 基于 SimpleFOC 的三无刷电机足球发射控制系统。
 
 P0 目标：完成三路电机速度闭环、三轮同步预转、单次稳定射出标准 5 号足球，并具备基础安全保护。P0 明确为单球手动上球，不做多球管道/球仓/闸门。
